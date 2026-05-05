@@ -10,32 +10,54 @@ const Experience = () => {
   return (
     <Layout>
       {/* Walkthrough Section */}
-      <section className="section-padding" style={{ paddingTop: "12rem" }}>
+      <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-            <h1 className="display" style={{ fontSize: "4rem", marginBottom: "3rem" }}>The Experience</h1>
-            <div style={{ fontSize: "1.2rem", lineHeight: "1.8", color: "rgba(28, 28, 28, 0.8)" }}>
-              <p>
-                From the moment you step into our Diamond Plaza studio, the world outside fades away. Your journey begins in our styling suite, where you'll browse our exclusive collection of designer gowns—each one created in-house to celebrate the unique beauty of motherhood.
-              </p>
-              <p>
-                As you settle into the makeup chair, our professional artists work to enhance your natural glow, tailoring your look to the gowns you've chosen and the editorial direction of your session.
-              </p>
-              <p>
-                The shoot itself is a calm, guided experience. We handle every detail—from lighting and backdrops to gentle posing—ensuring you feel celebrated and at ease. Within weeks, you'll receive a curated gallery of high-resolution, retouched images that capture this extraordinary chapter of your life forever.
-              </p>
+          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "3rem" }}>
+               <h1 className="display" style={{ fontSize: "5rem", margin: 0 }}>The Experience</h1>
+               <div style={{ flexGrow: 1, height: "2px", backgroundColor: "var(--sky-blue)" }}></div>
+            </div>
+            
+            <div className="grid grid-2" style={{ gap: "6rem", alignItems: "start" }}>
+               <div style={{ fontSize: "1.2rem", lineHeight: "2", color: "rgba(28, 28, 28, 0.8)" }}>
+                  <p>
+                    <strong style={{ color: "var(--magenta)", fontSize: "1.4rem" }}>01. Arrival</strong><br />
+                    From the moment you step into our Diamond Plaza studio, the world outside fades away. Your journey begins in our styling suite, a calm sanctuary designed for your ease.
+                  </p>
+                  <p>
+                    <strong style={{ color: "var(--sky-blue)", fontSize: "1.4rem" }}>02. Gown Selection</strong><br />
+                    Browse our exclusive collection of designer gowns. Our stylists help you choose the pieces that best celebrate your silhouette and personal style.
+                  </p>
+                  <p>
+                    <strong style={{ color: "var(--magenta)", fontSize: "1.4rem" }}>03. Professional Makeup</strong><br />
+                    Settle into the chair for professional artistry. We tailor your look to the gowns and the editorial direction of your session.
+                  </p>
+               </div>
+               <div style={{ fontSize: "1.2rem", lineHeight: "2", color: "rgba(28, 28, 28, 0.8)" }}>
+                  <p>
+                    <strong style={{ color: "var(--sky-blue)", fontSize: "1.4rem" }}>04. The Session</strong><br />
+                    The shoot is a guided, empowering experience. We handle every detail of lighting and posing, ensuring you feel celebrated at every stage.
+                  </p>
+                  <p>
+                    <strong style={{ color: "var(--magenta)", fontSize: "1.4rem" }}>05. Image Delivery</strong><br />
+                    Within weeks, you'll receive a curated gallery of retouched images—crafted as heirlooms to last a lifetime.
+                  </p>
+               </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* The Gown Collection */}
-      <section className="section-padding" style={{ backgroundColor: "white" }}>
+      <section className="section-padding" style={{ backgroundColor: "var(--sky-blue-tint)" }}>
         <div className="container">
-          <div className="grid grid-2" style={{ marginBottom: "4rem", alignItems: "flex-end" }}>
-            <h2 className="display" style={{ fontSize: "3rem" }}>The Gown Collection</h2>
-            <p style={{ opacity: 0.7, maxWidth: "400px", margin: 0 }}>
-              Original pieces designed and crafted in-house. Our fabrics are chosen for comfort, movement, and how they interact with light.
+          <div className="grid grid-2" style={{ marginBottom: "5rem", alignItems: "center" }}>
+            <div>
+               <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Collection</span>
+               <h2 className="display" style={{ fontSize: "4rem", marginTop: "1rem" }}>In-House Artistry</h2>
+            </div>
+            <p style={{ fontSize: "1.2rem", opacity: 0.8, borderLeft: "4px solid var(--magenta)", paddingLeft: "2rem" }}>
+              Every gown in our closet is an original piece designed specifically for the expectant silhouette. We don't just rent gowns; we design them.
             </p>
           </div>
           <div style={{ 
@@ -44,7 +66,7 @@ const Experience = () => {
             gap: "1.5rem" 
           }}>
             {[gownImg, p1, p2, p3, p4, p1, p2, p3].map((img, i) => (
-              <div key={i} style={{ aspectRatio: "3/4", overflow: "hidden" }}>
+              <div key={i} style={{ aspectRatio: "3/4", overflow: "hidden", border: "10px solid white" }}>
                 <img 
                   src={img} 
                   alt="Designer Gown" 
@@ -58,49 +80,60 @@ const Experience = () => {
       </section>
 
       {/* Videography Section */}
-      <section className="section-padding">
+      <section className="section-padding" style={{ backgroundColor: "var(--magenta-tint)" }}>
         <div className="container">
-          <div className="grid grid-2" style={{ alignItems: "center", gap: "6rem" }}>
-            <div style={{ aspectRatio: "16/9", backgroundColor: "#ddd", position: "relative", overflow: "hidden" }}>
-               {/* Mock Video Thumbnail */}
+          <div className="grid grid-2" style={{ alignItems: "center", gap: "8rem" }}>
+            <div style={{ aspectRatio: "16/9", backgroundColor: "white", position: "relative", overflow: "hidden", boxShadow: "30px 30px 0 var(--sky-blue)" }}>
                <div style={{ 
                  position: "absolute", 
                  inset: 0, 
                  display: "flex", 
                  alignItems: "center", 
                  justifyContent: "center",
-                 backgroundColor: "rgba(0,0,0,0.1)"
+                 backgroundColor: "rgba(0,0,0,0.1)",
+                 zIndex: 2
                }}>
                  <div style={{ 
-                   width: "60px", 
-                   height: "60px", 
+                   width: "80px", 
+                   height: "80px", 
                    border: "2px solid white", 
                    borderRadius: "50%",
                    display: "flex",
                    alignItems: "center",
                    justifyContent: "center",
-                   color: "white"
-                 }}>
+                   color: "white",
+                   fontSize: "1.5rem",
+                   cursor: "pointer",
+                   transition: "transform 0.3s ease"
+                 }}
+                 onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+                 onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                 >
                    ▶
                  </div>
                </div>
-               <img src={p4} alt="Videography Preview" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.6 }} />
+               <img src={p4} alt="Videography Preview" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.8 }} />
             </div>
             <div>
-              <h2 className="display" style={{ fontSize: "2.5rem", marginBottom: "1.5rem" }}>Maternity Films</h2>
-              <p style={{ fontSize: "1.1rem", opacity: 0.8 }}>
-                Capture the movement and emotion of your pregnancy with a short cinematic baby bump film. A beautiful companion to your still photographs, these films are crafted with the same editorial care as our sessions.
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Motion Portraiture</span>
+              <h2 className="display" style={{ fontSize: "3.5rem", margin: "1rem 0" }}>Maternity Films</h2>
+              <p style={{ fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8, marginBottom: "2rem" }}>
+                Capture the rhythm of life with our cinematic maternity films. We combine artful cinematography with professional sound design to create a short film that tells the story of your pregnancy in motion.
               </p>
+              <Link to="/pricing" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>View Videography Rates</Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* Closing CTA */}
-      <section className="section-padding" style={{ textAlign: "center" }}>
+      <section className="section-padding" style={{ textAlign: "center", backgroundColor: "white" }}>
         <div className="container">
-          <h2 className="display" style={{ fontSize: "3rem", marginBottom: "2rem" }}>Ready to begin?</h2>
-          <a href="https://wa.me/254720111928" className="btn btn-whatsapp">Book your session on WhatsApp</a>
+          <h2 className="display" style={{ fontSize: "4rem", marginBottom: "3rem" }}>Ready to begin?</h2>
+          <div style={{ display: "flex", gap: "2rem", justifyContent: "center" }}>
+             <a href="https://wa.me/254720111928" className="btn btn-whatsapp" style={{ padding: "1.5rem 3rem" }}>Enquire on WhatsApp</a>
+             <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--sky-blue)" }}>Book Session Online</Link>
+          </div>
         </div>
       </section>
     </Layout>

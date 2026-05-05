@@ -1,9 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 36 33% 97%;
+    --foreground: 30 8% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 8% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 8% 12%;
+    --primary: 30 8% 12%;
+    --primary-foreground: 36 33% 97%;
+    --secondary: 28 25% 92%;
+    --secondary-foreground: 30 8% 12%;
+    --muted: 28 20% 90%;
+    --muted-foreground: 30 6% 38%;
+    --accent: 18 30% 88%;
+    --accent-foreground: 30 8% 12%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 30 12% 86%;
+    --input: 30 12% 86%;
+    --ring: 30 8% 12%;
+    --radius: 0.5rem;
+  }
+}
+
 :root {
   /* Brand Color System */
   --sky-blue: #6EC1E4;
+  --sky-blue-tint: #E2F2F9;
   --magenta: #B84FA0;
+  --magenta-tint: #F7EBF5;
   --cream: #F9F5F2;
   --dark: #1C1C1C;
   
@@ -11,7 +42,9 @@
   --bg: var(--cream);
   --text: var(--dark);
   --accent: var(--sky-blue);
+  --accent-soft: var(--sky-blue-tint);
   --signature: var(--magenta);
+  --signature-soft: var(--magenta-tint);
   
   /* Typography */
   --font-display: 'Cormorant Garamond', serif;
@@ -98,25 +131,39 @@ a {
 }
 
 .btn-primary {
-  background-color: var(--accent);
+  background: linear-gradient(135deg, var(--sky-blue), #4fa8cc);
   color: white;
+  box-shadow: 0 4px 14px rgba(110,193,228,0.35);
 }
 
 .btn-primary:hover {
-  background-color: var(--dark);
+  background: linear-gradient(135deg, var(--magenta), #8B3A78);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(184,79,160,0.35);
+}
+
+.btn-outline {
+  border: 2px solid var(--sky-blue);
+  background: transparent;
+  color: var(--sky-blue);
+}
+
+.btn-outline:hover {
+  background-color: var(--sky-blue);
   color: white;
   transform: translateY(-2px);
 }
 
-.btn-outline {
-  border: 1px solid var(--dark);
-  background: transparent;
-  color: var(--dark);
+.btn-magenta {
+  background: linear-gradient(135deg, var(--magenta), #8B3A78);
+  color: white;
+  box-shadow: 0 4px 14px rgba(184,79,160,0.35);
 }
 
-.btn-outline:hover {
-  background-color: var(--dark);
-  color: white;
+.btn-magenta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(184,79,160,0.45);
 }
 
 .btn-whatsapp {
@@ -159,7 +206,7 @@ a {
   background-color: rgba(249, 245, 242, 0.95);
   backdrop-filter: blur(10px);
   padding: 1rem 0;
-  border-bottom: 1px solid rgba(28, 28, 28, 0.05);
+  border-bottom: 2px solid var(--sky-blue);
 }
 
 .nav-container {
@@ -170,7 +217,8 @@ a {
 
 .nav-links {
   display: flex;
-  gap: 3rem;
+  gap: 2.5rem;
+  align-items: center;
 }
 
 .nav-link {
@@ -185,7 +233,22 @@ a {
 }
 
 .nav-link:hover {
-  opacity: 0.6;
+  color: var(--sky-blue);
+  opacity: 1;
+}
+
+/* Mobile nav hamburger: hidden on desktop, visible on mobile */
+.nav-hamburger {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none !important;
+  }
+  .nav-hamburger {
+    display: flex !important;
+  }
 }
 
 /* Animation */
@@ -201,3 +264,98 @@ a {
     transform: translateY(0);
   }
 }
+
+/* Masonry Layout */
+.masonry {
+  column-count: 3;
+  column-gap: 2rem;
+  width: 100%;
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 2rem;
+  display: block;
+}
+
+@media (max-width: 992px) {
+  .masonry {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .masonry {
+    column-count: 1;
+  }
+}
+
+/* Brand Color Utilities */
+.text-sky-blue { color: var(--sky-blue) !important; }
+.text-magenta  { color: var(--magenta)  !important; }
+.bg-sky-blue   { background-color: var(--sky-blue) !important; }
+.bg-magenta    { background-color: var(--magenta)  !important; }
+
+.brand-divider-blue {
+  width: 80px;
+  height: 4px;
+  background: var(--sky-blue);
+  margin: 1.5rem 0;
+  border-radius: 2px;
+}
+
+.brand-divider-magenta {
+  width: 80px;
+  height: 4px;
+  background: var(--magenta);
+  margin: 1.5rem 0;
+  border-radius: 2px;
+}
+
+.brand-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 1rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.brand-tag-blue {
+  background-color: var(--sky-blue-tint);
+  color: var(--sky-blue);
+}
+
+.brand-tag-magenta {
+  background-color: var(--magenta-tint);
+  color: var(--magenta);
+}
+
+/* Input focus glow using brand colors */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--sky-blue) !important;
+  box-shadow: 0 0 0 3px rgba(110,193,228,0.18);
+}
+
+/* Gradient shimmer animation */
+@keyframes gradientShift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+/* Colored section accent bar */
+.section-accent-bar {
+  height: 4px;
+  width: 60px;
+  border-radius: 2px;
+  margin: 1.5rem auto;
+}
+
+.section-accent-bar.blue    { background: var(--sky-blue); }
+.section-accent-bar.magenta { background: var(--magenta); }

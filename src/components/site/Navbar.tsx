@@ -1,33 +1,210 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
+
+const navLinks = [
+  { to: "/", label: "Home" },
+  { to: "/portfolio", label: "Portfolio" },
+  { to: "/maternity-gowns", label: "Gowns" },
+  { to: "/experience", label: "Experience" },
+  { to: "/pricing", label: "Pricing" },
+];
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === "/";
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => setMenuOpen(false), [location.pathname]);
+
+  const solid = scrolled || !isHome;
+
   return (
-    <nav className={`navbar ${scrolled || !isHome ? "scrolled" : ""}`}>
+    <nav
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        zIndex: 1000,
+        transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
+        backgroundColor: solid ? "rgba(255,255,255,0.97)" : "transparent",
+        backdropFilter: solid ? "blur(16px)" : "none",
+        borderBottom: solid ? "2px solid var(--sky-blue)" : "none",
+        boxShadow: solid ? "0 4px 24px rgba(110,193,228,0.12)" : "none",
+        padding: scrolled ? "0.75rem 0" : "1.5rem 0",
+      }}
+    >
       <div className="container nav-container">
-        <Link to="/" className="display" style={{ fontSize: "1.5rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          Fiesta House Attire
+        {/* Logo */}
+        <Link
+          to="/"
+          className="display"
+          style={{
+            fontSize: "1.45rem",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: solid ? "var(--dark)" : "white",
+            display: "flex",
+            alignItems: "center",
+            gap: "0",
+            textDecoration: "none",
+          }}
+        >
+          <span>Fiesta House</span>
+          <span
+            style={{
+              background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              marginLeft: "0.5rem",
+            }}
+          >
+            Attire
+          </span>
         </Link>
-        <div className="nav-links">
-          <Link to="/" className="nav-link">Home</Link>
-          <Link to="/portfolio" className="nav-link">Portfolio</Link>
-          <Link to="/experience" className="nav-link">Experience</Link>
-          <Link to="/pricing" className="nav-link">Pricing</Link>
-          <Link to="/contact" className="nav-link book">Book</Link>
+
+        {/* Desktop Links */}
+        <div className="nav-links" style={{ alignItems: "center", gap: "2.5rem" }}>
+          {navLinks.map((link) => {
+            const isActive =
+              link.to === "/"
+                ? location.pathname === "/"
+                : location.pathname.startsWith(link.to);
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="nav-link"
+                style={{
+                  color: solid
+                    ? isActive
+                      ? "var(--sky-blue)"
+                      : "var(--dark)"
+                    : isActive
+                    ? "var(--sky-blue)"
+                    : "rgba(255,255,255,0.9)",
+                  borderBottom: isActive ? "2px solid var(--sky-blue)" : "2px solid transparent",
+                  paddingBottom: "3px",
+                  fontWeight: isActive ? "500" : "400",
+                  transition: "all 0.3s ease",
+                }}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+
+          {/* Book CTA Button */}
+          <Link
+            to="/contact"
+            style={{
+              background: "linear-gradient(135deg, var(--magenta), #8B3A78)",
+              color: "white",
+              padding: "0.6rem 1.6rem",
+              borderRadius: "100px",
+              fontSize: "0.78rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.15em",
+              fontWeight: "600",
+              fontFamily: "var(--font-sans)",
+              boxShadow: "0 4px 16px rgba(184,79,160,0.35)",
+              transition: "all 0.3s ease",
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(184,79,160,0.45)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(184,79,160,0.35)";
+            }}
+          >
+            Book a Session
+          </Link>
         </div>
+
+        {/* Mobile Hamburger */}
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Toggle menu"
+          style={{
+            display: "none",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: solid ? "var(--dark)" : "white",
+            padding: "0.5rem",
+          }}
+          className="nav-hamburger"
+        >
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {menuOpen && (
+        <div
+          style={{
+            backgroundColor: "white",
+            borderTop: "3px solid var(--sky-blue)",
+            padding: "2rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.5rem",
+          }}
+        >
+          {navLinks.map((link) => {
+            const isActive =
+              link.to === "/"
+                ? location.pathname === "/"
+                : location.pathname.startsWith(link.to);
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                style={{
+                  fontSize: "0.9rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.15em",
+                  color: isActive ? "var(--sky-blue)" : "var(--dark)",
+                  fontWeight: isActive ? "600" : "400",
+                  textDecoration: "none",
+                }}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+          <Link
+            to="/contact"
+            style={{
+              background: "linear-gradient(135deg, var(--magenta), #8B3A78)",
+              color: "white",
+              padding: "0.9rem 2rem",
+              borderRadius: "100px",
+              textAlign: "center",
+              fontSize: "0.85rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.15em",
+              fontWeight: "600",
+              textDecoration: "none",
+            }}
+          >
+            Book a Session
+          </Link>
+        </div>
+      )}
     </nav>
   );
 };
