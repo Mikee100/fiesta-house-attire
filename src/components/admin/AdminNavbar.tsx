@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Library, ExternalLink, Camera } from "lucide-react";
+import { LayoutDashboard, Library, ExternalLink, Camera, FileText } from "lucide-react";
 
 const AdminNavbar = () => {
   const location = useLocation();
@@ -28,6 +28,16 @@ const AdminNavbar = () => {
                 >
                   <LayoutDashboard size={16} />
                   Portfolios
+                </Button>
+              </Link>
+              <Link to="/admin/blog">
+                <Button 
+                  variant={isActive('/admin/blog') || location.pathname.includes('/admin/blog/') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <FileText size={16} />
+                  Blog
                 </Button>
               </Link>
               <Link to="/admin/assets">

@@ -110,8 +110,24 @@ a {
     padding: 4rem 0;
   }
   .container {
-    padding: 0 1.5rem;
+    padding: 0 1.25rem;
   }
+  .mobile-center {
+    text-align: center !important;
+  }
+  .mobile-gap-8 {
+    gap: 2rem !important;
+  }
+  .mobile-gap-12 {
+    gap: 3rem !important;
+  }
+}
+
+/* Responsive Typography Utilities */
+@media (max-width: 768px) {
+  .h1-mobile { font-size: clamp(2.5rem, 8vw, 3.5rem) !important; }
+  .h2-mobile { font-size: clamp(2rem, 7vw, 2.8rem) !important; }
+  .h3-mobile { font-size: 1.75rem !important; }
 }
 
 /* Buttons */
@@ -359,3 +375,67 @@ select:focus {
 
 .section-accent-bar.blue    { background: var(--sky-blue); }
 .section-accent-bar.magenta { background: var(--magenta); }
+
+/* Quill Editor Styles */
+.quill-editor-container .ql-container {
+  min-height: 400px;
+  max-height: 800px;
+  overflow-y: auto;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  background-color: white;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.quill-editor-container .ql-toolbar {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.quill-editor-container .ql-container.ql-snow {
+  border-color: #e2e8f0;
+}
+
+.quill-editor-container .ql-editor {
+  line-height: 1.6;
+  color: #334155;
+}
+
+.quill-editor-container .ql-editor h1,
+.quill-editor-container .ql-editor h2,
+.quill-editor-container .ql-editor h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--text);
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.quill-editor-container .ql-editor p {
+  margin-bottom: 1.25rem;
+}
+
+.quill-editor-container .ql-editor a {
+  color: var(--sky-blue);
+  text-decoration: underline;
+}
+
+.quill-editor-container .ql-editor img {
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.quill-editor-container .ql-editor blockquote {
+  border-left: 4px solid var(--sky-blue);
+  padding-left: 1.5rem;
+  font-style: italic;
+  color: #64748b;
+  margin: 1.5rem 0;
+}
+

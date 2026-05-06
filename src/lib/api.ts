@@ -121,3 +121,95 @@ export const createAsset = async (url: string, folderId?: string) => {
   });
   return await res.json();
 };
+
+// --- Blog ---
+
+export interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string | null;
+  cover_image_url: string | null;
+  author: string;
+  status: 'draft' | 'published';
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+  categories: BlogCategory[];
+}
+
+export const fetchBlogCategories = async (): Promise<BlogCategory[]> => {
+  const res = await fetch(`${API_URL}/blog-categories`);
+  return await res.json();
+};
+
+export const createBlogCategory = async (name: string) => {
+  const res = await fetch(`${API_URL}/blog-categories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  return await res.json();
+};
+
+export const fetchBlogPosts = async (page = 1, category?: string): Promise<{
+  posts: BlogPost[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+}> => {
+  let url = `${API_URL}/blog-posts?page=${page}&limit=9`;
+  if (category) url += `&category=${encodeURIComponent(category)}`;
+  const res = await fetch(url);
+  return await res.json();
+};
+
+export const fetchAllBlogPosts = async (): Promise<BlogPost[]> => {
+  const res = await fetch(`${API_URL}/blog-posts/all`);
+  return await res.json();
+};
+
+export const fetchBlogPost = async (slug: string): Promise<BlogPost | null> => {
+  try {
+    const res = await fetch(`${API_URL}/blog-posts/${slug}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+};
+
+export const fetchRecentBlogPosts = async () => {
+  const res = await fetch(`${API_URL}/blog-posts-recent`);
+  return await res.json();
+};
+
+export const createBlogPost = async (data: Partial<BlogPost> & { category_ids?: string[] }) => {
+  const res = await fetch(`${API_URL}/blog-posts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+};
+
+export const updateBlogPost = async (id: string, data: Partial<BlogPost> & { category_ids?: string[] }) => {
+  const res = await fetch(`${API_URL}/blog-posts/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+};
+
+export const deleteBlogPost = async (id: string) => {
+  const res = await fetch(`${API_URL}/blog-posts/${id}`, { method: 'DELETE' });
+  return await res.json();
+};

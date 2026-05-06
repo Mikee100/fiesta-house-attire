@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { Folder, Image as ImageIcon, Plus, Trash2, ChevronRight, Upload, Loader2, Search, CheckCircle2 } from "lucide-react";
+import { Folder, Image as ImageIcon, Plus, Trash2, ChevronRight, Upload, Loader2, Search, CheckCircle2, Copy } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 
 const AdminAssets = () => {
@@ -117,6 +117,11 @@ const AdminAssets = () => {
       toast.success("Folder cover updated");
       loadData();
     }
+  };
+
+  const handleCopyUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast.success("URL copied to clipboard");
   };
 
   return (
@@ -263,12 +268,21 @@ const AdminAssets = () => {
                            >
                              <Trash2 className="h-4 w-4" />
                            </Button>
+                           <Button 
+                             variant="secondary" 
+                             size="icon"
+                             onClick={() => handleCopyUrl(asset.url)}
+                             className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
+                             title="Copy URL"
+                           >
+                             <Copy className="h-4 w-4" />
+                           </Button>
                            {currentFolderId && (
                              <Button 
                                variant="secondary" 
                                size="icon"
                                onClick={() => handleSetFolderCover(asset.url)}
-                               className="h-9 w-9"
+                               className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
                                title="Set as folder cover"
                              >
                                <CheckCircle2 className="h-4 w-4" />

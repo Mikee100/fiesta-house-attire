@@ -13,9 +13,9 @@ const Experience = () => {
       <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "3rem" }}>
-               <h1 className="display" style={{ fontSize: "5rem", margin: 0 }}>The Experience</h1>
-               <div style={{ flexGrow: 1, height: "2px", backgroundColor: "var(--sky-blue)" }}></div>
+            <div className="mobile-center" style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "3rem", flexWrap: "wrap" }}>
+               <h1 className="display h1-mobile" style={{ fontSize: "5rem", margin: 0 }}>The Experience</h1>
+               <div style={{ flexGrow: 1, height: "2px", backgroundColor: "var(--sky-blue)" }} className="hidden md:block"></div>
             </div>
             
             <div className="grid grid-2" style={{ gap: "6rem", alignItems: "start" }}>
@@ -60,11 +60,12 @@ const Experience = () => {
               Every gown in our closet is an original piece designed specifically for the expectant silhouette. We don't just rent gowns; we design them.
             </p>
           </div>
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "repeat(4, 1fr)", 
-            gap: "1.5rem" 
-          }}>
+          <div 
+            className="grid grid-2 md:grid-cols-4"
+            style={{ 
+              gap: "1rem" 
+            }}
+          >
             {[gownImg, p1, p2, p3, p4, p1, p2, p3].map((img, i) => (
               <div key={i} style={{ aspectRatio: "3/4", overflow: "hidden", border: "10px solid white" }}>
                 <img 
@@ -82,8 +83,8 @@ const Experience = () => {
       {/* Videography Section */}
       <section className="section-padding" style={{ backgroundColor: "var(--magenta-tint)" }}>
         <div className="container">
-          <div className="grid grid-2" style={{ alignItems: "center", gap: "8rem" }}>
-            <div style={{ aspectRatio: "16/9", backgroundColor: "white", position: "relative", overflow: "hidden", boxShadow: "30px 30px 0 var(--sky-blue)" }}>
+          <div className="grid grid-2 mobile-gap-12" style={{ alignItems: "center", gap: "8rem" }}>
+            <div style={{ aspectRatio: "16/9", backgroundColor: "white", position: "relative", overflow: "hidden", boxShadow: "clamp(10px, 4vw, 30px) clamp(10px, 4vw, 30px) 0 var(--sky-blue)" }}>
                <div style={{ 
                  position: "absolute", 
                  inset: 0, 
@@ -114,9 +115,9 @@ const Experience = () => {
                </div>
                <img src={p4} alt="Videography Preview" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.8 }} />
             </div>
-            <div>
+            <div className="mobile-center">
               <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Motion Portraiture</span>
-              <h2 className="display" style={{ fontSize: "3.5rem", margin: "1rem 0" }}>Maternity Films</h2>
+              <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", margin: "1rem 0" }}>Maternity Films</h2>
               <p style={{ fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8, marginBottom: "2rem" }}>
                 Capture the rhythm of life with our cinematic maternity films. We combine artful cinematography with professional sound design to create a short film that tells the story of your pregnancy in motion.
               </p>
@@ -127,12 +128,12 @@ const Experience = () => {
       </section>
 
       {/* Closing CTA */}
-      <section className="section-padding" style={{ textAlign: "center", backgroundColor: "white" }}>
+      <section className="section-padding mobile-center" style={{ textAlign: "center", backgroundColor: "white" }}>
         <div className="container">
-          <h2 className="display" style={{ fontSize: "4rem", marginBottom: "3rem" }}>Ready to begin?</h2>
-          <div style={{ display: "flex", gap: "2rem", justifyContent: "center" }}>
-             <a href="https://wa.me/254720111928" className="btn btn-whatsapp" style={{ padding: "1.5rem 3rem" }}>Enquire on WhatsApp</a>
-             <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--sky-blue)" }}>Book Session Online</Link>
+          <h2 className="display h2-mobile" style={{ fontSize: "4rem", marginBottom: "3rem" }}>Ready to begin?</h2>
+          <div style={{ display: "flex", gap: "1.5rem", justifyContent: "center", flexWrap: "wrap" }}>
+             <a href="https://wa.me/254720111928" className="btn btn-whatsapp" style={{ padding: "1.2rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
+             <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--sky-blue)", padding: "1.2rem 2rem", fontSize: "0.85rem" }}>Book Online</Link>
           </div>
         </div>
       </section>

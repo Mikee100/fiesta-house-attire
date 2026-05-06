@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Layout from "@/components/site/Layout";
-import { fetchPortfolios, fetchAssets, fetchFolders } from "@/lib/api";
+import { fetchPortfolios, fetchAssets, fetchFolders, fetchRecentBlogPosts, BlogPost } from "@/lib/api";
 import {
   Accordion,
   AccordionContent,
@@ -17,6 +17,9 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
+import BeforeAfterSlider from "@/components/site/BeforeAfterSlider";
+import InstagramFeed from "@/components/site/InstagramFeed";
+import { Mail, MapPin, Clock, Phone, Instagram, Facebook } from "lucide-react";
 
 import heroImg from "@/assets/hero_new.png";
 import p1 from "@/assets/portfolio-1.jpg";
@@ -51,20 +54,23 @@ const Index = () => {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [portfoliosData, assetsData, foldersData] = await Promise.all([
+        const [portfoliosData, assetsData, foldersData, postsData] = await Promise.all([
           fetchPortfolios(),
           fetchAssets(undefined, 1, 12),
-          fetchFolders()
+          fetchFolders(),
+          fetchRecentBlogPosts()
         ]);
         
         if (portfoliosData) setPortfolios(portfoliosData);
         if (assetsData && assetsData.assets) setAssets(assetsData.assets);
         if (foldersData) setFolders(foldersData);
+        if (postsData) setRecentPosts(postsData.slice(0, 6));
       } catch (err) {
         console.error("Failed to load home page data:", err);
       } finally {
@@ -106,8 +112,8 @@ const Index = () => {
         </Carousel>
 
         <div className="absolute inset-0 flex items-center justify-center text-center z-10 pointer-events-none">
-          <div className="container fade-in" style={{ color: "white", pointerEvents: "auto" }}>
-            <h1 className="display" style={{ fontSize: "clamp(3.5rem, 10vw, 7rem)", marginBottom: "1rem", textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
+          <div className="container fade-in mobile-center" style={{ color: "white", pointerEvents: "auto" }}>
+            <h1 className="display h1-mobile" style={{ fontSize: "clamp(3rem, 10vw, 7rem)", marginBottom: "1rem", textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
               Fiesta House Attire
             </h1>
             <p style={{
@@ -131,9 +137,9 @@ const Index = () => {
       {/* Curated Collections Section */}
       <section className="section-padding" style={{ backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "5rem" }}>
+          <div className="mobile-center" style={{ marginBottom: "3rem" }}>
             <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Curated Collections</span>
-            <h2 className="display" style={{ fontSize: "3.5rem", marginTop: "1rem" }}>Explore our signature aesthetics</h2>
+            <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", marginTop: "1rem" }}>Explore our signature aesthetics</h2>
           </div>
           <div className="grid grid-3" style={{ gap: "2rem" }}>
             {loading ? (
@@ -164,9 +170,9 @@ const Index = () => {
       {/* Signature Concepts / Specialties */}
       <section className="section-padding" style={{ backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "6rem" }}>
+          <div className="mobile-center" style={{ marginBottom: "4rem" }}>
             <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Our Signature Concepts</span>
-            <h2 className="display" style={{ fontSize: "4.5rem", marginTop: "1rem" }}>Elevating the Maternity Narrative</h2>
+            <h2 className="display h2-mobile" style={{ fontSize: "4.5rem", marginTop: "1rem" }}>Elevating the Maternity Narrative</h2>
           </div>
 
           <div className="grid grid-3" style={{ gap: "4rem" }}>
@@ -225,11 +231,11 @@ const Index = () => {
       </section>
       <section className="section-padding" style={{ backgroundColor: "var(--bg)" }}>
         <div className="container" style={{ maxWidth: "1000px" }}>
-          <div style={{ textAlign: "center", marginBottom: "4rem" }}>
+          <div className="mobile-center" style={{ marginBottom: "3rem" }}>
             <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>A Private Sanctuary</span>
-            <h2 className="display" style={{ fontSize: "3.5rem", marginTop: "1rem", color: "var(--dark)" }}>Not just a studio. A maternity experience.</h2>
+            <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", marginTop: "1rem", color: "var(--dark)" }}>Not just a studio. A maternity experience.</h2>
           </div>
-          <div className="grid grid-2" style={{ gap: "4rem", alignItems: "center" }}>
+          <div className="grid grid-2 mobile-gap-8" style={{ gap: "4rem", alignItems: "center" }}>
             <div style={{ fontSize: "1.2rem", lineHeight: "1.8", color: "rgba(28, 28, 28, 0.8)" }}>
               <p>
                 Fiesta House is a private, fully curated maternity sanctuary designed exclusively for expectant mothers who refuse to be ordinary. We transform pregnancy into art through our iconic, one-of-a-kind studio sets.
@@ -239,8 +245,8 @@ const Index = () => {
               </p>
               <Link to="/experience" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way →</Link>
             </div>
-            <div style={{ position: "relative" }}>
-              <img src={p1} alt="Maternity Portrait" style={{ width: "100%", borderRadius: "2px", boxShadow: "20px 20px 0 var(--sky-blue-tint)" }} />
+            <div style={{ position: "relative" }} className="mobile-center">
+              <img src={p1} alt="Maternity Portrait" style={{ width: "100%", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
             </div>
           </div>
         </div>
@@ -270,8 +276,8 @@ const Index = () => {
               marginBottom: "2.5rem",
               textShadow: "0 2px 4px rgba(0,0,0,0.3)"
             }}>The Sanctuary</span>
-            <h2 className="display" style={{ 
-              fontSize: "clamp(4rem, 12vw, 7.5rem)", 
+            <h2 className="display h2-mobile" style={{ 
+              fontSize: "clamp(3rem, 12vw, 7.5rem)", 
               lineHeight: "1", 
               marginBottom: "2.5rem",
               textShadow: "0 4px 20px rgba(0,0,0,0.4)"
@@ -301,9 +307,9 @@ const Index = () => {
       {/* Iconic Sets Section - Gallery Layout */}
       <section className="section-padding" style={{ backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "8rem" }}>
+          <div className="mobile-center" style={{ marginBottom: "5rem" }}>
             <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Environments</span>
-            <h2 className="display" style={{ fontSize: "4rem", marginTop: "1rem" }}>Curated Studio Masterpieces</h2>
+            <h2 className="display h2-mobile" style={{ fontSize: "4rem", marginTop: "1rem" }}>Curated Studio Masterpieces</h2>
           </div>
 
           <div className="grid grid-3" style={{ gap: "5rem 3rem" }}>
@@ -331,33 +337,34 @@ const Index = () => {
         </div>
       </section>
 
-      {/* All-Inclusive Luxury - Refactored Editorial List */}
-      <section className="section-padding" style={{ backgroundColor: "var(--bg)" }}>
-        <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "8rem" }}>
-            <h2 className="display" style={{ fontSize: "4.5rem", color: "var(--dark)" }}>All-Inclusive Luxury</h2>
-            <div style={{ width: "120px", height: "1px", backgroundColor: "var(--magenta)", margin: "2rem auto" }}></div>
-          </div>
 
-          <div className="grid grid-2" style={{ gap: "8rem" }}>
-            {[
-              { title: "Designer Atelier", desc: "Access to our rare in-house collection of silk, lace, and chiffon gowns.", color: "var(--sky-blue)" },
-              { title: "Professional Makeup", desc: "On-site artistry tailored for studio lighting and editorial finishes.", color: "var(--magenta)" },
-              { title: "Private Sanctuary", desc: "A climate-controlled, calm space at Diamond Plaza designed for comfort.", color: "var(--sky-blue)" },
-              { title: "All-Women Team", desc: "An expert team trained specifically to support and care for expectant mothers.", color: "var(--magenta)" },
-              { title: "Guided Posing", desc: "Never feel lost. We provide expert direction for every frame and movement.", color: "var(--sky-blue)" },
-              { title: "Cinematic Editing", desc: "High-end retouching and bespoke finishing for every single image.", color: "var(--magenta)" }
-            ].map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
-                <div className="display" style={{ fontSize: "3.5rem", color: item.color, opacity: 0.65, lineHeight: "0.8", minWidth: "2.5rem" }}>
-                  {i + 1}
+      {/* Interactive Transformation - Before & After */}
+      <section className="section-padding" style={{ backgroundColor: "white" }}>
+        <div className="container">
+          <div className="grid grid-2" style={{ gap: "6rem", alignItems: "center" }}>
+            <div style={{ order: 2 }}>
+              <BeforeAfterSlider 
+                beforeImage="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg"
+                afterImage="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg"
+              />
+            </div>
+            <div style={{ order: 1 }} className="mobile-center">
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Art of the Edit</span>
+              <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", margin: "1rem 0" }}>Cinematic Storytelling</h2>
+              <p style={{ fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8, marginBottom: "2rem" }}>
+                We don't just take photos; we craft heirlooms. Our signature "Cinematic Edit" transforms raw moments into breathtaking art, balancing light, shadow, and texture to celebrate your journey in its most beautiful light.
+              </p>
+              <div style={{ display: "flex", gap: "2rem" }}>
+                <div>
+                  <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Natural Skin</h4>
+                  <p style={{ fontSize: "0.9rem", opacity: 0.6 }}>Preserving the authentic beauty of motherhood.</p>
                 </div>
                 <div>
-                  <h3 className="display" style={{ fontSize: "2rem", marginBottom: "1rem" }}>{item.title}</h3>
-                  <p style={{ fontSize: "1.1rem", opacity: 0.7, lineHeight: "1.6" }}>{item.desc}</p>
+                  <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Eternal Glow</h4>
+                  <p style={{ fontSize: "0.9rem", opacity: 0.6 }}>Soft, ethereal lighting tailored to your silhouette.</p>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
@@ -365,13 +372,13 @@ const Index = () => {
       {/* The Gown Closet Teaser */}
       <section className="section-padding" style={{ backgroundColor: "white" }}>
         <div className="container">
-          <div className="grid grid-2" style={{ gap: "6rem", alignItems: "center" }}>
-            <div>
-              <img src={gownImg} alt="Designer Gowns" style={{ width: "100%", borderRadius: "2px", boxShadow: "-20px 20px 0 var(--magenta-tint)" }} />
+          <div className="grid grid-2 mobile-gap-12" style={{ gap: "6rem", alignItems: "center" }}>
+            <div className="mobile-center">
+              <img src={gownImg} alt="Designer Gowns" style={{ width: "100%", borderRadius: "2px", boxShadow: "clamp(-20px, -4vw, -10px) clamp(10px, 4vw, 20px) 0 var(--magenta-tint)" }} />
             </div>
-            <div>
+            <div className="mobile-center">
               <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "500" }}>Couture Atelier</span>
-              <h2 className="display" style={{ fontSize: "3.5rem", margin: "1rem 0" }}>Originality, Designed.</h2>
+              <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", margin: "1rem 0" }}>Originality, Designed.</h2>
               <p style={{ fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8, marginBottom: "2rem" }}>
                 Every piece in the Fiesta Closet is designed and crafted in-house. These are original garments that cannot be found anywhere else in Kenya. We transform fabrics into heirlooms.
               </p>
@@ -391,9 +398,9 @@ const Index = () => {
       {/* The Fiesta Experience Walkthrough */}
       <section className="section-padding" style={{ backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "6rem" }}>
+          <div className="mobile-center" style={{ marginBottom: "4rem" }}>
             <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Process</span>
-            <h2 className="display" style={{ fontSize: "4.5rem", marginTop: "1rem" }}>Your journey to the frame</h2>
+            <h2 className="display h2-mobile" style={{ fontSize: "4.5rem", marginTop: "1rem" }}>Your journey to the frame</h2>
           </div>
 
           <div className="grid grid-4" style={{ gap: "3rem" }}>
@@ -418,10 +425,10 @@ const Index = () => {
       {/* Latest from the Studio - Masonry Gallery */}
       <section className="section-padding" style={{ backgroundColor: "var(--bg)" }}>
         <div className="container">
-          <div className="grid grid-2" style={{ gap: "4rem", alignItems: "flex-end", marginBottom: "5rem" }}>
-            <div>
+          <div className="grid grid-2 mobile-gap-8" style={{ gap: "4rem", alignItems: "flex-end", marginBottom: "5rem" }}>
+            <div className="mobile-center">
               <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Live from the Sanctuary</span>
-              <h2 className="display" style={{ fontSize: "4.5rem", marginTop: "1rem" }}>Recent Masterpieces</h2>
+              <h2 className="display h2-mobile" style={{ fontSize: "4.5rem", marginTop: "1rem" }}>Recent Masterpieces</h2>
             </div>
             <p style={{ fontSize: "1.2rem", opacity: 0.7, maxWidth: "400px" }}>
               Explore the latest captures from our Nairobi studio. Every frame is a testament to the beauty of life in bloom.
@@ -452,8 +459,8 @@ const Index = () => {
       {/* Frequently Asked Questions - Accordion */}
       <section className="section-padding" style={{ backgroundColor: "white" }}>
         <div className="container" style={{ maxWidth: "900px" }}>
-          <div style={{ textAlign: "center", marginBottom: "5rem" }}>
-            <h2 className="display" style={{ fontSize: "3.5rem" }}>Common Inquiries</h2>
+          <div className="mobile-center" style={{ marginBottom: "3rem" }}>
+            <h2 className="display h2-mobile" style={{ fontSize: "3.5rem" }}>Common Inquiries</h2>
           </div>
           <Accordion type="single" collapsible className="w-full">
             {[
@@ -475,10 +482,95 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Visit the Sanctuary - Location & Contact */}
+      <section className="section-padding" style={{ backgroundColor: "var(--bg)" }}>
+        <div className="container">
+          <div className="grid grid-2 mobile-gap-12" style={{ gap: "6rem" }}>
+            <div className="mobile-center">
+              <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Visit the Sanctuary</span>
+              <h2 className="display h2-mobile" style={{ fontSize: "4rem", marginTop: "1rem", marginBottom: "3rem" }}>Where to find us</h2>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+                <div style={{ display: "flex", gap: "1.5rem" }}>
+                  <div style={{ color: "var(--sky-blue)" }}><MapPin size={24} /></div>
+                  <div>
+                    <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Diamond Plaza II</h4>
+                    <p style={{ opacity: 0.7 }}>4th Floor, Parklands, Nairobi, Kenya</p>
+                  </div>
+                </div>
+                
+                <div style={{ display: "flex", gap: "1.5rem" }}>
+                  <div style={{ color: "var(--sky-blue)" }}><Clock size={24} /></div>
+                  <div>
+                    <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Studio Hours</h4>
+                    <p style={{ opacity: 0.7 }}>Tuesday – Sunday: 9:00 AM – 6:00 PM<br/>Mondays: Closed for Studio Maintenance</p>
+                  </div>
+                </div>
+                
+                <div style={{ display: "flex", gap: "1.5rem" }}>
+                  <div style={{ color: "var(--sky-blue)" }}><Phone size={24} /></div>
+                  <div>
+                    <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Direct Line</h4>
+                    <p style={{ opacity: 0.7 }}>+254 720 111 928</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: "4rem", display: "flex", gap: "1.5rem" }}>
+                <a href="https://www.instagram.com/fiestahousematernity/" target="_blank" rel="noreferrer" style={{ color: "var(--sky-blue)" }}><Instagram /></a>
+                <a href="#" style={{ color: "var(--sky-blue)" }}><Facebook /></a>
+              </div>
+            </div>
+            
+            <div style={{ height: "100%", minHeight: "400px", position: "relative", overflow: "hidden", borderRadius: "2px" }}>
+              <div style={{ 
+                width: "100%", 
+                height: "100%", 
+                backgroundColor: "#e5e7eb", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                backgroundImage: "url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1000')",
+                backgroundSize: "cover",
+                backgroundPosition: "center"
+              }}>
+                <div style={{ 
+                  backgroundColor: "white", 
+                  padding: "1.5rem 2rem", 
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                  borderRadius: "2px",
+                  textAlign: "center"
+                }}>
+                  <div className="display" style={{ fontSize: "1.2rem", color: "var(--magenta)" }}>FIESTA HOUSE</div>
+                  <div style={{ fontSize: "0.8rem", opacity: 0.6, marginTop: "0.5rem" }}>Diamond Plaza II, Nairobi</div>
+                  <a 
+                    href="https://maps.google.com" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    style={{ 
+                      display: "block", 
+                      marginTop: "1.5rem", 
+                      fontSize: "0.75rem", 
+                      fontWeight: "700", 
+                      textTransform: "uppercase", 
+                      letterSpacing: "0.1em",
+                      color: "var(--sky-blue)",
+                      borderBottom: "1px solid var(--sky-blue)"
+                    }}
+                  >
+                    Get Directions
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <section className="section-padding" style={{ backgroundColor: "white" }}>
         <div className="container">
-          <div className="grid grid-2" style={{ gap: "6rem" }}>
+          <div className="grid grid-2 mobile-gap-12" style={{ gap: "6rem" }}>
             {[
               {
                 text: "I have never felt more beautiful in my life. The gowns, the makeup, the way they made me feel — it was the most special day of my pregnancy.",
@@ -503,30 +595,160 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Gift of Timelessness - Gift Vouchers */}
+      <section className="section-padding" style={{ backgroundColor: "var(--magenta-tint)" }}>
+        <div className="container">
+          <div className="grid grid-2 mobile-gap-12" style={{ gap: "4rem", alignItems: "center" }}>
+            <div className="mobile-center">
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Baby Shower & Beyond</span>
+              <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", marginTop: "1rem" }}>The Gift of Timelessness</h2>
+              <p style={{ fontSize: "1.2rem", opacity: 0.8, marginTop: "1.5rem" }}>
+                Give the expectant mother in your life an experience she will never forget. Our luxury gift vouchers are the perfect way to celebrate a new chapter with art that lasts a lifetime.
+              </p>
+              <div style={{ marginTop: "2.5rem" }}>
+                <Link to="/contact" className="btn btn-magenta">Purchase a Voucher</Link>
+              </div>
+            </div>
+            <div style={{ position: "relative" }}>
+              <div style={{ 
+                aspectRatio: "16/10", 
+                backgroundColor: "white", 
+                borderRadius: "2px", 
+                boxShadow: "0 20px 40px rgba(184,79,160,0.15)",
+                padding: "3rem",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                border: "1px solid var(--magenta-tint)"
+              }}>
+                <div className="display" style={{ fontSize: "2rem", color: "var(--magenta)", marginBottom: "1rem" }}>FIESTA HOUSE</div>
+                <div style={{ width: "40px", height: "1px", backgroundColor: "var(--magenta)", marginBottom: "2rem" }}></div>
+                <div className="display" style={{ fontSize: "3rem", lineHeight: "1" }}>Luxury Maternity <br/> Experience</div>
+                <div style={{ marginTop: "auto", fontSize: "0.8rem", opacity: 0.5, letterSpacing: "0.1em" }}>VALID AT OUR NAIROBI SANCTUARY</div>
+              </div>
+              {/* Decorative elements */}
+              <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "100px", height: "100px", backgroundColor: "var(--magenta)", opacity: 0.1, borderRadius: "50%" }}></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Latest Stories Carousel */}
+      {recentPosts.length > 0 && (
+        <section className="section-padding" style={{ backgroundColor: "white" }}>
+          <div className="container">
+            <div className="mobile-center" style={{ marginBottom: "3rem" }}>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Fiesta Chronicles</span>
+              <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", marginTop: "1rem" }}>Stories from the Sanctuary</h2>
+            </div>
+
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-8">
+                {recentPosts.map((post) => (
+                  <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-1/3 pl-8">
+                    <Link to={`/blog/${post.slug}`} className="group block">
+                      <div className="aspect-[4/5] rounded-2xl overflow-hidden mb-6 relative">
+                        {post.cover_image_url ? (
+                          <img
+                            src={post.cover_image_url}
+                            alt={post.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                        ) : (
+                           <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
+                             <span className="font-display italic text-2xl">Fiesta House</span>
+                           </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
+                      </div>
+                      <div className="space-y-3">
+                        <span className="text-[10px] text-[var(--magenta)] uppercase tracking-widest font-bold">
+                          {post.categories?.[0]?.name || "Story"}
+                        </span>
+                        <h3 className="font-display text-2xl leading-tight group-hover:text-[var(--sky-blue)] transition-colors line-clamp-2">
+                          {post.title}
+                        </h3>
+                        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
+                          {post.excerpt || 'Read more about this maternity journey and the stories that make each session unique...'}
+                        </p>
+                      </div>
+                    </Link>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="flex justify-center gap-4 mt-12">
+                <CarouselPrevious className="static translate-y-0" />
+                <CarouselNext className="static translate-y-0" />
+              </div>
+            </Carousel>
+
+            <div className="text-center mt-16">
+              <Link to="/blog" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>
+                View All Stories
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+
+      {/* Instagram Feed Section */}
+      <InstagramFeed />
+
       {/* Final CTA */}
-      <section className="section-padding" style={{ backgroundColor: "var(--dark)", color: "white", textAlign: "center", position: "relative" }}>
-        {/* Gradient accent bar at top */}
+      <section style={{ 
+        backgroundColor: "white", 
+        color: "var(--dark)", 
+        padding: "10rem 0", 
+        position: "relative",
+        overflow: "hidden",
+        borderTop: "1px solid rgba(0,0,0,0.05)"
+      }}>
+        {/* Subtle background accent */}
+        <div style={{
+          position: "absolute",
+          top: "-50%",
+          right: "-10%",
+          width: "600px",
+          height: "600px",
+          background: "radial-gradient(circle, rgba(184, 79, 160, 0.05) 0%, transparent 70%)",
+          zIndex: 0
+        }} />
+
         <div style={{
           position: "absolute",
           top: 0, left: 0, right: 0,
-          height: "5px",
+          height: "3px",
           background: "linear-gradient(90deg, var(--sky-blue), var(--magenta), var(--sky-blue))",
           backgroundSize: "200% 100%",
-          animation: "gradientShift 4s ease infinite",
+          animation: "gradientShift 6s linear infinite",
+          opacity: 0.8
         }} />
-        <div style={{ position: "absolute", top: "2rem", left: "2rem", opacity: 0.1, fontSize: "0.8rem", letterSpacing: "0.1em" }}>
-          © FIESTA HOUSE ATTIRE COPYRIGHTS RESERVED
-        </div>
-        <div className="container">
-          <h2 className="display" style={{ fontSize: "4rem", marginBottom: "2rem" }}>Ready to own the frame?</h2>
-          <p style={{ fontSize: "1.2rem", maxWidth: "600px", margin: "0 auto 3rem", opacity: 0.7 }}>
-            Experience the best maternity photoshoot in Kenya. Secure your session at our Diamond Plaza sanctuary today.
-          </p>
-          <div style={{ display: "flex", gap: "1.5rem", justifyContent: "center" }}>
-            <Link to="/contact" className="btn" style={{ background: "linear-gradient(135deg, var(--sky-blue), #4fa8cc)", color: "white", boxShadow: "0 6px 20px rgba(110,193,228,0.4)" }}>Book your session</Link>
-            <a href="https://wa.me/254720111928" className="btn btn-whatsapp">Chat on WhatsApp</a>
+
+        <div className="container" style={{ position: "relative", zIndex: 1 }}>
+          <div className="grid grid-2 mobile-gap-8" style={{ alignItems: "center", gap: "4rem" }}>
+            <div className="mobile-center" style={{ textAlign: "left" }}>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.8rem", fontWeight: "600", display: "block", marginBottom: "1rem" }}>Your Journey Starts Here</span>
+              <h2 className="display h2-mobile" style={{ fontSize: "3rem", marginBottom: "1.5rem" }}>Ready to own the frame?</h2>
+              <p style={{ fontSize: "1.1rem", opacity: 0.6, maxWidth: "500px", margin: 0 }}>
+                Experience the best maternity photoshoot in Kenya. Secure your session at our Diamond Plaza sanctuary today.
+              </p>
+            </div>
+            
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }} className="mobile-center justify-center">
+              <Link to="/contact" className="btn btn-magenta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
+              <a href="https://wa.me/254720111928" className="btn btn-whatsapp" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
+            </div>
           </div>
         </div>
+        
+
       </section>
     </Layout>
   );

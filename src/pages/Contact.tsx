@@ -276,7 +276,7 @@ const Contact = () => {
                   </p>
                   <p>
                     <strong style={{ color: "var(--magenta)" }}>Instagram:</strong>{" "}
-                    @fiestahouseattire
+                    @fiestahousematernity
                   </p>
                 </div>
               </div>

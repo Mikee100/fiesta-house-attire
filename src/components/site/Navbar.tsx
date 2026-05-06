@@ -8,6 +8,7 @@ const navLinks = [
   { to: "/maternity-gowns", label: "Gowns" },
   { to: "/experience", label: "Experience" },
   { to: "/pricing", label: "Pricing" },
+  { to: "/blog", label: "Blog" },
 ];
 
 const Navbar = () => {
@@ -103,35 +104,6 @@ const Navbar = () => {
             );
           })}
 
-          {/* Book CTA Button */}
-          <Link
-            to="/contact"
-            style={{
-              background: "linear-gradient(135deg, var(--magenta), #8B3A78)",
-              color: "white",
-              padding: "0.6rem 1.6rem",
-              borderRadius: "100px",
-              fontSize: "0.78rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.15em",
-              fontWeight: "600",
-              fontFamily: "var(--font-sans)",
-              boxShadow: "0 4px 16px rgba(184,79,160,0.35)",
-              transition: "all 0.3s ease",
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(184,79,160,0.45)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(184,79,160,0.35)";
-            }}
-          >
-            Book a Session
-          </Link>
         </div>
 
         {/* Mobile Hamburger */}
