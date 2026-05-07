@@ -35,16 +35,13 @@ const Footer = () => {
               className="display"
               style={{ fontSize: "1.5rem", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "1rem" }}
             >
-              <span style={{ color: "var(--dark)" }}>Fiesta House</span>{" "}
-              <span
-                style={{
-                  background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                Attire
+              <span style={{ 
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "1.8rem",
+                color: "var(--dark)",
+                fontWeight: "600"
+              }}>
+                Fiesta House
               </span>
             </div>
             <p style={{ fontSize: "0.85rem", opacity: 0.7, lineHeight: "1.6", maxWidth: "260px", marginBottom: "1rem" }}>

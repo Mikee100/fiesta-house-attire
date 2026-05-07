@@ -28,7 +28,11 @@ const MaternityGowns = () => {
   }, []);
 
   return (
-    <Layout>
+    <Layout
+      title="Designer Maternity Gowns Nairobi | The Fiesta Atelier"
+      description="Explore our exclusive collection of luxury designer maternity gowns in Nairobi. From silk trains to delicate lace, find the perfect gown for your photoshoot at Fiesta House Attire."
+      keywords="maternity gowns nairobi, designer pregnancy dresses kenya, luxury maternity shoot outfits, maternity photoshoot clothing, fiesta house gowns"
+    >
       {/* Hero Section */}
       <section className="section-padding" style={{ paddingTop: "15rem", backgroundColor: "white" }}>
         <div className="container">

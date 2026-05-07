@@ -1,66 +1,54 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { Helmet } from 'react-helmet';
 
 interface SEOProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   keywords?: string;
   ogImage?: string;
   ogUrl?: string;
+  ogType?: string;
+  canonical?: string;
 }
 
-const SEO: React.FC<SEOProps> = ({ title, description, keywords, ogImage, ogUrl }) => {
-  useEffect(() => {
-    // Update Title
-    document.title = `${title} | Fiesta House Attire`;
+const SEO: React.FC<SEOProps> = ({ 
+  title, 
+  description, 
+  keywords, 
+  ogImage = '/og-image.jpg', 
+  ogUrl = 'https://fiestahouseattire.com',
+  ogType = 'website',
+  canonical
+}) => {
+  const fullTitle = title ? `${title} | Fiesta House Attire` : "Fiesta House Attire | Luxury Maternity Photography Nairobi";
+  const defaultDescription = "Fiesta House Attire is Nairobi's premier luxury maternity studio. Exclusive designer gowns, professional makeup, and editorial photography in a private studio.";
+  const metaDescription = description || defaultDescription;
+  const defaultKeywords = "maternity photoshoot nairobi, luxury maternity photography, pregnancy photoshoot, nairobi maternity studio, designer maternity gowns, baby bump photoshoot kenya";
+  const metaKeywords = keywords ? `${defaultKeywords}, ${keywords}` : defaultKeywords;
 
-    // Update Meta Description
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', description);
-    } else {
-      metaDescription = document.createElement('meta');
-      metaDescription.setAttribute('name', 'description');
-      metaDescription.setAttribute('content', description);
-      document.head.appendChild(metaDescription);
-    }
+  return (
+    <Helmet>
+      {/* Basic Meta Tags */}
+      <title>{fullTitle}</title>
+      <meta name="description" content={metaDescription} />
+      <meta name="keywords" content={metaKeywords} />
+      {canonical && <link rel="canonical" href={canonical} />}
 
-    // Update Meta Keywords
-    if (keywords) {
-      let metaKeywords = document.querySelector('meta[name="keywords"]');
-      if (metaKeywords) {
-        metaKeywords.setAttribute('content', keywords);
-      } else {
-        metaKeywords = document.createElement('meta');
-        metaKeywords.setAttribute('name', 'keywords');
-        metaKeywords.setAttribute('content', keywords);
-        document.head.appendChild(metaKeywords);
-      }
-    }
+      {/* Open Graph / Facebook */}
+      <meta property="og:type" content={ogType} />
+      <meta property="og:url" content={ogUrl} />
+      <meta property="og:title" content={fullTitle} />
+      <meta property="og:description" content={metaDescription} />
+      <meta property="og:image" content={ogImage} />
 
-    // Update OpenGraph Tags
-    const updateOgTag = (property: string, content: string) => {
-      let tag = document.querySelector(`meta[property="${property}"]`);
-      if (tag) {
-        tag.setAttribute('content', content);
-      } else {
-        tag = document.createElement('meta');
-        tag.setAttribute('property', property);
-        tag.setAttribute('content', content);
-        document.head.appendChild(tag);
-      }
-    };
-
-    updateOgTag('og:title', title);
-    updateOgTag('og:description', description);
-    if (ogImage) updateOgTag('og:image', ogImage);
-    if (ogUrl) updateOgTag('og:url', ogUrl);
-    
-    updateOgTag('og:type', 'website');
-    updateOgTag('og:site_name', 'Fiesta House Attire');
-
-  }, [title, description, keywords, ogImage, ogUrl]);
-
-  return null; // This component doesn't render anything
+      {/* Twitter */}
+      <meta property="twitter:card" content="summary_large_image" />
+      <meta property="twitter:url" content={ogUrl} />
+      <meta property="twitter:title" content={fullTitle} />
+      <meta property="twitter:description" content={metaDescription} />
+      <meta property="twitter:image" content={ogImage} />
+    </Helmet>
+  );
 };
 
 export default SEO;

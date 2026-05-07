@@ -32,7 +32,11 @@ const Portfolio = () => {
   }, []);
 
   return (
-    <Layout>
+    <Layout
+      title="Portfolio | Luxury Maternity & Couture Photography"
+      description="Explore our curated collection of luxury maternity photography in Nairobi. From signature studio sets to couture maternity portraits, see the art we create at Fiesta House Attire."
+      keywords="maternity photography portfolio, luxury pregnancy photos, couture maternity portraits nairobi, best maternity photography galleries"
+    >
       <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "8rem" }}>

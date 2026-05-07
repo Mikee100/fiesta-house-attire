@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
-import Navbar from "@/components/site/Navbar";
-import Footer from "@/components/site/Footer";
+import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { BlogPost, BlogCategory } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { Helmet } from "react-helmet";
 import { BlogCardSkeleton } from "@/components/ui/SkeletonCards";
 
 const Blog = () => {
@@ -62,14 +60,11 @@ const Blog = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] flex flex-col">
-      <Helmet>
-        <title>Stories & Insights | Fiesta House Attire</title>
-        <meta name="description" content="Maternity photography blog Nairobi featuring expert pregnancy photoshoot tips, styling advice, and professional guidance." />
-      </Helmet>
-      
-      <Navbar />
-
+    <Layout
+      title="Stories & Insights | Maternity Photography Blog"
+      description="Expert pregnancy photoshoot tips, styling advice, and professional maternity photography guidance from Nairobi's premier luxury studio."
+      keywords="maternity photography blog, pregnancy photoshoot tips, styling for maternity shoot, nairobi maternity photography guide"
+    >
       <main className="flex-grow pt-32 pb-24">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6">
           
@@ -260,8 +255,7 @@ const Blog = () => {
         </div>
       </main>
 
-      <Footer />
-    </div>
+    </Layout>
   );
 };
 

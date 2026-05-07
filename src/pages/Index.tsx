@@ -86,7 +86,50 @@ const Index = () => {
     : [heroImg];
 
   return (
-    <Layout>
+    <Layout 
+      title="Luxury Maternity Photography Nairobi | The Sanctuary"
+      description="Nairobi's premier luxury maternity studio. Experience world-class maternity photography with designer gowns, professional makeup, and iconic studio sets at Fiesta House Attire."
+      keywords="luxury maternity photography nairobi, best maternity photographer kenya, maternity gowns nairobi, pregnancy photoshoot nairobi, baby bump photoshoot nairobi"
+    >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "name": "Fiesta House Attire",
+          "image": "https://fiestahouseattire.com/og-image.jpg",
+          "@id": "https://fiestahouseattire.com",
+          "url": "https://fiestahouseattire.com",
+          "telephone": "+254720111928",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",
+            "addressLocality": "Nairobi",
+            "addressCountry": "KE"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": -1.2612,
+            "longitude": 36.8228
+          },
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ],
+            "opens": "09:00",
+            "closes": "18:00"
+          },
+          "sameAs": [
+            "https://www.instagram.com/fiestahousematernity/",
+            "https://www.facebook.com/fiestahousematernity"
+          ]
+        })}
+      </script>
       {/* Hero Section */}
       <section className="hero" style={{
         height: "100vh",

@@ -109,12 +109,11 @@ const faqs = [
 
 const Pricing = () => {
   return (
-    <Layout>
-      <SEO 
-        title="Pricing Plan - 7 Luxury Maternity Photoshoot Packages"
-        description="Explore luxury maternity photoshoot pricing in Nairobi. 7 exclusive packages including designer gowns, professional makeup, and stunning studio photography at Fiesta House Attire."
-        keywords="maternity photoshoot nairobi, pregnancy photography pricing, luxury maternity shoot, baby bump photoshoot nairobi, fiesta house attire pricing"
-      />
+    <Layout
+      title="Pricing & Packages | Luxury Maternity Photoshoot Nairobi"
+      description="Explore luxury maternity photoshoot pricing in Nairobi. 7 exclusive packages including designer gowns, professional makeup, and stunning studio photography at Fiesta House Attire."
+      keywords="maternity photoshoot nairobi, pregnancy photography pricing, luxury maternity shoot, baby bump photoshoot nairobi, fiesta house attire pricing"
+    >
 
       {/* Hero Section */}
       <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>

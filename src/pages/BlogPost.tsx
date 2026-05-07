@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { format } from "date-fns";
-import Navbar from "@/components/site/Navbar";
-import Footer from "@/components/site/Footer";
+import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { BlogPost } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Loader2, ChevronLeft, Calendar, User } from "lucide-react";
-import { Helmet } from "react-helmet";
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -68,13 +66,11 @@ const BlogPostPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] flex flex-col">
-      <Helmet>
-        <title>{post.title} | Fiesta House Attire</title>
-        <meta name="description" content={post.excerpt || `Read ${post.title} on Fiesta House Attire's blog.`} />
-      </Helmet>
-
-      <Navbar />
+    <Layout
+      title={post.title}
+      description={post.excerpt || `Read ${post.title} on Fiesta House Attire's blog.`}
+      ogImage={post.cover_image_url}
+    >
 
       <main className="flex-grow pt-32 pb-24">
         <div className="container max-w-5xl mx-auto px-4 sm:px-6">
@@ -177,8 +173,7 @@ const BlogPostPage = () => {
         </div>
       </main>
 
-      <Footer />
-    </div>
+    </Layout>
   );
 };
 

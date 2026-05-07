@@ -1,14 +1,24 @@
-import React from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import SEO from "./SEO";
 
 interface LayoutProps {
   children: React.ReactNode;
+  title?: string;
+  description?: string;
+  keywords?: string;
+  ogImage?: string;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, title, description, keywords, ogImage }) => {
   return (
     <div className="layout-wrapper">
+      <SEO 
+        title={title} 
+        description={description} 
+        keywords={keywords} 
+        ogImage={ogImage} 
+      />
       <Navbar />
       <main>{children}</main>
       <Footer />

@@ -69,7 +69,11 @@ const PortfolioCategory = () => {
   }
 
   return (
-    <Layout>
+    <Layout 
+      title={portfolio.title}
+      description={`View the ${portfolio.title} collection at Fiesta House Attire. Luxury maternity photography in Nairobi featuring our signature aesthetics.`}
+      ogImage={portfolio.images[0]}
+    >
       <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "6rem" }}>

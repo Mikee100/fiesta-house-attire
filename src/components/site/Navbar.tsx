@@ -47,29 +47,34 @@ const Navbar = () => {
         {/* Logo */}
         <Link
           to="/"
-          className="display"
           style={{
-            fontSize: "1.45rem",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: solid ? "var(--dark)" : "white",
             display: "flex",
             alignItems: "center",
-            gap: "0",
+            gap: "0.75rem",
             textDecoration: "none",
           }}
         >
-          <span>Fiesta House</span>
+          <img 
+            src="/favicon.ico" 
+            alt="Fiesta House" 
+            style={{ 
+              width: "32px", 
+              height: "32px",
+              borderRadius: "50%",
+              boxShadow: solid ? "0 2px 8px rgba(0,0,0,0.1)" : "0 2px 8px rgba(255,255,255,0.2)"
+            }} 
+          />
           <span
             style={{
-              background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              marginLeft: "0.5rem",
+              fontFamily: "'Playfair Display', serif",
+              fontSize: "1.6rem",
+              fontWeight: "600",
+              letterSpacing: "0.02em",
+              color: solid ? "var(--dark)" : "white",
+              transition: "color 0.4s ease",
             }}
           >
-            Attire
+            Fiesta House
           </span>
         </Link>
 
