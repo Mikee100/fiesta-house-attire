@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
+import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
 
 const PortfolioCategory = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,9 +42,17 @@ const PortfolioCategory = () => {
   if (loading) {
     return (
       <Layout>
-        <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div className="loader"></div>
-        </div>
+        <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
+          <div className="container">
+            <div style={{ textAlign: "center", marginBottom: "6rem" }}>
+               <div style={{ marginBottom: "2rem" }}>
+                 <div style={{ width: "150px", height: "20px", backgroundColor: "var(--magenta-tint)", margin: "0 auto", borderRadius: "100px" }}></div>
+               </div>
+               <div style={{ width: "300px", height: "60px", backgroundColor: "var(--magenta-tint)", margin: "0 auto", borderRadius: "2px" }}></div>
+            </div>
+            <MasonrySkeleton count={9} />
+          </div>
+        </section>
       </Layout>
     );
   }

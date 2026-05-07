@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
 
 const MaternityGowns = () => {
   const [images, setImages] = useState<any[]>([]);
@@ -42,9 +43,7 @@ const MaternityGowns = () => {
 
           <div className="masonry">
             {loading ? (
-              Array(8).fill(0).map((_, i) => (
-                <Skeleton key={i} className="masonry-item w-full h-[400px] mb-8" />
-              ))
+              <MasonrySkeleton count={8} />
             ) : images.length > 0 ? (
               images.map((img, i) => (
                 <div 

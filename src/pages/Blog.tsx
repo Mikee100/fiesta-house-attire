@@ -8,6 +8,7 @@ import { BlogPost, BlogCategory } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Helmet } from "react-helmet";
+import { BlogCardSkeleton } from "@/components/ui/SkeletonCards";
 
 const Blog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -106,8 +107,10 @@ const Blog = () => {
               </div>
 
               {loading ? (
-                <div className="flex justify-center items-center h-64">
-                  <Loader2 className="h-8 w-8 animate-spin text-[var(--sky-blue)]" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-16">
+                  {Array(6).fill(0).map((_, i) => (
+                    <BlogCardSkeleton key={i} />
+                  ))}
                 </div>
               ) : posts.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-slate-100 max-w-2xl mx-auto">

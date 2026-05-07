@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
+import { PortfolioCardSkeleton } from "@/components/ui/SkeletonCards";
 
 const Portfolio = () => {
   const [portfolios, setPortfolios] = useState<any[]>([]);
@@ -44,7 +45,11 @@ const Portfolio = () => {
           </div>
 
           <div className="grid grid-3" style={{ gap: "2.5rem" }}>
-            {portfolios.map((portfolio, idx) => (
+            {loading ? (
+              Array(6).fill(0).map((_, i) => (
+                <PortfolioCardSkeleton key={i} />
+              ))
+            ) : portfolios.map((portfolio, idx) => (
               <Link 
                 key={portfolio.id} 
                 to={`/portfolio/${portfolio.slug}`}
