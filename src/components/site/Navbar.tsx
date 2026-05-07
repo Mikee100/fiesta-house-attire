@@ -58,20 +58,25 @@ const Navbar = () => {
             src="/favicon.ico" 
             alt="Fiesta House" 
             style={{ 
-              width: "32px", 
-              height: "32px",
-              borderRadius: "50%",
-              boxShadow: solid ? "0 2px 8px rgba(0,0,0,0.1)" : "0 2px 8px rgba(255,255,255,0.2)"
+              width: "36px", 
+              height: "36px",
+              borderRadius: "4px", // Slight rounding instead of full circle
+              boxShadow: solid ? "0 4px 12px rgba(0,0,0,0.08)" : "0 4px 12px rgba(255,255,255,0.15)"
             }} 
           />
           <span
             style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: "1.6rem",
-              fontWeight: "600",
+              fontFamily: "'Bodoni Moda', serif",
+              fontStyle: "italic",
+              fontSize: "1.85rem",
+              fontWeight: "400", // Removed bold
               letterSpacing: "0.02em",
-              color: solid ? "var(--dark)" : "white",
-              transition: "color 0.4s ease",
+              background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              transition: "opacity 0.4s ease",
+              textShadow: "none"
             }}
           >
             Fiesta House

@@ -27,6 +27,15 @@ export const deletePortfolio = async (id: string) => {
   return await res.json();
 };
 
+export const updatePortfolio = async (id: string, data: { cover_image_url?: string; title?: string }) => {
+  const res = await fetch(`${API_URL}/portfolios/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+};
+
 export const addImageToPortfolio = async (portfolioId: string, url: string) => {
   const res = await fetch(`${API_URL}/portfolios/${portfolioId}/images`, {
     method: 'POST',
@@ -41,6 +50,13 @@ export const addImagesToPortfolioBulk = async (portfolioId: string, urls: string
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ urls })
+  });
+  return await res.json();
+};
+
+export const deduplicatePortfolioImages = async (portfolioId: string) => {
+  const res = await fetch(`${API_URL}/portfolios/${portfolioId}/deduplicate`, {
+    method: 'POST'
   });
   return await res.json();
 };

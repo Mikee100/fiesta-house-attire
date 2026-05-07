@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { ChevronLeft, Plus, Trash2, Image as ImageIcon, Library, Folder } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, Image as ImageIcon, Library, Folder, Search, CheckCircle2 } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 
 const AdminPortfolio = () => {
@@ -22,6 +22,10 @@ const AdminPortfolio = () => {
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [localSearch, setLocalSearch] = useState("");
 
   useEffect(() => {
     fetchPortfolioDetails();
@@ -33,7 +37,15 @@ const AdminPortfolio = () => {
 
   useEffect(() => {
     loadAssets();
-  }, [currentPage, isLibraryOpen, currentLibraryFolderId]);
+  }, [currentPage, isLibraryOpen, currentLibraryFolderId, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Reset to page 1 on search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchPortfolioDetails = async () => {
     setLoading(true);
@@ -56,7 +68,7 @@ const AdminPortfolio = () => {
 
   const loadAssets = async () => {
     if (!isLibraryOpen) return;
-    const assetsData = await api.fetchAssets(currentLibraryFolderId || undefined, currentPage, 12);
+    const assetsData = await api.fetchAssets(currentLibraryFolderId || undefined, currentPage, 12, debouncedSearch);
     setAssets(assetsData?.assets || []);
     setTotalPages(assetsData?.totalPages || 1);
   };
@@ -70,7 +82,10 @@ const AdminPortfolio = () => {
   const handleAddImages = async () => {
     if (selectedAssets.length === 0 || !id) return;
 
+    setIsProcessing(true);
     const result = await api.addImagesToPortfolioBulk(id, selectedAssets);
+    setIsProcessing(false);
+    
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -84,16 +99,20 @@ const AdminPortfolio = () => {
   const handleAddAllFromFolder = async () => {
     if (!currentLibraryFolderId || !id) return;
     
+    setIsProcessing(true);
     // Fetch ALL assets in this folder (ignore pagination for bulk add)
     const assetsData = await api.fetchAssets(currentLibraryFolderId, 1, 100);
     const urls = assetsData?.assets?.map((a: any) => a.url) || [];
     
     if (urls.length === 0) {
       toast.error("Folder is empty");
+      setIsProcessing(false);
       return;
     }
 
     const result = await api.addImagesToPortfolioBulk(id, urls);
+    setIsProcessing(false);
+
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -106,12 +125,31 @@ const AdminPortfolio = () => {
   const handleAddImageViaUrl = async () => {
     if (!newImageUrl || !id) return;
 
+    setIsProcessing(true);
     const result = await api.addImageToPortfolio(id, newImageUrl);
+    setIsProcessing(false);
+
     if (result.error) {
       toast.error(result.error);
     } else {
       toast.success("Image added");
       setNewImageUrl("");
+      fetchPortfolioDetails();
+    }
+  };
+
+  const handleDeduplicate = async () => {
+    if (!id) return;
+    setIsProcessing(true);
+    const result = await api.deduplicatePortfolioImages(id);
+    setIsProcessing(false);
+
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success(result.removedCount > 0 
+        ? `Removed ${result.removedCount} duplicates` 
+        : "No duplicates found");
       fetchPortfolioDetails();
     }
   };
@@ -138,15 +176,45 @@ const AdminPortfolio = () => {
               <ChevronLeft className="h-6 w-6" />
             </Button>
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold tracking-tight">{portfolio?.title}</h1>
             <p className="text-muted-foreground">Manage images in this collection</p>
           </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleDeduplicate} 
+            disabled={isProcessing}
+            className="border-amber-200 text-amber-600 hover:bg-amber-50"
+          >
+            {isProcessing ? "Processing..." : "Clean Duplicates"}
+          </Button>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Sidebar Actions */}
           <div className="md:col-span-1 space-y-6 h-fit">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Search Library</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search all images..." 
+                    className="pl-9 h-9"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      if (!isLibraryOpen) setIsLibraryOpen(true);
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">Type to search and add from your entire media library</p>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium">Add via URL</CardTitle>
@@ -157,8 +225,13 @@ const AdminPortfolio = () => {
                   value={newImageUrl}
                   onChange={(e) => setNewImageUrl(e.target.value)}
                 />
-                <Button className="w-full" onClick={handleAddImageViaUrl} style={{ backgroundColor: "#6EC1E4" }}>
-                  <Plus className="mr-2 h-4 w-4" /> Add to Portfolio
+                <Button 
+                  className="w-full" 
+                  onClick={handleAddImageViaUrl} 
+                  disabled={isProcessing || !newImageUrl}
+                  style={{ backgroundColor: "#6EC1E4" }}
+                >
+                  <Plus className="mr-2 h-4 w-4" /> {isProcessing ? "Adding..." : "Add to Portfolio"}
                 </Button>
               </CardContent>
             </Card>
@@ -174,17 +247,36 @@ const AdminPortfolio = () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <DialogTitle className="text-2xl font-bold">Media Library</DialogTitle>
-                      <p className="text-sm text-muted-foreground mt-1">Select assets to add to your portfolio</p>
+                      <div className="relative mt-2">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input 
+                          placeholder="Search images..." 
+                          className="pl-10 h-9 w-[300px] bg-slate-50 border-none ring-1 ring-slate-200" 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-3">
                       {currentLibraryFolderId && (
-                        <Button variant="outline" size="sm" onClick={handleAddAllFromFolder} className="border-sky-200 text-sky-600 hover:bg-sky-50">
-                          Add All from Folder
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleAddAllFromFolder} 
+                          disabled={isProcessing}
+                          className="border-sky-200 text-sky-600 hover:bg-sky-50"
+                        >
+                          {isProcessing ? "Adding..." : "Add All from Folder"}
                         </Button>
                       )}
                       {selectedAssets.length > 0 && (
-                        <Button onClick={handleAddImages} size="sm" className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-200">
-                          Add {selectedAssets.length} Selected
+                        <Button 
+                          onClick={handleAddImages} 
+                          size="sm" 
+                          disabled={isProcessing}
+                          className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-200"
+                        >
+                          {isProcessing ? "Adding..." : `Add ${selectedAssets.length} Selected`}
                         </Button>
                       )}
                     </div>
@@ -319,19 +411,57 @@ const AdminPortfolio = () => {
           </div>
 
           {/* Image Grid */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-3 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Portfolio Images ({portfolio?.images?.length || 0})</h2>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Filter images..." 
+                  className="pl-9 h-9"
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              {portfolio?.images?.map((img: any) => (
+              {portfolio?.images?.filter((img: any) => 
+                !localSearch || img.url.toLowerCase().includes(localSearch.toLowerCase())
+              ).map((img: any) => (
                 <div key={img.id} className="group relative aspect-[4/5] bg-slate-200 rounded-lg overflow-hidden border">
                    <img src={img.url} alt="" className="object-cover w-full h-full" />
-                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                     <Button 
-                       variant="destructive" 
-                       size="icon"
-                       onClick={() => handleDeleteImage(img.id)}
-                     >
-                       <Trash2 className="h-4 w-4" />
-                     </Button>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
+                     <div className="flex gap-2">
+                       <Button 
+                         variant="destructive" 
+                         size="icon"
+                         onClick={() => handleDeleteImage(img.id)}
+                         className="h-9 w-9"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                       <Button 
+                         variant="secondary" 
+                         size="icon"
+                         onClick={async () => {
+                           if (!id) return;
+                           const res = await api.updatePortfolio(id, { cover_image_url: img.url });
+                           if (res.error) toast.error(res.error);
+                           else {
+                             toast.success("Set as portfolio cover");
+                             fetchPortfolioDetails();
+                           }
+                         }}
+                         className={`h-9 w-9 border-none ${portfolio?.cover_image_url === img.url ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-white text-slate-700 hover:bg-slate-100'}`}
+                         title="Set as portfolio cover"
+                       >
+                         <CheckCircle2 className="h-4 w-4" />
+                       </Button>
+                     </div>
+                     {portfolio?.cover_image_url === img.url && (
+                       <span className="text-[10px] text-white bg-emerald-500 px-2 py-1 rounded-full uppercase tracking-widest font-bold">Cover Image</span>
+                     )}
                    </div>
                 </div>
               ))}

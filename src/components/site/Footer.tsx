@@ -36,10 +36,14 @@ const Footer = () => {
               style={{ fontSize: "1.5rem", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "1rem" }}
             >
               <span style={{ 
-                fontFamily: "'Playfair Display', serif",
-                fontSize: "1.8rem",
-                color: "var(--dark)",
-                fontWeight: "600"
+                fontFamily: "'Bodoni Moda', serif",
+                fontStyle: "italic",
+                fontSize: "2.2rem",
+                fontWeight: "400",
+                background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
               }}>
                 Fiesta House
               </span>

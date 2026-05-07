@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, LogOut } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, Library, Sparkles, FolderPlus, Search } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 
 const Admin = () => {
@@ -16,6 +16,7 @@ const Admin = () => {
   const [newPortfolioTitle, setNewPortfolioTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [useMock, setUseMock] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Use brand colors for consistent luxury feel
   const brandSky = "#6EC1E4";
@@ -31,11 +32,9 @@ const Admin = () => {
       const data = await api.fetchPortfolios();
 
       if (data === null) {
-        // This means the API call failed entirely
         setUseMock(true);
         setPortfolios(MOCK_PORTFOLIOS);
       } else {
-        // Data is an array (even if empty)
         setPortfolios(data);
         setUseMock(false);
       }
@@ -46,7 +45,8 @@ const Admin = () => {
     setLoading(false);
   };
 
-  const handleAddPortfolio = async () => {
+  const handleAddPortfolio = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!newPortfolioTitle) return;
     
     if (useMock) {
@@ -71,6 +71,8 @@ const Admin = () => {
        return;
     }
 
+    if (!confirm("Are you sure you want to delete this portfolio?")) return;
+
     const result = await api.deletePortfolio(id);
     if (result.error) {
       toast.error(result.error);
@@ -80,122 +82,165 @@ const Admin = () => {
     }
   };
 
+  const filteredPortfolios = portfolios.filter(p => 
+    p.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#FDFCFD]">
       <AdminNavbar />
-      <div className="max-w-6xl mx-auto p-8">
-        <header className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">Manage your photography collections</p>
-          </div>
-        </header>
+      
+      <div className="max-w-[1400px] mx-auto px-6 py-10">
+        <div className="flex flex-col lg:flex-row gap-10">
+          
+          {/* Sidebar Actions */}
+          <aside className="w-full lg:w-80 space-y-8">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-serif italic text-slate-900 tracking-tight">Studio</h1>
+              <p className="text-slate-500 text-sm">Manage your professional collections</p>
+            </div>
 
-        {useMock ? (
-          <div className="bg-amber-50 border border-amber-200 p-4 mb-8 rounded-lg text-amber-800 text-sm">
-            <strong>Development Mode:</strong> Backend connection not established. Showing local mock data.
-          </div>
-        ) : (
-          <div className="bg-emerald-50 border border-emerald-200 p-4 mb-8 rounded-lg text-emerald-800 text-sm">
-            <strong>Live Mode:</strong> Connected to your Supabase database.
-          </div>
-        )}
-
-        <Tabs defaultValue="portfolios" className="w-full">
-          <TabsList className="mb-8">
-            <TabsTrigger value="portfolios" className="flex items-center gap-2">
-              <LayoutDashboard className="h-4 w-4" /> Portfolios
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" /> Global Assets
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="portfolios">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Add New Portfolio Card */}
-              <Card className="border-dashed border-2 flex flex-col justify-center items-center p-8 bg-transparent">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-sm font-medium">Create New Portfolio</CardTitle>
-                </CardHeader>
-                <CardContent className="w-full space-y-4">
-                  <Input 
-                    placeholder="e.g. Family Baby Bump" 
-                    value={newPortfolioTitle}
-                    onChange={(e) => setNewPortfolioTitle(e.target.value)}
-                  />
-                  <Button className="w-full" onClick={handleAddPortfolio} style={{ backgroundColor: brandSky }}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Category
+            <Card className="border-none shadow-sm bg-white overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-[#6EC1E4] to-[#B84FA0]" />
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-slate-400">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <form onSubmit={handleAddPortfolio} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">New Portfolio</label>
+                    <Input 
+                      placeholder="e.g. Maternity Elegance" 
+                      value={newPortfolioTitle}
+                      onChange={(e) => setNewPortfolioTitle(e.target.value)}
+                      className="bg-slate-50 border-slate-100 focus:bg-white transition-all"
+                    />
+                  </div>
+                  <Button 
+                    className="w-full shadow-md shadow-sky-100 hover:shadow-lg transition-all" 
+                    type="submit"
+                    style={{ backgroundColor: brandSky }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Create Portfolio
                   </Button>
-                </CardContent>
-              </Card>
+                </form>
 
-              {/* Media Library Quick Access */}
-              <Card className="border-sky-200 bg-sky-50/30 flex flex-col justify-center items-center p-8">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-sm font-medium">Media Library</CardTitle>
-                </CardHeader>
-                <CardContent className="w-full space-y-4">
-                  <p className="text-xs text-center text-muted-foreground">Bulk upload and organize images in folders.</p>
-                  <Link to="/admin/assets" className="w-full">
-                    <Button variant="outline" className="w-full border-sky-300 text-sky-700 hover:bg-sky-100">
-                      Open Library
+                <div className="pt-4 border-t border-slate-50">
+                  <Link to="/admin/assets">
+                    <Button variant="outline" className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-sky-600 transition-all">
+                      <Library className="mr-2 h-4 w-4" /> Media Library
                     </Button>
                   </Link>
-                </CardContent>
-              </Card>
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Portfolio Cards */}
-              {portfolios.map((p) => (
-                <Card key={p.id} className="overflow-hidden group relative">
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    <Button 
-                      variant="destructive" 
-                      size="icon" 
-                      onClick={() => handleDeletePortfolio(p.id)}
-                      className="h-8 w-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="aspect-video bg-slate-200 relative overflow-hidden">
-                    {p.images && p.images.length > 0 ? (
-                      <img src={typeof p.images[0] === 'string' ? p.images[0] : p.images[0].url} alt="" className="object-cover w-full h-full" />
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-xl shadow-sky-100 relative overflow-hidden group">
+               <div className="relative z-10">
+                 <Sparkles className="h-8 w-8 mb-4 opacity-80" />
+                 <h3 className="font-bold text-lg leading-tight mb-2">Portfolio Management</h3>
+                 <p className="text-sky-100 text-xs">Organize your masterpieces and showcase your best work to clients.</p>
+               </div>
+               <div className="absolute -right-4 -bottom-4 opacity-10 transform rotate-12 group-hover:scale-110 transition-transform duration-700">
+                 <ImageIcon size={120} />
+               </div>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <main className="flex-1 space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="relative w-full md:w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input 
+                  placeholder="Search portfolios..." 
+                  className="pl-10 bg-white border-none shadow-sm h-11 rounded-xl focus-visible:ring-sky-200"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {useMock && (
+                <div className="px-4 py-2 bg-amber-50 border border-amber-100 text-amber-700 text-xs rounded-full font-medium flex items-center gap-2">
+                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                  Development Mode: Local Data
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              {filteredPortfolios.map((p) => (
+                <Card key={p.id} className="group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-2xl overflow-hidden bg-white flex flex-col">
+                  <div className="aspect-[16/10] bg-slate-100 relative overflow-hidden">
+                    {p.cover_image_url || (p.images && p.images.length > 0) ? (
+                      <img 
+                        src={p.cover_image_url || (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].url)} 
+                        alt={p.title} 
+                        className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110" 
+                      />
                     ) : (
-                      <div className="flex items-center justify-center h-full text-slate-400">
-                        <ImageIcon className="h-12 w-12" />
+                      <div className="flex flex-col items-center justify-center h-full text-slate-300">
+                        <ImageIcon className="h-16 w-16 mb-2 opacity-20" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">No images</span>
                       </div>
                     )}
+                    
+                    {/* Overlay Actions */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                       <Link to={`/admin/portfolio/${p.id}`}>
+                         <Button variant="secondary" className="bg-white/90 hover:bg-white text-slate-900 border-none rounded-full px-6">
+                           Manage
+                         </Button>
+                       </Link>
+                       <Button 
+                         variant="destructive" 
+                         size="icon" 
+                         onClick={() => handleDeletePortfolio(p.id)}
+                         className="rounded-full bg-red-500/80 hover:bg-red-600 border-none"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                    </div>
+
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-slate-900 shadow-sm border border-white/20">
+                        {p.images?.length || 0} ITEMS
+                      </div>
+                    </div>
                   </div>
-                  <CardHeader>
-                    <CardTitle className="flex justify-between items-center">
+                  
+                  <CardHeader className="p-6">
+                    <CardTitle className="text-xl font-serif text-slate-800">
                       {p.title}
-                      <span className="text-xs font-normal text-muted-foreground">
-                        {p.images?.length || 0} images
-                      </span>
                     </CardTitle>
+                    <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-medium">Photography Collection</p>
                   </CardHeader>
-                  <CardContent>
-                    <Link to={`/admin/portfolio/${p.id}`}>
-                      <Button variant="outline" className="w-full">Manage Images</Button>
+                  
+                  <CardContent className="p-6 pt-0 mt-auto">
+                    <Link to={`/admin/portfolio/${p.id}`} className="block">
+                      <Button variant="ghost" className="w-full justify-between group-hover:bg-sky-50 group-hover:text-sky-600 transition-colors border border-slate-50">
+                        View Details
+                        <Sparkles className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all ml-2" />
+                      </Button>
                     </Link>
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </TabsContent>
 
-          <TabsContent value="settings">
-             <Card>
-               <CardHeader>
-                 <CardTitle>System Settings</CardTitle>
-               </CardHeader>
-               <CardContent>
-                 <p className="text-sm text-muted-foreground">Global asset management and studio settings coming soon.</p>
-               </CardContent>
-             </Card>
-          </TabsContent>
-        </Tabs>
+              {filteredPortfolios.length === 0 && !loading && (
+                <div className="col-span-full py-32 flex flex-col items-center justify-center text-center">
+                  <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                    <LayoutDashboard className="h-10 w-10 text-slate-200" />
+                  </div>
+                  <h3 className="text-xl font-serif text-slate-900">No portfolios found</h3>
+                  <p className="text-slate-500 max-w-xs mt-2">
+                    Start by creating your first photography collection using the quick action sidebar.
+                  </p>
+                </div>
+              )}
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );

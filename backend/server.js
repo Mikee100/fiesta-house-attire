@@ -76,10 +76,10 @@ app.post('/api/portfolios/:id/images', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'INSERT INTO portfolio_images (portfolio_id, url) VALUES ($1, $2) RETURNING *',
+      'INSERT INTO portfolio_images (portfolio_id, url) VALUES ($1, $2) ON CONFLICT (portfolio_id, url) DO NOTHING RETURNING *',
       [id, url]
     );
-    res.json(result.rows[0]);
+    res.json(result.rows[0] || { message: 'Image already exists' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to add image' });
@@ -96,15 +96,41 @@ app.post('/api/portfolios/:id/images/bulk', async (req, res) => {
     const results = [];
     for (const url of urls) {
       const result = await pool.query(
-        'INSERT INTO portfolio_images (portfolio_id, url) VALUES ($1, $2) RETURNING *',
+        'INSERT INTO portfolio_images (portfolio_id, url) VALUES ($1, $2) ON CONFLICT (portfolio_id, url) DO NOTHING RETURNING *',
         [id, url]
       );
-      results.push(result.rows[0]);
+      if (result.rows[0]) {
+        results.push(result.rows[0]);
+      }
     }
     res.json(results);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to add images' });
+  }
+});
+
+// Deduplicate portfolio images
+app.post('/api/portfolios/:id/deduplicate', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(`
+      DELETE FROM portfolio_images 
+      WHERE portfolio_id = $1 AND id IN (
+          SELECT id 
+          FROM (
+              SELECT id, 
+              ROW_NUMBER() OVER (PARTITION BY portfolio_id, url ORDER BY created_at ASC) as row_num 
+              FROM portfolio_images
+              WHERE portfolio_id = $1
+          ) t 
+          WHERE t.row_num > 1
+      )
+    `, [id]);
+    res.json({ message: 'Deduplicated successfully', removedCount: result.rowCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Deduplication failed' });
   }
 });
 
@@ -117,6 +143,42 @@ app.delete('/api/portfolios/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Delete failed' });
+  }
+});
+
+// Update portfolio (e.g., set cover image)
+app.patch('/api/portfolios/:id', async (req, res) => {
+  const { id } = req.params;
+  const { cover_image_url, title } = req.body;
+  
+  try {
+    let query = 'UPDATE portfolios SET ';
+    const params = [];
+    let count = 1;
+
+    if (cover_image_url !== undefined) {
+      query += `cover_image_url = $${count}, `;
+      params.push(cover_image_url);
+      count++;
+    }
+    if (title !== undefined) {
+      query += `title = $${count}, `;
+      params.push(title);
+      count++;
+    }
+
+    if (params.length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+    // Remove trailing comma and space
+    query = query.slice(0, -2);
+    query += ` WHERE id = $${count} RETURNING *`;
+    params.push(id);
+
+    const result = await pool.query(query, params);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update portfolio' });
   }
 });
 

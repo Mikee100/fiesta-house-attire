@@ -66,7 +66,7 @@ const Index = () => {
           fetchFolders(),
           fetchRecentBlogPosts()
         ]);
-        
+
         if (portfoliosData) setPortfolios(portfoliosData);
         if (assetsData && assetsData.assets) setAssets(assetsData.assets);
         if (foldersData) setFolders(foldersData);
@@ -86,7 +86,7 @@ const Index = () => {
     : [heroImg];
 
   return (
-    <Layout 
+    <Layout
       title="Luxury Maternity Photography Nairobi | The Sanctuary"
       description="Nairobi's premier luxury maternity studio. Experience world-class maternity photography with designer gowns, professional makeup, and iconic studio sets at Fiesta House Attire."
       keywords="luxury maternity photography nairobi, best maternity photographer kenya, maternity gowns nairobi, pregnancy photoshoot nairobi, baby bump photoshoot nairobi"
@@ -225,49 +225,49 @@ const Index = () => {
                 title: "Expertly Guided Studio Shoots",
                 subtitle: "Studio Shoots",
                 desc: "Step into our studio for an elegant maternity photography experience focused on poses and perfection.",
-                fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886824525_IMG_5360-371x347.jpg",
-                link: "/gallery/236d5ccb-e6d2-47c1-a98f-0ba95fd70385"
+                fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155044498_IMG_5453.jpg",
+                link: "/gallery/2a2ab935-7752-4c1d-99a3-52c9046ef873"
               },
               {
-                id: "b8b100e9-81ce-4778-bf57-0adee0b46fc0",
-                title: "Our Maternity Gowns",
-                subtitle: "Couture Atelier",
-                desc: "Enhance your maternity photoshoot with our collection of luxurious, hand-crafted designer gowns.",
-                fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886824525_IMG_5360-371x347.jpg",
-                link: "/maternity-gowns"
+              id: "b8b100e9-81ce-4778-bf57-0adee0b46fc0",
+            title: "Our Maternity Gowns",
+            subtitle: "Couture Atelier",
+            desc: "Enhance your maternity photoshoot with our collection of luxurious, hand-crafted designer gowns.",
+            fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886824525_IMG_5360-371x347.jpg",
+            link: "/maternity-gowns"
               },
-              {
-                id: "1aea11b8-fd79-4602-9c44-af400754ebec",
-                title: "Suspending Concept",
-                subtitle: "Cinematic Art",
-                desc: "Elevate your maternity story with Fiesta House’s suspending concept—where gravity meets grace.",
-                fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg",
-                link: "/gallery/1aea11b8-fd79-4602-9c44-af400754ebec"
+            {
+              id: "1aea11b8-fd79-4602-9c44-af400754ebec",
+            title: "Suspending Concept",
+            subtitle: "Cinematic Art",
+            desc: "Elevate your maternity story with Fiesta House’s suspending concept—where gravity meets grace.",
+            fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg",
+            link: "/gallery/1aea11b8-fd79-4602-9c44-af400754ebec"
               }
             ].map((concept, i) => {
               const folder = folders.find(f => f.id === concept.id);
-              const displayImg = folder?.cover_image_url || concept.fallbackImg;
-              
-              return (
-                <div key={i} className="group cursor-pointer">
-                  <Link to={concept.link}>
-                    <div className="overflow-hidden aspect-[4/5] mb-8 relative">
-                      <img
-                        src={displayImg}
-                        alt={concept.title}
-                        className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
-                    </div>
-                    <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.15em", fontSize: "0.8rem", fontWeight: "600" }}>{concept.subtitle}</span>
-                    <h3 className="display" style={{ fontSize: "2.4rem", margin: "0.5rem 0 1rem" }}>{concept.title}</h3>
-                    <p style={{ opacity: 0.6, lineHeight: "1.6", marginBottom: "1.5rem" }}>{concept.desc}</p>
-                    <span className="inline-block" style={{ borderBottom: "2px solid var(--sky-blue)", paddingBottom: "2px", fontSize: "0.9rem", fontWeight: "600", color: "var(--sky-blue)" }}>
-                      Explore Collection →
-                    </span>
-                  </Link>
+            const displayImg = folder?.cover_image_url || concept.fallbackImg;
+
+            return (
+            <div key={i} className="group cursor-pointer">
+              <Link to={concept.link}>
+                <div className="overflow-hidden aspect-[4/5] mb-8 relative">
+                  <img
+                    src={displayImg}
+                    alt={concept.title}
+                    className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
                 </div>
-              );
+                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.15em", fontSize: "0.8rem", fontWeight: "600" }}>{concept.subtitle}</span>
+                <h3 className="display" style={{ fontSize: "2.4rem", margin: "0.5rem 0 1rem" }}>{concept.title}</h3>
+                <p style={{ opacity: 0.6, lineHeight: "1.6", marginBottom: "1.5rem" }}>{concept.desc}</p>
+                <span className="inline-block" style={{ borderBottom: "2px solid var(--sky-blue)", paddingBottom: "2px", fontSize: "0.9rem", fontWeight: "600", color: "var(--sky-blue)" }}>
+                  Explore Collection →
+                </span>
+              </Link>
+            </div>
+            );
             })}
           </div>
         </div>
@@ -289,16 +289,16 @@ const Index = () => {
               <Link to="/experience" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way →</Link>
             </div>
             <div style={{ position: "relative" }} className="mobile-center">
-              <img src={p1} alt="Maternity Portrait" style={{ width: "100%", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
+              <img src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg" alt="Maternity Portrait" style={{ width: "100%", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
             </div>
           </div>
         </div>
       </section>
 
       {/* Immersive Studio Experience - Parallax Section */}
-      <section 
+      <section
         className="relative min-h-screen flex items-center overflow-hidden"
-        style={{ 
+        style={{
           backgroundAttachment: "fixed",
           backgroundImage: "url('https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg')",
           backgroundPosition: "center",
@@ -309,34 +309,34 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
         <div className="container relative z-10 text-white">
           <div style={{ maxWidth: "700px" }}>
-            <span style={{ 
-              color: "var(--sky-blue)", 
-              textTransform: "uppercase", 
-              letterSpacing: "0.4em", 
-              fontSize: "1.1rem", 
-              fontWeight: "600", 
-              display: "block", 
+            <span style={{
+              color: "var(--sky-blue)",
+              textTransform: "uppercase",
+              letterSpacing: "0.4em",
+              fontSize: "1.1rem",
+              fontWeight: "600",
+              display: "block",
               marginBottom: "2.5rem",
               textShadow: "0 2px 4px rgba(0,0,0,0.3)"
             }}>The Sanctuary</span>
-            <h2 className="display h2-mobile" style={{ 
-              fontSize: "clamp(3rem, 12vw, 7.5rem)", 
-              lineHeight: "1", 
+            <h2 className="display h2-mobile" style={{
+              fontSize: "clamp(3rem, 12vw, 7.5rem)",
+              lineHeight: "1",
               marginBottom: "2.5rem",
               textShadow: "0 4px 20px rgba(0,0,0,0.4)"
             }}>Where Gravity Meets Grace</h2>
-            <p style={{ 
-              fontSize: "1.4rem", 
-              lineHeight: "1.6", 
-              opacity: 0.95, 
+            <p style={{
+              fontSize: "1.4rem",
+              lineHeight: "1.6",
+              opacity: 0.95,
               marginBottom: "4rem",
               textShadow: "0 2px 10px rgba(0,0,0,0.3)",
               maxWidth: "600px"
             }}>
               Our Nairobi studio is a private, fully curated sanctuary designed specifically for the expectant mother. We don't just take photos; we create environments where your maternity story is transformed into timeless art.
             </p>
-            <Link to="/experience" className="btn btn-primary" style={{ 
-              backgroundColor: "var(--sky-blue)", 
+            <Link to="/experience" className="btn btn-primary" style={{
+              backgroundColor: "var(--sky-blue)",
               border: "none",
               padding: "1.2rem 3rem",
               fontSize: "1rem",
@@ -369,7 +369,7 @@ const Index = () => {
                   <img src={set.img} alt={set.name} className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-700" />
                   <div className="absolute bottom-6 left-6 text-white opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
-                    <span className="text-[10px] uppercase tracking-widest font-bold">SET {i+1}</span>
+                    <span className="text-[10px] uppercase tracking-widest font-bold">SET {i + 1}</span>
                   </div>
                 </div>
                 <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{set.name}</h3>
@@ -386,7 +386,7 @@ const Index = () => {
         <div className="container">
           <div className="grid grid-2" style={{ gap: "6rem", alignItems: "center" }}>
             <div style={{ order: 2 }}>
-              <BeforeAfterSlider 
+              <BeforeAfterSlider
                 beforeImage="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg"
                 afterImage="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg"
               />
@@ -532,7 +532,7 @@ const Index = () => {
             <div className="mobile-center">
               <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Visit the Sanctuary</span>
               <h2 className="display h2-mobile" style={{ fontSize: "4rem", marginTop: "1rem", marginBottom: "3rem" }}>Where to find us</h2>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
                 <div style={{ display: "flex", gap: "1.5rem" }}>
                   <div style={{ color: "var(--sky-blue)" }}><MapPin size={24} /></div>
@@ -541,15 +541,15 @@ const Index = () => {
                     <p style={{ opacity: 0.7 }}>4th Floor, Parklands, Nairobi, Kenya</p>
                   </div>
                 </div>
-                
+
                 <div style={{ display: "flex", gap: "1.5rem" }}>
                   <div style={{ color: "var(--sky-blue)" }}><Clock size={24} /></div>
                   <div>
                     <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Studio Hours</h4>
-                    <p style={{ opacity: 0.7 }}>Tuesday – Sunday: 9:00 AM – 6:00 PM<br/>Mondays: Closed for Studio Maintenance</p>
+                    <p style={{ opacity: 0.7 }}>Tuesday – Sunday: 9:00 AM – 6:00 PM<br />Mondays: Closed for Studio Maintenance</p>
                   </div>
                 </div>
-                
+
                 <div style={{ display: "flex", gap: "1.5rem" }}>
                   <div style={{ color: "var(--sky-blue)" }}><Phone size={24} /></div>
                   <div>
@@ -564,38 +564,38 @@ const Index = () => {
                 <a href="#" style={{ color: "var(--sky-blue)" }}><Facebook /></a>
               </div>
             </div>
-            
+
             <div style={{ height: "100%", minHeight: "400px", position: "relative", overflow: "hidden", borderRadius: "2px" }}>
-              <div style={{ 
-                width: "100%", 
-                height: "100%", 
-                backgroundColor: "#e5e7eb", 
-                display: "flex", 
-                alignItems: "center", 
+              <div style={{
+                width: "100%",
+                height: "100%",
+                backgroundColor: "#e5e7eb",
+                display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
                 backgroundImage: "url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1000')",
                 backgroundSize: "cover",
                 backgroundPosition: "center"
               }}>
-                <div style={{ 
-                  backgroundColor: "white", 
-                  padding: "1.5rem 2rem", 
+                <div style={{
+                  backgroundColor: "white",
+                  padding: "1.5rem 2rem",
                   boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
                   borderRadius: "2px",
                   textAlign: "center"
                 }}>
                   <div className="display" style={{ fontSize: "1.2rem", color: "var(--magenta)" }}>FIESTA HOUSE</div>
                   <div style={{ fontSize: "0.8rem", opacity: 0.6, marginTop: "0.5rem" }}>Diamond Plaza II, Nairobi</div>
-                  <a 
-                    href="https://maps.google.com" 
-                    target="_blank" 
+                  <a
+                    href="https://maps.google.com"
+                    target="_blank"
                     rel="noreferrer"
-                    style={{ 
-                      display: "block", 
-                      marginTop: "1.5rem", 
-                      fontSize: "0.75rem", 
-                      fontWeight: "700", 
-                      textTransform: "uppercase", 
+                    style={{
+                      display: "block",
+                      marginTop: "1.5rem",
+                      fontSize: "0.75rem",
+                      fontWeight: "700",
+                      textTransform: "uppercase",
                       letterSpacing: "0.1em",
                       color: "var(--sky-blue)",
                       borderBottom: "1px solid var(--sky-blue)"
@@ -653,10 +653,10 @@ const Index = () => {
               </div>
             </div>
             <div style={{ position: "relative" }}>
-              <div style={{ 
-                aspectRatio: "16/10", 
-                backgroundColor: "white", 
-                borderRadius: "2px", 
+              <div style={{
+                aspectRatio: "16/10",
+                backgroundColor: "white",
+                borderRadius: "2px",
                 boxShadow: "0 20px 40px rgba(184,79,160,0.15)",
                 padding: "3rem",
                 display: "flex",
@@ -666,7 +666,7 @@ const Index = () => {
               }}>
                 <div className="display" style={{ fontSize: "2rem", color: "var(--magenta)", marginBottom: "1rem" }}>FIESTA HOUSE</div>
                 <div style={{ width: "40px", height: "1px", backgroundColor: "var(--magenta)", marginBottom: "2rem" }}></div>
-                <div className="display" style={{ fontSize: "3rem", lineHeight: "1" }}>Luxury Maternity <br/> Experience</div>
+                <div className="display" style={{ fontSize: "3rem", lineHeight: "1" }}>Luxury Maternity <br /> Experience</div>
                 <div style={{ marginTop: "auto", fontSize: "0.8rem", opacity: 0.5, letterSpacing: "0.1em" }}>VALID AT OUR NAIROBI SANCTUARY</div>
               </div>
               {/* Decorative elements */}
@@ -704,9 +704,9 @@ const Index = () => {
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                           />
                         ) : (
-                           <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-                             <span className="font-display italic text-2xl">Fiesta House</span>
-                           </div>
+                          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
+                            <span className="font-display italic text-2xl">Fiesta House</span>
+                          </div>
                         )}
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
                       </div>
@@ -745,10 +745,10 @@ const Index = () => {
       <InstagramFeed />
 
       {/* Final CTA */}
-      <section style={{ 
-        backgroundColor: "white", 
-        color: "var(--dark)", 
-        padding: "10rem 0", 
+      <section style={{
+        backgroundColor: "white",
+        color: "var(--dark)",
+        padding: "10rem 0",
         position: "relative",
         overflow: "hidden",
         borderTop: "1px solid rgba(0,0,0,0.05)"
@@ -783,14 +783,14 @@ const Index = () => {
                 Experience the best maternity photoshoot in Kenya. Secure your session at our Diamond Plaza sanctuary today.
               </p>
             </div>
-            
+
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }} className="mobile-center justify-center">
               <Link to="/contact" className="btn btn-magenta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
               <a href="https://wa.me/254720111928" className="btn btn-whatsapp" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
             </div>
           </div>
         </div>
-        
+
 
       </section>
     </Layout>
