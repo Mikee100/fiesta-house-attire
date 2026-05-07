@@ -6,6 +6,8 @@ import * as api from "@/lib/api";
 import { BlogPost } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Loader2, ChevronLeft, Calendar, User } from "lucide-react";
+import { Footer } from "react-day-picker";
+import Navbar from "@/components/site/Navbar";
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
