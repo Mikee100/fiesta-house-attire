@@ -139,7 +139,6 @@ const Index = () => {
         <Carousel
           opts={{ loop: true }}
           className="w-full h-full"
-          autoPlay={true}
         >
           <CarouselContent className="h-screen m-0 p-0">
             {heroImages.map((url, i) => (
@@ -176,7 +175,23 @@ const Index = () => {
           </div>
         </div>
       </section>
-
+ {/* Maternity Photoshoot Description Section */}
+            <section className="section-padding" style={{ background: "#f8f9fb" }}>
+              <div className="container" style={{ maxWidth: 900, margin: "0 auto" }}>
+                <h2 style={{ color: "var(--magenta)", fontSize: "2.2rem", fontWeight: 700, marginBottom: 12, textAlign: "center", letterSpacing: "0.02em" }}>
+                  Best Maternity Photoshoot in Kenya
+                </h2>
+                <h3 style={{ color: "#222", fontSize: "1.3rem", fontWeight: 600, marginBottom: 24, textAlign: "center" }}>
+                  Maternity Photography in Nairobi | Fiesta House
+                </h3>
+                <p style={{ fontSize: "1.15rem", color: "#444", marginBottom: 18, textAlign: "center" }}>
+                  Fiesta House is not a typical photoshoot studio. It is a private, fully curated maternity sanctuary designed exclusively for expectant mothers who refuse to be ordinary. We transform pregnancy into art through our iconic, one-of-a-kind studio sets — from the cinematic Boat Set to the regal Master Staircase, immersive Flower Gardens, elegant Swings, and grand Chandeliers. These are not ordinary backdrops, but meticulously designed environments created to produce imagery that cannot be replicated anywhere else.
+                </p>
+                <p style={{ fontSize: "1.15rem", color: "#444", marginBottom: 18, textAlign: "center" }}>
+                  Every detail is intentional. From rare designer maternity gowns and professional makeup artistry to guided posing and an all-women team trained specifically to care for expectant mothers, everything is executed at a world-class standard. Most importantly, your comfort comes first — from the ambiance to the pacing of your session, every moment is designed to ensure you feel safe, supported, and celebrated. This is where confidence meets couture, and motherhood is captured without compromise.
+                </p>
+              </div>
+            </section>
       {/* Curated Collections Section */}
       <section className="section-padding" style={{ backgroundColor: "white" }}>
         <div className="container">
@@ -184,13 +199,14 @@ const Index = () => {
             <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Curated Collections</span>
             <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", marginTop: "1rem" }}>Explore our signature aesthetics</h2>
           </div>
+           
           <div className="grid grid-3" style={{ gap: "2rem" }}>
             {loading ? (
-              Array(3).fill(0).map((_, i) => (
+              Array(6).fill(0).map((_, i) => (
                 <Skeleton key={i} className="aspect-[3/4] w-full" />
               ))
             ) : (
-              portfolios.slice(0, 3).map((portfolio) => (
+              portfolios.slice(0, 6).map((portfolio) => (
                 <Link key={portfolio.id} to={`/portfolio/${portfolio.slug}`} className="group relative overflow-hidden aspect-[3/4]">
                   {portfolio.images[0] && (
                     <img
@@ -207,6 +223,13 @@ const Index = () => {
               ))
             )}
           </div>
+          {!loading && portfolios.length > 6 && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: "2rem" }}>
+              <Link to="/portfolio" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)", fontWeight: 600, padding: "0.75rem 2.5rem", fontSize: "1.1rem" }}>
+                Find More
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
