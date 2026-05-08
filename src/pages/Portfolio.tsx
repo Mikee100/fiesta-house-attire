@@ -21,7 +21,8 @@ const Portfolio = () => {
         // Map backend structure (images is an array of objects)
         const formattedData = data.map((p: any) => ({
           ...p,
-          images: p.images.map((img: any) => img.url)
+          images: p.images.map((img: any) => img.url),
+          cover_image_url: p.cover_image_url || null
         }));
         setPortfolios(formattedData);
       }
@@ -39,6 +40,20 @@ const Portfolio = () => {
     >
       <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
         <div className="container">
+            {/* Minimalistic Tagline */}
+            <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+              <span style={{
+                display: "inline-block",
+                fontSize: "1.3rem",
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                color: "var(--dark)",
+                opacity: 0.85,
+                marginBottom: "0.5rem"
+              }}>
+                Timeless. Elegant. Uniquely Yours.
+              </span>
+            </div>
           <div style={{ textAlign: "center", marginBottom: "8rem" }}>
              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Portfolio</span>
              <h1 className="display" style={{ fontSize: "5rem", marginTop: "1rem" }}>The Collections</h1>
@@ -74,7 +89,7 @@ const Portfolio = () => {
                   border: idx % 2 === 0 ? "1px solid var(--sky-blue-tint)" : "1px solid var(--magenta-tint)"
                 }}>
                   <img 
-                    src={portfolio.images[0]} 
+                    src={portfolio.cover_image_url || (portfolio.images && portfolio.images[0])} 
                     alt={portfolio.title} 
                     style={{ 
                       width: "100%", 
@@ -116,19 +131,7 @@ const Portfolio = () => {
             ))}
           </div>
           
-          <div style={{ 
-            marginTop: "10rem", 
-            textAlign: "center",
-            padding: "8rem 2rem",
-            backgroundColor: "var(--magenta-tint)",
-            borderRadius: "2px"
-          }}>
-            <h2 className="display" style={{ fontSize: "4rem", marginBottom: "2.5rem", color: "var(--dark)" }}>Ready to be photographed?</h2>
-            <div style={{ display: "flex", gap: "2rem", justifyContent: "center", flexWrap: "wrap" }}>
-               <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--magenta)" }}>Book your session</Link>
-               <Link to="/pricing" className="btn btn-outline" style={{ borderColor: "var(--dark)" }}>View Investment</Link>
-            </div>
-          </div>
+          {/* ...call-to-action section removed for minimalism... */}
         </div>
       </section>
     </Layout>

@@ -15,7 +15,7 @@ export default {
     extend: {
       fontFamily: {
         display: ["Cormorant Garamond", "serif"],
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["Open Sans", "Arial", "Helvetica", "sans-serif"],
       },
       colors: {
         blush: "hsl(var(--blush))",

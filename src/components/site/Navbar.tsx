@@ -40,7 +40,7 @@ const Navbar = () => {
         backdropFilter: solid ? "blur(16px)" : "none",
         borderBottom: solid ? "2px solid var(--sky-blue)" : "none",
         boxShadow: solid ? "0 4px 24px rgba(110,193,228,0.12)" : "none",
-        padding: scrolled ? "0.75rem 0" : "1.5rem 0",
+        padding: scrolled ? "0.3rem 0" : "0.7rem 0",
       }}
     >
       <div className="container nav-container">

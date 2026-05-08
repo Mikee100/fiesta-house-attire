@@ -214,11 +214,7 @@ const Blog = () => {
                   <p className="text-slate-500 text-sm mb-6 max-w-md leading-relaxed">
                     We believe every pregnancy is a masterpiece waiting to be captured. Our blog is a curated space for inspiration, styling tips, and the stories behind our most iconic sessions in Nairobi.
                   </p>
-                  <Link to="/contact">
-                    <Button className="rounded-full bg-[var(--magenta)] hover:bg-[#8B3A78] text-white border-none px-8 py-6 h-auto text-xs uppercase tracking-widest font-bold">
-                      Book Your Session
-                    </Button>
-                  </Link>
+                  {/* Book Your Session button removed for minimalism */}
                 </div>
               </div>
 

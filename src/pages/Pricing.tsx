@@ -118,9 +118,9 @@ const Pricing = () => {
       {/* Hero Section */}
       <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "8rem" }} className="fade-in">
+          <div style={{ textAlign: "center", marginBottom: "4rem" }} className="fade-in">
             <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Your Investment</span>
-            <h1 className="display" style={{ fontSize: "clamp(3.5rem, 8vw, 5.5rem)", marginTop: "1.2rem", marginBottom: "1.5rem" }}>Packages & Rates</h1>
+            <h1 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", marginTop: "0.8rem", marginBottom: "1rem" }}>Packages & Rates</h1>
             <div style={{ width: "120px", height: "4px", backgroundColor: "var(--sky-blue)", margin: "0 auto 2rem" }}></div>
             <p style={{ maxWidth: "700px", margin: "0 auto", fontSize: "1.1rem", color: "var(--muted-foreground)" }}>
               Choose a package that resonates with your vision. Every session is a luxury experience tailored to celebrate your motherhood.
@@ -130,18 +130,18 @@ const Pricing = () => {
           {/* Pricing Grid */}
           <div style={{ 
             display: "grid", 
-            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", 
-            gap: "3rem" 
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
+            gap: "1.5rem" 
           }}>
             {packages.map((pkg, i) => (
               <div 
                 key={i} 
                 style={{ 
-                  padding: "4rem 2.5rem", 
+                  padding: "2rem 1.2rem", 
                   backgroundColor: pkg.popular ? "white" : "var(--bg)", 
-                  borderRadius: "24px",
+                  borderRadius: "16px",
                   border: pkg.popular ? `2px solid ${pkg.color}` : "1px solid rgba(0,0,0,0.05)",
-                  boxShadow: pkg.popular ? "0 30px 60px rgba(0,0,0,0.1)" : "none",
+                  boxShadow: pkg.popular ? "0 16px 32px rgba(0,0,0,0.08)" : "none",
                   display: "flex",
                   flexDirection: "column",
                   transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -171,13 +171,13 @@ const Pricing = () => {
                   </div>
                 )}
                 
-                <div style={{ marginBottom: "2.5rem" }}>
-                  <h3 className="display" style={{ fontSize: "2.8rem", marginBottom: "1rem", color: "var(--dark)" }}>{pkg.name}</h3>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginBottom: "1.5rem" }}>
-                    <span style={{ fontSize: "1.2rem", fontWeight: "600", color: pkg.color }}>Ksh</span>
-                    <span style={{ fontSize: "3rem", fontWeight: "300", color: "var(--dark)" }}>{pkg.price}</span>
+                <div style={{ marginBottom: "1.2rem" }}>
+                  <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.6rem", color: "var(--dark)" }}>{pkg.name}</h3>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "1rem" }}>
+                    <span style={{ fontSize: "1rem", fontWeight: "600", color: pkg.color }}>Ksh</span>
+                    <span style={{ fontSize: "2.2rem", fontWeight: "300", color: "var(--dark)" }}>{pkg.price}</span>
                   </div>
-                  <p style={{ fontSize: "0.95rem", color: "var(--muted-foreground)", lineHeight: "1.6" }}>{pkg.description}</p>
+                  <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", lineHeight: "1.5" }}>{pkg.description}</p>
                 </div>
 
                 <div style={{ flexGrow: 1, marginBottom: "3rem" }}>

@@ -30,7 +30,7 @@ const Contact = () => {
             className="display"
             style={{ fontSize: "clamp(3rem, 7vw, 5rem)", color: "var(--dark)", marginBottom: "0.5rem" }}
           >
-            Book Your Session
+            {/* Book Your Session heading removed for minimalism */}
           </h1>
           <div style={{ width: "80px", height: "4px", background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))", borderRadius: "2px", marginTop: "1.5rem" }} />
         </div>

@@ -229,45 +229,45 @@ const Index = () => {
                 link: "/gallery/2a2ab935-7752-4c1d-99a3-52c9046ef873"
               },
               {
-              id: "b8b100e9-81ce-4778-bf57-0adee0b46fc0",
-            title: "Our Maternity Gowns",
-            subtitle: "Couture Atelier",
-            desc: "Enhance your maternity photoshoot with our collection of luxurious, hand-crafted designer gowns.",
-            fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886824525_IMG_5360-371x347.jpg",
-            link: "/maternity-gowns"
+                id: "b8b100e9-81ce-4778-bf57-0adee0b46fc0",
+                title: "Our Maternity Gowns",
+                subtitle: "Couture Atelier",
+                desc: "Enhance your maternity photoshoot with our collection of luxurious, hand-crafted designer gowns.",
+                fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886824525_IMG_5360-371x347.jpg",
+                link: "/maternity-gowns"
               },
-            {
-              id: "1aea11b8-fd79-4602-9c44-af400754ebec",
-            title: "Suspending Concept",
-            subtitle: "Cinematic Art",
-            desc: "Elevate your maternity story with Fiesta House’s suspending concept—where gravity meets grace.",
-            fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg",
-            link: "/gallery/1aea11b8-fd79-4602-9c44-af400754ebec"
+              {
+                id: "1aea11b8-fd79-4602-9c44-af400754ebec",
+                title: "Suspending Concept",
+                subtitle: "Cinematic Art",
+                desc: "Elevate your maternity story with Fiesta House’s suspending concept—where gravity meets grace.",
+                fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg",
+                link: "/gallery/1aea11b8-fd79-4602-9c44-af400754ebec"
               }
             ].map((concept, i) => {
               const folder = folders.find(f => f.id === concept.id);
-            const displayImg = folder?.cover_image_url || concept.fallbackImg;
+              const displayImg = folder?.cover_image_url || concept.fallbackImg;
 
-            return (
-            <div key={i} className="group cursor-pointer">
-              <Link to={concept.link}>
-                <div className="overflow-hidden aspect-[4/5] mb-8 relative">
-                  <img
-                    src={displayImg}
-                    alt={concept.title}
-                    className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
+              return (
+                <div key={i} className="group cursor-pointer">
+                  <Link to={concept.link}>
+                    <div className="overflow-hidden aspect-[4/5] mb-8 relative">
+                      <img
+                        src={displayImg}
+                        alt={concept.title}
+                        className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
+                    </div>
+                    <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.15em", fontSize: "0.8rem", fontWeight: "600" }}>{concept.subtitle}</span>
+                    <h3 className="display" style={{ fontSize: "2.4rem", margin: "0.5rem 0 1rem" }}>{concept.title}</h3>
+                    <p style={{ opacity: 0.6, lineHeight: "1.6", marginBottom: "1.5rem" }}>{concept.desc}</p>
+                    <span className="inline-block" style={{ borderBottom: "2px solid var(--sky-blue)", paddingBottom: "2px", fontSize: "0.9rem", fontWeight: "600", color: "var(--sky-blue)" }}>
+                      Explore Collection →
+                    </span>
+                  </Link>
                 </div>
-                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.15em", fontSize: "0.8rem", fontWeight: "600" }}>{concept.subtitle}</span>
-                <h3 className="display" style={{ fontSize: "2.4rem", margin: "0.5rem 0 1rem" }}>{concept.title}</h3>
-                <p style={{ opacity: 0.6, lineHeight: "1.6", marginBottom: "1.5rem" }}>{concept.desc}</p>
-                <span className="inline-block" style={{ borderBottom: "2px solid var(--sky-blue)", paddingBottom: "2px", fontSize: "0.9rem", fontWeight: "600", color: "var(--sky-blue)" }}>
-                  Explore Collection →
-                </span>
-              </Link>
-            </div>
-            );
+              );
             })}
           </div>
         </div>
@@ -300,7 +300,7 @@ const Index = () => {
         className="relative min-h-screen flex items-center overflow-hidden"
         style={{
           backgroundAttachment: "fixed",
-          backgroundImage: "url('https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg')",
+          backgroundImage: "url('https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg')",
           backgroundPosition: "center",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat"
@@ -357,12 +357,12 @@ const Index = () => {
 
           <div className="grid grid-3" style={{ gap: "5rem 3rem" }}>
             {[
-              { name: "The Master Staircase", detail: "Regal architecture for sweeping silhouettes.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887599212_IMG_9057-768x1152.jpg" },
+              { name: "The Master Staircase", detail: "Regal architecture for sweeping silhouettes.", img: "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMG_6419-scaled.jpg" },
               { name: "Flower Gardens", detail: "Immersive floral arrangements in full bloom.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg" },
               { name: "The Minimalist Loft", detail: "Shadow and light editorial storytelling.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg" },
               { name: "Elegant Swings", detail: "Capture the lightness of being.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887596251_IMG_0053-1365x2048.jpg" },
               { name: "Cinematic Boat", detail: "Serene aquatic poetic reflection.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg" },
-              { name: "The Grand Chandelier", detail: "High-glamour lighting and reflections.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598071_IMGL1316-460x460.jpg" }
+              { name: "The Grand Chandelier", detail: "High-glamour lighting and reflections.", img: "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMG_1293-1-scaled.jpg" }
             ].map((set, i) => (
               <div key={i} className="group cursor-default">
                 <div className="overflow-hidden aspect-[4/5] mb-8 relative rounded-[2px] shadow-sm group-hover:shadow-xl transition-all duration-700">
@@ -432,7 +432,8 @@ const Index = () => {
                   </span>
                 ))}
               </div>
-              <Link to="/experience" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>The Collection</Link>
+              <Link to="/maternity-gowns
+              " className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>The Collection</Link>
             </div>
           </div>
         </div>

@@ -1,12 +1,4 @@
-.navbar {
-  padding: var(--spacing-md) 0;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 100;
-  background: transparent;
-}
+
 
 .navbar-container {
   display: flex;
@@ -14,7 +6,6 @@
   align-items: center;
 }
 
-.navbar-logo {
   font-family: var(--font-display);
   font-size: 1.5rem;
   letter-spacing: 0.1em;
@@ -28,9 +19,6 @@
   align-items: center;
 }
 
-.navbar-links li a {
-  font-family: var(--font-body);
-  font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--color-text);
@@ -57,6 +45,6 @@
   }
   
   .navbar-links li a {
-    font-size: 0.75rem;
+    /* font-size removed to use global */
   }
 }

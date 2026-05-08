@@ -128,19 +128,7 @@ const PortfolioCategory = () => {
             ))}
           </div>
 
-          <div style={{ 
-            marginTop: "10rem", 
-            textAlign: "center",
-            padding: "8rem 2rem",
-            backgroundColor: "var(--magenta-tint)",
-            borderRadius: "2px"
-          }}>
-            <h2 className="display" style={{ fontSize: "4rem", marginBottom: "2.5rem", color: "var(--dark)" }}>Love these portraits?</h2>
-            <div style={{ display: "flex", gap: "2rem", justifyContent: "center", flexWrap: "wrap" }}>
-               <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--magenta)" }}>Book your session</Link>
-               <Link to="/pricing" className="btn btn-outline" style={{ borderColor: "var(--dark)" }}>View Investment</Link>
-            </div>
-          </div>
+          {/* ...call-to-action section removed for minimalism... */}
         </div>
       </section>
     </Layout>

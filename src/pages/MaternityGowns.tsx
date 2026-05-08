@@ -123,18 +123,7 @@ const MaternityGowns = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="section-padding" style={{ backgroundColor: "white", textAlign: "center" }}>
-        <div className="container">
-           <div style={{ maxWidth: "800px", margin: "0 auto", padding: "10rem 2rem", backgroundColor: "var(--magenta-tint)", borderRadius: "2px" }}>
-              <h2 className="display" style={{ fontSize: "4rem", marginBottom: "2.5rem" }}>Ready to wear the art?</h2>
-              <div style={{ display: "flex", gap: "2rem", justifyContent: "center", flexWrap: "wrap" }}>
-                 <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--magenta)" }}>Book your session</Link>
-                 <Link to="/experience" className="btn btn-outline">The Experience</Link>
-              </div>
-           </div>
-        </div>
-      </section>
+      {/* ...call-to-action section removed for minimalism... */}
     </Layout>
   );
 };
