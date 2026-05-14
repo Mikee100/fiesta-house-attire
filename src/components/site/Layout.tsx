@@ -22,7 +22,56 @@ const Layout: React.FC<LayoutProps> = ({ children, title, description, keywords,
       <Navbar />
       <main>{children}</main>
       <Footer />
-      
+
+      {/* Fixed Social Media Bar */}
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          right: 0,
+          transform: "translateY(-50%)",
+          zIndex: 1001,
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          padding: "0.5rem 0.3rem",
+          background: "rgba(255,255,255,0.85)",
+          borderRadius: "12px 0 0 12px",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
+          alignItems: "center"
+        }}
+        aria-label="Social Media Links"
+      >
+        {/* Instagram */}
+        <a href="https://instagram.com/fiestahousematernity" target="_blank" rel="noreferrer" aria-label="Instagram" style={{ color: '#B84FA0', fontSize: 0 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B84FA0" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.5" y2="6.5"/></svg>
+        </a>
+        {/* Facebook */}
+        <a href="https://facebook.com/fiestahousematernity" target="_blank" rel="noreferrer" aria-label="Facebook" style={{ color: '#4267B2', fontSize: 0 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4267B2" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 8.5h-2a1 1 0 0 0-1 1v2h3l-.5 3h-2.5v7h-3v-7H7v-3h2v-2a4 4 0 0 1 4-4h3v3z"/></svg>
+        </a>
+        {/* YouTube */}
+        <a href="https://youtube.com/@fiestahousematernity" target="_blank" rel="noreferrer" aria-label="YouTube" style={{ color: '#FF0000', fontSize: 0 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF0000" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><polygon points="10 15 15 12 10 9 10 15"/></svg>
+        </a>
+        {/* Pinterest */}
+        <a href="https://pinterest.com/fiestahousematernity" target="_blank" rel="noreferrer" aria-label="Pinterest" style={{ color: '#E60023', fontSize: 0 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="12" fill="#E60023"/>
+            <path d="M12 6.5c-3.1 0-5.1 2.2-5.1 4.6 0 1.1.4 2.1 1.3 2.5.1.1.2 0 .2-.1 0-.1.1-.4.1-.5 0-.2 0-.3-.1-.5-.2-.6-.1-1.1.3-1.5.4-.4 1.1-.6 1.7-.6 1.3 0 2.1.7 2.1 1.8 0 1.1-.5 2-1.2 2-.4 0-.7-.3-.6-.7.1-.4.3-.8.3-1.2 0-.3-.2-.6-.6-.6-.5 0-.8.5-.8 1.1 0 .4.1.7.1.7s-.3 1.2-.3 1.5c-.1.4-.1.8 0 1.1.1.2.3.2.4.2.2 0 .3-.1.4-.3.1-.3.4-1.1.4-1.4.1-.3.2-.4.4-.4.2 0 .3.2.3.4 0 .3-.2.7-.2 1 0 .3.2.5.5.5.6 0 1.1-.7 1.1-1.7 0-1.4-1.1-2.3-2.7-2.3z" fill="#fff"/>
+          </svg>
+        </a>
+        {/* TikTok */}
+        <a href="https://www.tiktok.com/@fiestahousematernity" target="_blank" rel="noreferrer" aria-label="TikTok" style={{ color: '#000', fontSize: 0 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="12" fill="#000"/>
+            <path d="M16.5 10.5c-1.1 0-2-.9-2-2V7h-1.2v7.1c0 .7-.6 1.3-1.3 1.3s-1.3-.6-1.3-1.3.6-1.3 1.3-1.3c.1 0 .2 0 .3 0v-1.2c-.1 0-.2 0-.3 0-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5c1.4 0 2.5-1.1 2.5-2.5V12c.6.5 1.3.8 2 .8v-1.3z" fill="#fff"/>
+            <path d="M16.5 7c0 1.1.9 2 2 2V8c-.6 0-1-.4-1-1h-1z" fill="#25F4EE"/>
+            <path d="M17.5 8c0 1.1.9 2 2 2V9c-.6 0-1-.4-1-1h-1z" fill="#FE2C55"/>
+          </svg>
+        </a>
+      </div>
+
       {/* Floating WhatsApp Button */}
       <a 
         href="https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20enquire%20about%20a%20maternity%20photoshoot%20session." 
