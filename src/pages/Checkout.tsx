@@ -66,20 +66,20 @@ const Checkout = () => {
       title="Checkout | Fiesta House Attire"
       description="Securely complete your purchase of luxury photography packages."
     >
-      <section className="section-padding" style={{ paddingTop: "12rem" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(8rem, 15vw, 12rem)" }}>
         <div className="container">
-          <Link to="/cart" style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--dark)", fontWeight: "600", marginBottom: "3rem" }}>
+          <Link to="/cart" className="inline-flex items-center gap-2 text-[var(--dark)] font-bold mb-10 hover:gap-3 transition-all">
             <ArrowLeft size={18} /> Back to Cart
           </Link>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 450px", gap: "5rem" }} className="fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] gap-12 lg:gap-16 items-start fade-in">
             {/* Checkout Form */}
-            <div>
-              <h2 className="display" style={{ fontSize: "2.5rem", marginBottom: "2.5rem" }}>Customer Information</h2>
+            <div className="mobile-center">
+              <h2 className="display h1-mobile" style={{ fontSize: "3.5rem", marginBottom: "2.5rem" }}>Customer Information</h2>
               
-              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                  <label style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "700", color: "var(--muted-foreground)" }}>Full Name</label>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-[var(--muted-foreground)]">Full Name</label>
                   <input 
                     type="text" 
                     name="name"
@@ -87,19 +87,13 @@ const Checkout = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter your full name"
-                    style={{ 
-                      padding: "1.2rem", 
-                      border: "2px solid var(--border)", 
-                      borderRadius: "12px",
-                      fontSize: "1rem",
-                      outline: "none"
-                    }}
+                    className="w-full p-4 md:p-5 border-2 border-[var(--border)] rounded-[16px] text-lg outline-none focus:border-[var(--sky-blue)] transition-colors"
                   />
                 </div>
 
-                <div className="grid grid-2" style={{ gap: "2rem" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                    <label style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "700", color: "var(--muted-foreground)" }}>Email Address</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="flex flex-col gap-3">
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-[var(--muted-foreground)]">Email Address</label>
                     <input 
                       type="email" 
                       name="email"
@@ -107,17 +101,11 @@ const Checkout = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="you@example.com"
-                      style={{ 
-                        padding: "1.2rem", 
-                        border: "2px solid var(--border)", 
-                        borderRadius: "12px",
-                        fontSize: "1rem",
-                        outline: "none"
-                      }}
+                      className="w-full p-4 md:p-5 border-2 border-[var(--border)] rounded-[16px] text-lg outline-none focus:border-[var(--sky-blue)] transition-colors"
                     />
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                    <label style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "700", color: "var(--muted-foreground)" }}>Phone Number</label>
+                  <div className="flex flex-col gap-3">
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-[var(--muted-foreground)]">Phone Number</label>
                     <input 
                       type="tel" 
                       name="phone"
@@ -125,31 +113,18 @@ const Checkout = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="07XX XXX XXX"
-                      style={{ 
-                        padding: "1.2rem", 
-                        border: "2px solid var(--border)", 
-                        borderRadius: "12px",
-                        fontSize: "1rem",
-                        outline: "none"
-                      }}
+                      className="w-full p-4 md:p-5 border-2 border-[var(--border)] rounded-[16px] text-lg outline-none focus:border-[var(--sky-blue)] transition-colors"
                     />
                   </div>
                 </div>
 
-                <div style={{ 
-                  marginTop: "1rem", 
-                  padding: "2rem", 
-                  backgroundColor: "var(--bg)", 
-                  borderRadius: "20px",
-                  display: "flex",
-                  gap: "1.5rem"
-                }}>
-                  <div style={{ flexShrink: 0, color: "var(--magenta)" }}>
-                    <ShieldCheck size={28} />
+                <div className="mt-4 p-8 bg-[var(--bg)] rounded-[24px] flex flex-col md:flex-row gap-6">
+                  <div className="shrink-0 text-[var(--magenta)]">
+                    <ShieldCheck size={32} />
                   </div>
                   <div>
-                    <h4 style={{ fontWeight: "700", marginBottom: "0.4rem" }}>Payment Information</h4>
-                    <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", lineHeight: "1.5" }}>
+                    <h4 className="font-bold text-lg mb-2">Payment Information</h4>
+                    <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
                       To maintain a minimalistic and secure experience, we will send you M-Pesa payment instructions via email and phone immediately after you place your order.
                     </p>
                   </div>
@@ -158,22 +133,9 @@ const Checkout = () => {
                 <button 
                   type="submit" 
                   disabled={loading}
-                  className="btn" 
-                  style={{ 
-                    marginTop: "1rem",
-                    padding: "1.5rem", 
-                    backgroundColor: "var(--dark)", 
-                    color: "white", 
-                    borderRadius: "100px",
-                    fontWeight: "700",
-                    fontSize: "1.1rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "1rem",
-                    opacity: loading ? 0.7 : 1,
-                    cursor: loading ? "not-allowed" : "pointer"
-                  }}
+                  className={`btn mt-4 p-6 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all ${
+                    loading ? "bg-gray-400 cursor-not-allowed" : "bg-[var(--dark)] text-white hover:bg-[var(--magenta)] shadow-xl shadow-black/10"
+                  }`}
                 >
                   <CreditCard size={20} />
                   {loading ? "Processing..." : "Pay & Place Order"}
@@ -182,40 +144,34 @@ const Checkout = () => {
             </div>
 
             {/* Order Summary */}
-            <div style={{ position: "sticky", top: "120px", height: "fit-content" }}>
-              <div style={{ 
-                backgroundColor: "white", 
-                padding: "3rem", 
-                borderRadius: "32px",
-                border: "1px solid var(--border)",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.03)"
-              }}>
-                <h3 className="display" style={{ fontSize: "1.8rem", marginBottom: "2.5rem" }}>Summary</h3>
+            <div className="lg:sticky lg:top-32 h-fit">
+              <div className="bg-white p-8 md:p-12 rounded-[32px] border border-black/5 shadow-xl">
+                <h3 className="display text-3xl mb-10">Summary</h3>
                 
-                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", marginBottom: "2.5rem" }}>
+                <div className="flex flex-col gap-6 mb-10">
                   {cart.map((item) => (
-                    <div key={item.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem" }}>
-                      <div style={{ maxWidth: "70%" }}>
-                        <span style={{ fontWeight: "600" }}>{item.name}</span>
-                        <span style={{ marginLeft: "0.5rem", opacity: 0.5 }}>x{item.quantity}</span>
+                    <div key={item.id} className="flex justify-between items-center text-sm">
+                      <div className="max-w-[70%]">
+                        <span className="font-bold">{item.name}</span>
+                        <span className="ml-2 opacity-40">x{item.quantity}</span>
                       </div>
-                      <span style={{ fontWeight: "600" }}>Ksh {(item.price * item.quantity).toLocaleString()}</span>
+                      <span className="font-bold">Ksh {(item.price * item.quantity).toLocaleString()}</span>
                     </div>
                   ))}
                   
-                  <div style={{ height: "1px", backgroundColor: "var(--border)", margin: "0.5rem 0" }}></div>
+                  <div className="h-px bg-[var(--border)] my-2 opacity-50"></div>
                   
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.3rem", fontWeight: "700" }}>
+                  <div className="flex justify-between items-center text-xl font-bold">
                     <span>Total Amount</span>
-                    <span style={{ color: "var(--magenta)" }}>Ksh {cartTotal.toLocaleString()}</span>
+                    <span className="text-[var(--magenta)]">Ksh {cartTotal.toLocaleString()}</span>
                   </div>
                 </div>
 
-                <div style={{ fontSize: "0.85rem", color: "var(--muted-foreground)", lineHeight: "1.6" }}>
-                  <p style={{ marginBottom: "1rem" }}>
-                    <strong>Next Steps:</strong>
+                <div className="text-sm text-[var(--muted-foreground)] leading-relaxed bg-[var(--bg)] p-6 rounded-[20px]">
+                  <p className="font-bold mb-3 text-[var(--dark)]">
+                    Next Steps:
                   </p>
-                  <ul style={{ paddingLeft: "1.2rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <ul className="space-y-2 list-disc pl-4">
                     <li>Receive confirmation email</li>
                     <li>Follow payment instructions</li>
                     <li>Our team contacts you within 2 hours</li>

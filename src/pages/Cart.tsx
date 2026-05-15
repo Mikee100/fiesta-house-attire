@@ -12,17 +12,17 @@ const Cart = () => {
       title="Your Cart | Fiesta House Attire"
       description="Review your selected photography packages and gift vouchers."
     >
-      <section className="section-padding" style={{ paddingTop: "12rem", minHeight: "80vh" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(8rem, 15vw, 12rem)", minHeight: "80vh" }}>
         <div className="container">
-          <div style={{ marginBottom: "4rem" }} className="fade-in">
-            <h1 className="display" style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>Your Selection</h1>
-            <div style={{ width: "80px", height: "4px", backgroundColor: "var(--magenta)", marginBottom: "2rem" }}></div>
+          <div className="mb-12 fade-in mobile-center">
+            <h1 className="display h1-mobile" style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>Your Selection</h1>
+            <div className="brand-divider-magenta" style={{ margin: "1.5rem auto 1.5rem 0" }}></div>
           </div>
 
           {cart.length === 0 ? (
             <div style={{ 
               textAlign: "center", 
-              padding: "6rem 2rem", 
+              padding: "clamp(3rem, 10vw, 6rem) 1.5rem", 
               backgroundColor: "var(--bg)", 
               borderRadius: "32px",
               display: "flex",
@@ -43,60 +43,51 @@ const Cart = () => {
                 <ShoppingBag size={40} />
               </div>
               <div>
-                <h2 className="display" style={{ fontSize: "2rem", marginBottom: "1rem" }}>Your cart is empty</h2>
+                <h2 className="display h2-mobile" style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>Your cart is empty</h2>
                 <p style={{ color: "var(--muted-foreground)", marginBottom: "2rem" }}>It looks like you haven't added any packages to your cart yet.</p>
-                <Link to="/shop" className="btn-primary" style={{ borderRadius: "100px" }}>
+                <Link to="/shop" className="btn btn-primary" style={{ borderRadius: "100px" }}>
                   Browse Shop
                 </Link>
               </div>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: "4rem" }} className="fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 lg:gap-16 items-start fade-in">
               {/* Items List */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+              <div className="flex flex-col gap-6">
                 {cart.map((item) => (
                   <div 
                     key={item.id} 
-                    style={{ 
-                      display: "grid", 
-                      gridTemplateColumns: "1fr auto", 
-                      alignItems: "center", 
-                      padding: "2rem", 
-                      backgroundColor: "white", 
-                      borderRadius: "24px",
-                      border: "1px solid rgba(0,0,0,0.05)",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.02)"
-                    }}
+                    className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-center p-6 md:p-8 bg-white rounded-[24px] border border-black/5 shadow-sm"
                   >
-                    <div>
+                    <div className="mobile-center">
                       <h3 style={{ fontSize: "1.4rem", fontWeight: "600", marginBottom: "0.5rem" }}>{item.name}</h3>
                       <p style={{ color: "var(--muted-foreground)", fontSize: "0.95rem", maxWidth: "400px" }}>{item.description}</p>
                     </div>
                     
-                    <div style={{ display: "flex", alignItems: "center", gap: "3rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "1rem", backgroundColor: "var(--bg)", padding: "0.5rem 1rem", borderRadius: "100px" }}>
+                    <div className="flex flex-wrap items-center justify-between md:justify-end gap-6 md:gap-12">
+                      <div className="flex items-center gap-4 bg-[var(--bg)] px-4 py-2 rounded-full">
                         <button 
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          style={{ border: "none", background: "none", cursor: "pointer", display: "flex", color: "var(--dark)" }}
+                          className="p-1 hover:text-[var(--magenta)] transition-colors"
                         >
                           <Minus size={16} />
                         </button>
-                        <span style={{ fontWeight: "600", minWidth: "20px", textAlign: "center" }}>{item.quantity}</span>
+                        <span className="font-bold min-w-[24px] text-center">{item.quantity}</span>
                         <button 
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          style={{ border: "none", background: "none", cursor: "pointer", display: "flex", color: "var(--dark)" }}
+                          className="p-1 hover:text-[var(--magenta)] transition-colors"
                         >
                           <Plus size={16} />
                         </button>
                       </div>
                       
-                      <div style={{ minWidth: "120px", textAlign: "right" }}>
-                        <span style={{ fontSize: "1.2rem", fontWeight: "600" }}>Ksh {(item.price * item.quantity).toLocaleString()}</span>
+                      <div className="text-right">
+                        <span className="text-xl font-bold">Ksh {(item.price * item.quantity).toLocaleString()}</span>
                       </div>
                       
                       <button 
                         onClick={() => removeFromCart(item.id)}
-                        style={{ border: "none", background: "none", cursor: "pointer", color: "#ff4d4f", padding: "0.5rem" }}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
                         title="Remove item"
                       >
                         <Trash2 size={20} />
@@ -105,33 +96,27 @@ const Cart = () => {
                   </div>
                 ))}
                 
-                <Link to="/shop" style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--magenta)", fontWeight: "600", marginTop: "1rem" }}>
+                <Link to="/shop" className="flex items-center gap-2 text-[var(--magenta)] font-bold mt-4 hover:gap-3 transition-all">
                   <ArrowLeft size={18} /> Continue Shopping
                 </Link>
               </div>
 
               {/* Summary Side */}
-              <div style={{ position: "sticky", top: "120px", height: "fit-content" }}>
-                <div style={{ 
-                  backgroundColor: "var(--dark)", 
-                  color: "white", 
-                  padding: "3rem 2.5rem", 
-                  borderRadius: "32px",
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
-                }}>
-                  <h3 className="display" style={{ fontSize: "1.8rem", marginBottom: "2rem" }}>Order Summary</h3>
+              <div className="lg:sticky lg:top-32 h-fit">
+                <div className="bg-[var(--dark)] text-white p-8 md:p-12 rounded-[32px] shadow-xl">
+                  <h3 className="display text-3xl mb-8">Order Summary</h3>
                   
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem", marginBottom: "2.5rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.7 }}>
+                  <div className="flex flex-col gap-5 mb-10">
+                    <div className="flex justify-between opacity-70">
                       <span>Subtotal</span>
                       <span>Ksh {cartTotal.toLocaleString()}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.7 }}>
+                    <div className="flex justify-between opacity-70">
                       <span>Processing Fee</span>
                       <span>Ksh 0</span>
                     </div>
-                    <div style={{ height: "1px", backgroundColor: "rgba(255,255,255,0.1)", margin: "0.5rem 0" }}></div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.4rem", fontWeight: "600" }}>
+                    <div className="h-px bg-white/10 my-2"></div>
+                    <div className="flex justify-between text-2xl font-bold">
                       <span>Total</span>
                       <span>Ksh {cartTotal.toLocaleString()}</span>
                     </div>
@@ -139,24 +124,12 @@ const Cart = () => {
                   
                   <Link 
                     to="/checkout" 
-                    className="btn" 
-                    style={{ 
-                      width: "100%", 
-                      backgroundColor: "var(--sky-blue)", 
-                      color: "white", 
-                      borderRadius: "100px",
-                      padding: "1.2rem",
-                      fontWeight: "700",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "0.8rem"
-                    }}
+                    className="btn w-full bg-[var(--sky-blue)] text-white rounded-full py-5 font-bold flex items-center justify-center gap-3 hover:bg-[var(--magenta)] transition-all shadow-lg shadow-sky-blue/20"
                   >
                     Proceed to Checkout <ArrowRight size={20} />
                   </Link>
                   
-                  <p style={{ marginTop: "2rem", fontSize: "0.8rem", textAlign: "center", opacity: 0.5, lineHeight: "1.5" }}>
+                  <p className="mt-8 text-xs text-center opacity-40 leading-relaxed">
                     Taxes and discounts will be calculated at checkout. By proceeding, you agree to our terms of service.
                   </p>
                 </div>

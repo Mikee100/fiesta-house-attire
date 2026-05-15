@@ -52,26 +52,17 @@ const Shop = () => {
       {/* Hero Section */}
       <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "4rem" }} className="fade-in">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-8 mb-16 fade-in">
             <div style={{ maxWidth: "700px" }}>
               <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Gift of Timelessness</span>
-              <h1 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", marginTop: "0.8rem", marginBottom: "1rem" }}>Packages & Vouchers</h1>
+              <h1 className="display h1-mobile" style={{ marginTop: "0.8rem", marginBottom: "1rem" }}>Packages & Vouchers</h1>
               <div style={{ width: "120px", height: "4px", backgroundColor: "var(--sky-blue)", marginBottom: "2rem" }}></div>
               <p style={{ fontSize: "1.1rem", color: "var(--muted-foreground)" }}>
                 Select a photography package or gift voucher for yourself or a loved one. Each purchase is a commitment to capturing life's most precious moments with elegance and grace.
               </p>
             </div>
             
-            <Link to="/cart" style={{ 
-              position: "relative", 
-              padding: "1rem 2rem", 
-              backgroundColor: "var(--bg)", 
-              borderRadius: "100px", 
-              display: "flex", 
-              alignItems: "center", 
-              gap: "0.8rem",
-              border: "1px solid var(--border)"
-            }}>
+            <Link to="/cart" className="relative self-start md:self-auto px-8 py-4 bg-[var(--bg)] rounded-full flex items-center gap-3 border border-[var(--border)] transition-transform hover:scale-105">
               <ShoppingCart size={20} />
               <span style={{ fontWeight: "600" }}>Cart</span>
               {cartCount > 0 && (
@@ -97,17 +88,13 @@ const Shop = () => {
           </div>
 
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem" }}>
-               {[1, 2, 3, 4].map(i => (
-                 <div key={i} style={{ height: "400px", backgroundColor: "var(--bg)", borderRadius: "20px", animate: "pulse" }}></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+               {[1, 2, 3].map(i => (
+                 <div key={i} className="h-[400px] bg-[var(--bg)] rounded-[24px] animate-pulse"></div>
                ))}
             </div>
           ) : (
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", 
-              gap: "2rem" 
-            }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {Array.isArray(packages) && packages.map((pkg) => (
                 <div 
                   key={pkg.id} 
@@ -219,19 +206,14 @@ const Shop = () => {
       {/* Gift Voucher Info Section */}
       <section className="section-padding" style={{ backgroundColor: "var(--bg)" }}>
         <div className="container">
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
-            gap: "4rem",
-            alignItems: "center"
-          }}>
-            <div>
-              <h2 className="display" style={{ fontSize: "3rem", marginBottom: "2rem" }}>A Gift to Remember</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="mobile-center">
+              <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", marginBottom: "2rem" }}>A Gift to Remember</h2>
               <p style={{ fontSize: "1.1rem", lineHeight: "1.8", color: "var(--muted-foreground)", marginBottom: "2rem" }}>
                 Our vouchers are more than just a piece of paper. They represent a promise of beauty, a moment of reflection, and a celebration of life's most precious transformations.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                <div style={{ display: "flex", gap: "1.5rem" }}>
+                <div style={{ display: "flex", gap: "1.5rem", textAlign: "left" }}>
                   <div style={{ flexShrink: 0, width: "40px", height: "40px", backgroundColor: "white", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--magenta)" }}>
                     <Check size={20} />
                   </div>
@@ -240,7 +222,7 @@ const Shop = () => {
                     <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)" }}>Instant voucher delivery to your email after purchase verification.</p>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: "1.5rem" }}>
+                <div style={{ display: "flex", gap: "1.5rem", textAlign: "left" }}>
                   <div style={{ flexShrink: 0, width: "40px", height: "40px", backgroundColor: "white", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--sky-blue)" }}>
                     <Check size={20} />
                   </div>
@@ -254,18 +236,18 @@ const Shop = () => {
             
             <div style={{ 
               backgroundColor: "white", 
-              padding: "4rem 3rem", 
+              padding: "clamp(2rem, 5vw, 4rem) clamp(1.5rem, 5vw, 3rem)", 
               borderRadius: "30px", 
               boxShadow: "0 20px 40px rgba(0,0,0,0.05)",
               textAlign: "center"
             }}>
-              <h3 className="display" style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>Custom Vouchers</h3>
+              <h3 className="display h2-mobile" style={{ fontSize: "2.5rem", marginBottom: "1.5rem" }}>Custom Vouchers</h3>
               <p style={{ marginBottom: "2.5rem", color: "var(--muted-foreground)" }}>
                 Need a specific value or a combination of services? We can create a personalized voucher just for you.
               </p>
               <a 
                 href="https://wa.me/254720111928?text=Hi%20Fiesta%20House,%20I'd%20like%20to%20request%20a%20custom%20gift%20voucher." 
-                className="btn-outline" 
+                className="btn btn-outline" 
                 style={{ padding: "1rem 2.5rem", borderRadius: "100px", display: "inline-flex" }}
               >
                 Chat via WhatsApp
