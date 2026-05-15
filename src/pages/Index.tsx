@@ -488,10 +488,10 @@ const Index = () => {
 
              <div className="grid grid-4" style={{ gap: "3rem" }}>
                {[
-                 { step: "01", title: "Consultation", desc: "We discuss your vision, preferred sets, and gown selections to curate your unique session." },
-                 { step: "02", title: "The Transformation", desc: "Professional makeup and styling in our private atelier to make you feel like the queen you are." },
-                 { step: "03", title: "The Session", desc: "Guided posing in our iconic sets with an all-women team focused on your comfort and beauty." },
-                 { step: "04", title: "The Reveal", desc: "Receive your curated gallery of high-end, cinematically retouched heirlooms." }
+                 { step: "01", title: "Book your Session", desc: "We discuss your vision, preferred sets, and gown selections to curate your unique session." },
+                 { step: "02", title: "Arrive & get glam", desc: "Professional makeup and styling in our private atelier to make you feel like the queen you are." },
+                 { step: "03", title: "Strike your pose", desc: "Guided posing in our iconic sets with an all-women team focused on your comfort and beauty." },
+                 { step: "04", title: "Receive your gallery", desc: "Receive your curated gallery of high-end, cinematically retouched heirlooms." }
                ].map((s, i) => (
                  <div key={i} style={{ position: "relative" }}>
                    <div className="display" style={{ fontSize: "5rem", color: i % 2 === 0 ? "var(--sky-blue)" : "var(--magenta)", opacity: 0.2, position: "absolute", top: "-2rem", left: "-1rem", zIndex: 0 }}>{s.step}</div>
@@ -529,7 +529,7 @@ const Index = () => {
                      <img
                        src={asset.url}
                        alt="Studio Masterpiece"
-                       className="w-full h-auto object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-700"
+                       className="w-full h-auto object-cover group-hover:grayscale-0 transition-all duration-700"
                      />
                      <div className="absolute inset-0 bg-magenta/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                    </div>

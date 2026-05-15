@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingCart } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -9,12 +10,14 @@ const navLinks = [
   { to: "/experience", label: "Experience" },
   { to: "/pricing", label: "Pricing" },
   { to: "/blog", label: "Blog" },
+  { to: "/shop", label: "Shop" },
 ];
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const { cartCount } = useCart();
   const isHome = location.pathname === "/";
 
   useEffect(() => {
@@ -113,7 +116,35 @@ const Navbar = () => {
               </Link>
             );
           })}
-
+          
+          <Link to="/cart" style={{ 
+            position: "relative", 
+            color: solid ? "var(--dark)" : "white",
+            display: "flex",
+            alignItems: "center"
+          }}>
+            <ShoppingCart size={22} />
+            {cartCount > 0 && (
+              <span style={{ 
+                position: "absolute", 
+                top: "-8px", 
+                right: "-8px", 
+                backgroundColor: "var(--magenta)", 
+                color: "white", 
+                fontSize: "10px", 
+                fontWeight: "700",
+                width: "18px", 
+                height: "18px", 
+                borderRadius: "50%", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+              }}>
+                {cartCount}
+              </span>
+            )}
+          </Link>
         </div>
 
         {/* Mobile Hamburger */}
@@ -168,6 +199,22 @@ const Navbar = () => {
               </Link>
             );
           })}
+          <Link
+            to="/cart"
+            style={{
+              fontSize: "0.9rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.15em",
+              color: "var(--dark)",
+              fontWeight: "400",
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.8rem"
+            }}
+          >
+            <ShoppingCart size={18} /> Cart ({cartCount})
+          </Link>
           <Link
             to="/contact"
             style={{
