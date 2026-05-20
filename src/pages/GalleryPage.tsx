@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import MasonryImage from "@/components/site/MasonryImage";
 
 const GalleryPage = () => {
   const { folderId } = useParams<{ folderId: string }>();
@@ -71,21 +72,15 @@ const GalleryPage = () => {
               images.map((img, i) => (
                 <div 
                   key={img.id} 
-                  className="masonry-item fade-in"
-                  style={{ animationDelay: `${i * 0.1}s` }}
+                  className="masonry-item fade-in group"
+                  style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   <div style={{ overflow: "hidden", borderRadius: "2px" }}>
-                    <img 
+                    <MasonryImage 
                       src={img.url} 
                       alt={`Gallery item ${i + 1}`} 
-                      style={{ 
-                        width: "100%", 
-                        height: "auto", 
-                        display: "block",
-                        transition: "transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1)" 
-                      }}
-                      onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                      onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                      className="group-hover:scale-105"
+                      priority={i < 3}
                     />
                   </div>
                 </div>

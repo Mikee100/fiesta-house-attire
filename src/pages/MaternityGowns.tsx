@@ -4,6 +4,7 @@ import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
+import MasonryImage from "@/components/site/MasonryImage";
 
 const MaternityGowns = () => {
   const [images, setImages] = useState<any[]>([]);
@@ -53,19 +54,14 @@ const MaternityGowns = () => {
                 <div 
                   key={img.id} 
                   className="masonry-item fade-in group relative"
-                  style={{ animationDelay: `${i * 0.1}s` }}
+                  style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   <div style={{ overflow: "hidden", borderRadius: "2px" }}>
-                    <img 
+                    <MasonryImage 
                       src={img.url} 
                       alt={`Maternity Gown ${i + 1}`} 
-                      style={{ 
-                        width: "100%", 
-                        height: "auto", 
-                        display: "block",
-                        transition: "transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1)" 
-                      }}
                       className="group-hover:scale-105"
+                      priority={i < 3}
                     />
                   </div>
                 </div>

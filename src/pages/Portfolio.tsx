@@ -4,6 +4,7 @@ import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
 import { PortfolioCardSkeleton } from "@/components/ui/SkeletonCards";
+import MasonryImage from "@/components/site/MasonryImage";
 
 const Portfolio = () => {
   const [portfolios, setPortfolios] = useState<any[]>([]);
@@ -92,11 +93,16 @@ const Portfolio = () => {
                     src={portfolio.cover_image_url || (portfolio.images && portfolio.images[0])} 
                     alt={portfolio.title} 
                     style={{ 
+                      position: "absolute",
+                      inset: 0,
                       width: "100%", 
                       height: "100%", 
-                      objectFit: "cover", 
-                      transition: "transform 1.5s cubic-bezier(0.165, 0.84, 0.44, 1)" 
+                      objectFit: "cover",
+                      opacity: 0,
+                      transition: "opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.165, 0.84, 0.44, 1)"
                     }}
+                    loading={idx < 3 ? "eager" : "lazy"}
+                    onLoad={(e) => { e.currentTarget.style.opacity = "1"; }}
                     onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
                     onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
                   />

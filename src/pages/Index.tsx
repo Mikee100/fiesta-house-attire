@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
 import BeforeAfterSlider from "@/components/site/BeforeAfterSlider";
+import MasonryImage from "@/components/site/MasonryImage";
 import InstagramFeed from "@/components/site/InstagramFeed";
 import { Mail, MapPin, Clock, Phone, Instagram, Facebook } from "lucide-react";
 
@@ -524,12 +525,13 @@ const Index = () => {
                   <Skeleton key={i} className="masonry-item w-full h-64 mb-8" />
                 ))
               ) : (
-                assets.map((asset) => (
+                assets.map((asset, i) => (
                   <div key={asset.id} className="masonry-item group relative overflow-hidden">
-                    <img
+                    <MasonryImage
                       src={asset.url}
                       alt="Studio Masterpiece"
                       className="w-full h-auto object-cover group-hover:grayscale-0 transition-all duration-700"
+                      priority={i < 3}
                     />
                     <div className="absolute inset-0 bg-magenta/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                   </div>
