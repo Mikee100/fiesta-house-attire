@@ -334,7 +334,6 @@ const Index = () => {
             </div>
           </div>
         </section>
-
         {/* Immersive Studio Experience - Parallax Section */}
         <section
           className="relative min-h-screen flex items-center overflow-hidden"
