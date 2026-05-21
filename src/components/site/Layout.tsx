@@ -44,15 +44,15 @@ const Layout: React.FC<LayoutProps> = ({ children, title, description, keywords,
           z-index: 1001;
           display: flex;
           flex-direction: column;
-          gap: 0.85rem;
-          padding: 0.8rem 0.5rem;
+          gap: 0.5rem;
+          padding: 0.55rem 0.35rem;
           background: rgba(255, 255, 255, 0.65);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border-radius: 20px 0 0 20px;
+          border-radius: 14px 0 0 14px;
           border: 1px solid rgba(255, 255, 255, 0.4);
           border-right: none;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
           align-items: center;
           animation: slideInSocial 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
@@ -61,17 +61,33 @@ const Layout: React.FC<LayoutProps> = ({ children, title, description, keywords,
           display: flex !important;
           align-items: center;
           justify-content: center;
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
           color: #ffffff !important;
           transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
           text-decoration: none;
         }
         
         .social-btn:hover {
-          transform: scale(1.18) translateX(-4px);
+          transform: scale(1.15) translateX(-3px);
+        }
+        
+        @media (max-width: 768px) {
+          .social-fixed-bar {
+            gap: 0.4rem;
+            padding: 0.45rem 0.3rem;
+            border-radius: 10px 0 0 10px;
+          }
+          .social-btn {
+            width: 26px;
+            height: 26px;
+          }
+          .social-btn svg {
+            width: 13px !important;
+            height: 13px !important;
+          }
         }
         
         .social-instagram {
