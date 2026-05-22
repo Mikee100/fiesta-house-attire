@@ -214,6 +214,8 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        
         {/* Maternity Photoshoot Description Section */}
         <section className="section-padding" style={{ background: "#f8f9fb" }}>
           <div className="container" style={{ maxWidth: 900, margin: "0 auto" }}>
