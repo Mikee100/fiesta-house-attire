@@ -4,6 +4,7 @@ import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, CreditCard, ShieldCheck } from "lucide-react";
+import * as api from "@/lib/api";
 
 const Checkout = () => {
   const { cart, cartTotal, clearCart } = useCart();
@@ -29,19 +30,13 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/shop/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name: formData.name,
-          customer_email: formData.email,
-          customer_phone: formData.phone,
-          items: cart,
-          total_amount: cartTotal
-        })
+      const data = await api.createShopOrder({
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        items: cart,
+        total_amount: cartTotal
       });
-
-      const data = await response.json();
 
       if (data.success) {
         toast.success("Order placed successfully!", {

@@ -4,6 +4,7 @@ import { useCart } from "@/context/CartContext";
 import { ShoppingCart, Check, Clock, Image, Shirt, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import * as api from "@/lib/api";
 
 const Shop = () => {
   const [packages, setPackages] = useState<any[]>([]);
@@ -13,8 +14,7 @@ const Shop = () => {
   useEffect(() => {
     const fetchPackages = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/shop/packages');
-        const data = await response.json();
+        const data = await api.fetchShopPackages();
         if (Array.isArray(data)) {
           setPackages(data);
         } else {

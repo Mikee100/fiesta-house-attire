@@ -229,3 +229,25 @@ export const deleteBlogPost = async (id: string) => {
   const res = await fetch(`${API_URL}/blog-posts/${id}`, { method: 'DELETE' });
   return await res.json();
 };
+
+// --- Shop ---
+
+export const fetchShopPackages = async () => {
+  const res = await fetch(`${API_URL}/shop/packages`);
+  return await res.json();
+};
+
+export const createShopOrder = async (payload: {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  items: any[];
+  total_amount: number;
+}) => {
+  const res = await fetch(`${API_URL}/shop/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+};
