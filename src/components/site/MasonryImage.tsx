@@ -86,11 +86,13 @@ const MasonryImage: React.FC<MasonryImageProps> = ({
         style={{
           opacity: loaded ? 1 : 0,
           transform: loaded ? "scale(1)" : "scale(1.02)",
-          transition: "opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease",
+          transition: priority
+            ? "opacity 0.25s ease-out, transform 0.25s ease-out, filter 0.2s ease"
+            : "opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease",
           willChange: "opacity, transform",
         }}
         loading={priority ? "eager" : "lazy"}
-        fetchPriority={priority ? "high" : "auto"}
+        decoding="async"
         onLoad={handleLoad}
         onMouseOver={onMouseOver}
         onMouseOut={onMouseOut}

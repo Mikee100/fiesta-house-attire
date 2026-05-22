@@ -72,7 +72,7 @@ const Navbar = () => {
               fontFamily: "'Bodoni Moda', serif",
               fontStyle: "italic",
               fontSize: "1.85rem",
-              fontWeight: "400", // Removed bold
+              fontWeight: "700",
               letterSpacing: "0.02em",
               background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))",
               WebkitBackgroundClip: "text",

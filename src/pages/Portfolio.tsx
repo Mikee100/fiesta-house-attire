@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
@@ -9,6 +9,28 @@ import MasonryImage from "@/components/site/MasonryImage";
 const Portfolio = () => {
   const [portfolios, setPortfolios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const prefetchedPortfoliosRef = useRef<Set<string>>(new Set());
+
+  const prefetchPortfolio = async (slug?: string) => {
+    if (!slug || prefetchedPortfoliosRef.current.has(slug)) return;
+    prefetchedPortfoliosRef.current.add(slug);
+
+    const portfolio = await api.fetchPortfolio(slug);
+    if (!portfolio) return;
+
+    const imageUrls = Array.isArray(portfolio.images)
+      ? portfolio.images
+          .slice(0, 4)
+          .map((img: any) => (typeof img === "string" ? img : img?.url))
+          .filter(Boolean)
+      : [];
+
+    for (const imageUrl of imageUrls) {
+      const prefetchImg = new Image();
+      prefetchImg.decoding = "async";
+      prefetchImg.src = imageUrl;
+    }
+  };
 
   useEffect(() => {
     const fetchPortfolios = async () => {
@@ -74,6 +96,8 @@ const Portfolio = () => {
                 key={portfolio.id} 
                 to={`/portfolio/${portfolio.slug}`}
                 className="fade-in"
+                onMouseEnter={() => prefetchPortfolio(portfolio.slug)}
+                onFocus={() => prefetchPortfolio(portfolio.slug)}
                 style={{ 
                   textDecoration: "none",
                   color: "inherit",
@@ -99,9 +123,13 @@ const Portfolio = () => {
                       height: "100%", 
                       objectFit: "cover",
                       opacity: 0,
-                      transition: "opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.165, 0.84, 0.44, 1)"
+                      transition: idx < 6
+                        ? "opacity 0.25s ease-out, transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)"
+                        : "opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1)"
                     }}
-                    loading={idx < 3 ? "eager" : "lazy"}
+                    loading={idx < 6 ? "eager" : "lazy"}
+                    fetchPriority={idx < 6 ? "high" : "auto"}
+                    decoding="async"
                     onLoad={(e) => { e.currentTarget.style.opacity = "1"; }}
                     onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
                     onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}

@@ -52,27 +52,39 @@ interface Folder {
   cover_image_url?: string;
 }
 
+const HOME_CAROUSEL_FOLDER_ID = "185cc818-f082-4e21-9122-c629de3c34dc";
+const FALLBACK_HERO_IMAGES = [
+  "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL4334-scaled.jpg",
+  "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL5839-scaled.jpg",
+  "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL3632-copy-scaled.jpg"
+];
+
 const Index = () => {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
+  const [heroImages, setHeroImages] = useState<string[]>(FALLBACK_HERO_IMAGES);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [portfoliosData, assetsData, foldersData, postsData] = await Promise.all([
+        const [portfoliosData, assetsData, foldersData, postsData, heroAssetsData] = await Promise.all([
           fetchPortfolios(),
           fetchAssets(undefined, 1, 12),
           fetchFolders(),
-          fetchRecentBlogPosts()
+          fetchRecentBlogPosts(),
+          fetchAssets(HOME_CAROUSEL_FOLDER_ID, 1, 50)
         ]);
 
         if (portfoliosData) setPortfolios(portfoliosData);
         if (assetsData && assetsData.assets) setAssets(assetsData.assets);
         if (foldersData) setFolders(foldersData);
         if (postsData) setRecentPosts(postsData.slice(0, 6));
+        if (heroAssetsData?.assets?.length) {
+          setHeroImages(heroAssetsData.assets.map((asset: Asset) => asset.url));
+        }
       } catch (err) {
         console.error("Failed to load home page data:", err);
       } finally {
@@ -81,14 +93,6 @@ const Index = () => {
     };
     loadData();
   }, []);
-
-  const heroImages = [
-    "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL4334-scaled.jpg",
-    "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL5839-scaled.jpg",
-    "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL3632-copy-scaled.jpg"
-    // Add more image URLs as needed
-  ];
-
 
   // Carousel autoplay effect (2 seconds)
   const [carouselApi, setCarouselApi] = useState(null);
@@ -160,11 +164,29 @@ const Index = () => {
             <CarouselContent className="h-screen m-0 p-0">
               {heroImages.map((url, i) => (
                 <CarouselItem key={i} className="relative h-full w-full p-0">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-[10000ms] hover:scale-110"
-                    style={{ backgroundImage: `url(${url})` }}
+                  <img
+                    src={url}
+                    alt={`Fiesta House hero slide ${i + 1}`}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-[10000ms] hover:scale-110 md:hidden"
+                    loading={i === 0 ? "eager" : "lazy"}
                   />
-                  <div className="absolute inset-0 bg-black/30" />
+                  <img
+                    src={url}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 hidden h-full w-full scale-110 object-cover blur-md md:block"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 hidden items-center justify-center p-8 md:flex lg:p-12">
+                    <img
+                      src={url}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-full w-full object-contain transition-transform duration-[10000ms] hover:scale-[1.03]"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-black/30 md:bg-black/40" />
                 </CarouselItem>
               ))}
             </CarouselContent>

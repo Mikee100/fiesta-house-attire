@@ -120,6 +120,36 @@ app.get('/api/portfolios', async (req, res) => {
   }
 });
 
+// Get a single portfolio by id or slug with its images
+app.get('/api/portfolios/:idOrSlug', async (req, res) => {
+  const { idOrSlug } = req.params;
+
+  try {
+    const portfolioResult = await pool.query(
+      'SELECT * FROM portfolios WHERE id::text = $1 OR slug = $1 LIMIT 1',
+      [idOrSlug]
+    );
+
+    if (portfolioResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Portfolio not found' });
+    }
+
+    const portfolio = portfolioResult.rows[0];
+    const imagesResult = await pool.query(
+      'SELECT * FROM portfolio_images WHERE portfolio_id = $1 ORDER BY "order" ASC',
+      [portfolio.id]
+    );
+
+    res.json({
+      ...portfolio,
+      images: imagesResult.rows
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // Create a new portfolio
 app.post('/api/portfolios', async (req, res) => {
   const { title } = req.body;

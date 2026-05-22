@@ -11,6 +11,18 @@ export const fetchPortfolios = async () => {
   }
 };
 
+export const fetchPortfolio = async (idOrSlug: string) => {
+  try {
+    const res = await fetch(`${API_URL}/portfolios/${encodeURIComponent(idOrSlug)}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Failed to fetch portfolio');
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
+
 export const createPortfolio = async (title: string) => {
   const res = await fetch(`${API_URL}/portfolios`, {
     method: 'POST',

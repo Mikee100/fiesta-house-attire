@@ -19,10 +19,9 @@ export default function FloatingScrollToTop() {
     <button
       onClick={scrollToTop}
       aria-label="Scroll to top"
-      className={`fixed bottom-6 right-6 z-[9999] rounded-full p-2 shadow-lg transition-opacity duration-300 focus:outline-none focus:ring-2 focus:ring-primary/70 bg-primary text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-      style={{ minWidth: 40, minHeight: 40 }}
+      className={`fixed bottom-5 right-3 md:bottom-6 md:right-4 z-[9999] inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 shadow-lg transition-[opacity,background-color,color,transform] duration-300 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-[var(--accent)] text-white hover:bg-[var(--signature)] hover:text-white hover:scale-105 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
     >
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="block">
         <path d="M10 15V5M10 5L5 10M10 5L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </button>

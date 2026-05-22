@@ -200,8 +200,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title, description, keywords,
         className="btn-whatsapp"
         style={{
           position: "fixed",
-          bottom: "2rem",
-          right: "2rem",
+          bottom: "6.5rem",
+          right: "1rem",
           width: "60px",
           height: "60px",
           display: "flex",
