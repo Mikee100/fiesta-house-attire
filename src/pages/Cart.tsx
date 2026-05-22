@@ -12,7 +12,7 @@ const Cart = () => {
       title="Your Cart | Fiesta House Attire"
       description="Review your selected photography packages and gift vouchers."
     >
-      <section className="section-padding" style={{ paddingTop: "clamp(8rem, 15vw, 12rem)", minHeight: "80vh" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", minHeight: "80vh" }}>
         <div className="container">
           <div className="mb-12 fade-in mobile-center">
             <h1 className="display h1-mobile" style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>Your Selection</h1>

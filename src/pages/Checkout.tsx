@@ -61,7 +61,7 @@ const Checkout = () => {
       title="Checkout | Fiesta House Attire"
       description="Securely complete your purchase of luxury photography packages."
     >
-      <section className="section-padding" style={{ paddingTop: "clamp(8rem, 15vw, 12rem)" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)" }}>
         <div className="container">
           <Link to="/cart" className="inline-flex items-center gap-2 text-[var(--dark)] font-bold mb-10 hover:gap-3 transition-all">
             <ArrowLeft size={18} /> Back to Cart

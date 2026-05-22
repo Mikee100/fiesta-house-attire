@@ -158,9 +158,12 @@ app.post('/api/portfolios', async (req, res) => {
   const slug = title.toLowerCase().replace(/ /g, '-');
   
   try {
+    const orderResult = await pool.query('SELECT COALESCE(MAX("order"), -1) + 1 AS next_order FROM portfolios');
+    const nextOrder = orderResult.rows[0].next_order;
+
     const result = await pool.query(
-      'INSERT INTO portfolios (title, slug) VALUES ($1, $2) RETURNING *',
-      [title, slug]
+      'INSERT INTO portfolios (title, slug, "order") VALUES ($1, $2, $3) RETURNING *',
+      [title, slug, nextOrder]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -248,10 +251,40 @@ app.delete('/api/portfolios/:id', async (req, res) => {
   }
 });
 
+// Reorder portfolios by explicit id sequence
+app.patch('/api/portfolios/reorder', async (req, res) => {
+  const { portfolioIds } = req.body;
+
+  if (!Array.isArray(portfolioIds) || portfolioIds.length === 0) {
+    return res.status(400).json({ error: 'portfolioIds array is required' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    for (let i = 0; i < portfolioIds.length; i++) {
+      await client.query(
+        'UPDATE portfolios SET "order" = $1 WHERE id = $2',
+        [i, portfolioIds[i]]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ message: 'Portfolio order updated' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Failed to reorder portfolios' });
+  } finally {
+    client.release();
+  }
+});
+
 // Update portfolio (e.g., set cover image)
 app.patch('/api/portfolios/:id', async (req, res) => {
   const { id } = req.params;
-  const { cover_image_url, title } = req.body;
+  const { cover_image_url, title, order } = req.body;
   
   try {
     let query = 'UPDATE portfolios SET ';
@@ -266,6 +299,11 @@ app.patch('/api/portfolios/:id', async (req, res) => {
     if (title !== undefined) {
       query += `title = $${count}, `;
       params.push(title);
+      count++;
+    }
+    if (order !== undefined) {
+      query += `"order" = $${count}, `;
+      params.push(order);
       count++;
     }
 

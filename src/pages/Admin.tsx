@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, Library, Sparkles, FolderPlus, Search } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, Library, Sparkles, FolderPlus, Search, ArrowUp, ArrowDown } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 
 const Admin = () => {
@@ -17,6 +17,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [useMock, setUseMock] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isReordering, setIsReordering] = useState(false);
 
   // Use brand colors for consistent luxury feel
   const brandSky = "#6EC1E4";
@@ -79,6 +80,47 @@ const Admin = () => {
     } else {
       toast.success("Deleted");
       fetchPortfolios();
+    }
+  };
+
+  const handleMovePortfolio = async (id: string, direction: "up" | "down") => {
+    if (useMock) {
+      toast.error("Backend connection required for ordering");
+      return;
+    }
+
+    const visible = filteredPortfolios;
+    const visibleIndex = visible.findIndex((p) => p.id === id);
+    if (visibleIndex === -1) return;
+
+    const targetVisibleIndex = direction === "up" ? visibleIndex - 1 : visibleIndex + 1;
+    if (targetVisibleIndex < 0 || targetVisibleIndex >= visible.length) return;
+
+    const targetId = visible[targetVisibleIndex].id;
+    const sourceIndex = portfolios.findIndex((p) => p.id === id);
+    const targetIndex = portfolios.findIndex((p) => p.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const nextPortfolios = [...portfolios];
+    [nextPortfolios[sourceIndex], nextPortfolios[targetIndex]] = [
+      nextPortfolios[targetIndex],
+      nextPortfolios[sourceIndex],
+    ];
+
+    setPortfolios(nextPortfolios);
+    setIsReordering(true);
+
+    try {
+      const result = await api.reorderPortfolios(nextPortfolios.map((p) => p.id));
+      if (result?.error) {
+        toast.error(result.error);
+        fetchPortfolios();
+      }
+    } catch (err) {
+      toast.error("Failed to save portfolio order");
+      fetchPortfolios();
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -169,7 +211,7 @@ const Admin = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {filteredPortfolios.map((p) => (
+              {filteredPortfolios.map((p, idx) => (
                 <Card key={p.id} className="group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-2xl overflow-hidden bg-white flex flex-col">
                   <div className="aspect-[16/10] bg-slate-100 relative overflow-hidden">
                     {p.cover_image_url || (p.images && p.images.length > 0) ? (
@@ -204,8 +246,39 @@ const Admin = () => {
 
                     <div className="absolute top-4 left-4">
                       <div className="bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-slate-900 shadow-sm border border-white/20">
-                        {p.images?.length || 0} ITEMS
+                        #{idx + 1} • {p.images?.length || 0} ITEMS
                       </div>
+                    </div>
+
+                    <div className="absolute top-4 right-4 flex gap-1 z-10">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8 bg-white/90 hover:bg-white text-slate-700"
+                        disabled={idx === 0 || isReordering || loading}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMovePortfolio(p.id, "up");
+                        }}
+                        title="Move up"
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8 bg-white/90 hover:bg-white text-slate-700"
+                        disabled={idx === filteredPortfolios.length - 1 || isReordering || loading}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMovePortfolio(p.id, "down");
+                        }}
+                        title="Move down"
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                   
@@ -239,6 +312,9 @@ const Admin = () => {
                 </div>
               )}
             </div>
+            <p className="text-xs text-slate-500">
+              Use the up/down arrows on each card to reorder collections. Client portfolio pages follow this same order.
+            </p>
           </main>
         </div>
       </div>

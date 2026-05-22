@@ -40,7 +40,7 @@ const GalleryPage = () => {
 
   return (
     <Layout>
-      <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "6rem" }}>
              <Link to="/" style={{ 

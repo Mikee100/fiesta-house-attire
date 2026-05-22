@@ -6,9 +6,8 @@ const Contact = () => {
       {/* Brand color hero bar */}
       <div
         style={{
-          paddingTop: "7rem",
           background: "linear-gradient(135deg, var(--sky-blue-tint) 0%, var(--magenta-tint) 100%)",
-          padding: "9rem 0 4rem",
+          padding: "6.5rem 0 4rem",
           borderBottom: "3px solid var(--sky-blue)",
         }}
       >

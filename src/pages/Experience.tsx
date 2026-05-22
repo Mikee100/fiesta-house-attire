@@ -10,7 +10,7 @@ const Experience = () => {
   return (
     <Layout>
       {/* Walkthrough Section */}
-      <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
             <div className="mobile-center" style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "3rem", flexWrap: "wrap" }}>

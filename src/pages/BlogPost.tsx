@@ -51,7 +51,7 @@ const BlogPostPage = () => {
     return (
       <div className="min-h-screen bg-[var(--bg)] flex flex-col">
         <Navbar />
-        <div className="flex-grow flex flex-col justify-center items-center pt-32 pb-24 text-center">
+        <div className="flex-grow flex flex-col justify-center items-center pt-24 pb-24 text-center">
           <h1 className="text-4xl font-display mb-4 text-[var(--text)]">Post Not Found</h1>
           <p className="text-slate-500 mb-8 max-w-md mx-auto">
             The article you are looking for does not exist or has been removed.
@@ -74,7 +74,7 @@ const BlogPostPage = () => {
       ogImage={post.cover_image_url}
     >
 
-      <main className="flex-grow pt-32 pb-24">
+      <main className="flex-grow pt-24 pb-24">
         <div className="container max-w-5xl mx-auto px-4 sm:px-6">
 
           <Link to="/blog" className="inline-flex items-center text-slate-500 hover:text-[var(--sky-blue)] transition-colors mb-8 text-sm font-medium uppercase tracking-wider fade-in">

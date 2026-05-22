@@ -39,11 +39,20 @@ export const deletePortfolio = async (id: string) => {
   return await res.json();
 };
 
-export const updatePortfolio = async (id: string, data: { cover_image_url?: string; title?: string }) => {
+export const updatePortfolio = async (id: string, data: { cover_image_url?: string; title?: string; order?: number }) => {
   const res = await fetch(`${API_URL}/portfolios/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
+  });
+  return await res.json();
+};
+
+export const reorderPortfolios = async (portfolioIds: string[]) => {
+  const res = await fetch(`${API_URL}/portfolios/reorder`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ portfolioIds })
   });
   return await res.json();
 };

@@ -35,7 +35,7 @@ const MaternityGowns = () => {
       keywords="maternity gowns nairobi, designer pregnancy dresses kenya, luxury maternity shoot outfits, maternity photoshoot clothing, fiesta house gowns"
     >
       {/* Hero Section */}
-      <section className="section-padding" style={{ paddingTop: "15rem", backgroundColor: "white" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 11vw, 9rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center", marginBottom: "8rem" }}>
              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Fiesta Atelier</span>

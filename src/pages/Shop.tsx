@@ -50,7 +50,7 @@ const Shop = () => {
       description="Purchase luxury maternity photography packages and gift vouchers. The perfect gift for expectant mothers in Nairobi."
     >
       {/* Hero Section */}
-      <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-8 mb-16 fade-in">
             <div style={{ maxWidth: "700px" }}>

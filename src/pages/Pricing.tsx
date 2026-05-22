@@ -116,7 +116,7 @@ const Pricing = () => {
     >
 
       {/* Hero Section */}
-      <section className="section-padding" style={{ paddingTop: "12rem", backgroundColor: "white" }}>
+      <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "4rem" }} className="fade-in">
             <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Your Investment</span>
