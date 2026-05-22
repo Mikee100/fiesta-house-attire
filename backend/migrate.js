@@ -47,6 +47,23 @@ async function migrate() {
       console.log('- UNIQUE constraint unique_portfolio_image already exists');
     }
 
+    // 4. Ensure videos table exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS videos (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        video_url TEXT NOT NULL,
+        source_type TEXT DEFAULT 'url',
+        is_featured BOOLEAN DEFAULT false,
+        sort_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    console.log('✓ Ensured videos table exists');
+
     process.exit(0);
   } catch (err) {
     console.error('Migration failed:', err);

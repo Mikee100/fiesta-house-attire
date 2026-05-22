@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Library, ExternalLink, Camera, FileText } from "lucide-react";
+import { LayoutDashboard, Library, ExternalLink, Camera, FileText, Clapperboard } from "lucide-react";
 
 const AdminNavbar = () => {
   const location = useLocation();
@@ -48,6 +48,16 @@ const AdminNavbar = () => {
                 >
                   <Library size={16} />
                   Media Library
+                </Button>
+              </Link>
+              <Link to="/admin/videos">
+                <Button 
+                  variant={isActive('/admin/videos') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Clapperboard size={16} />
+                  Videos
                 </Button>
               </Link>
             </div>

@@ -272,3 +272,70 @@ export const createShopOrder = async (payload: {
   });
   return await res.json();
 };
+
+// --- Videos ---
+
+export interface VideoItem {
+  id: string;
+  title: string;
+  description: string | null;
+  video_url: string;
+  source_type: 'url' | 'upload' | string;
+  is_featured: boolean;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const fetchVideos = async (): Promise<VideoItem[]> => {
+  const res = await fetch(`${API_URL}/videos`);
+  return await res.json();
+};
+
+export const fetchAdminVideos = async (): Promise<VideoItem[]> => {
+  const res = await fetch(`${API_URL}/admin/videos`);
+  return await res.json();
+};
+
+export const createVideo = async (payload: {
+  title: string;
+  description?: string;
+  video_url: string;
+  source_type?: 'url' | 'upload' | string;
+  is_featured?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+}) => {
+  const res = await fetch(`${API_URL}/videos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+};
+
+export const updateVideo = async (id: string, payload: Partial<VideoItem>) => {
+  const res = await fetch(`${API_URL}/videos/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+};
+
+export const deleteVideo = async (id: string) => {
+  const res = await fetch(`${API_URL}/videos/${id}`, {
+    method: 'DELETE'
+  });
+  return await res.json();
+};
+
+export const reorderVideos = async (videoIds: string[]) => {
+  const res = await fetch(`${API_URL}/videos/reorder`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ videoIds })
+  });
+  return await res.json();
+};

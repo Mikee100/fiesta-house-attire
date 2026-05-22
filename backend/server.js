@@ -211,6 +211,32 @@ const initShopDb = async () => {
 
 initShopDb();
 
+// Initialize Videos Database
+const initVideosDb = async () => {
+  try {
+    console.log("Checking videos database tables...");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS videos (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        video_url TEXT NOT NULL,
+        source_type TEXT DEFAULT 'url',
+        is_featured BOOLEAN DEFAULT false,
+        sort_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+    console.log("✓ Videos database initialized");
+  } catch (err) {
+    console.error("Videos DB Init Error:", err);
+  }
+};
+
+initVideosDb();
+
 // Routes
 
 // Get all portfolios with their images
@@ -621,6 +647,182 @@ app.delete('/api/assets/:id', async (req, res) => {
     res.json({ message: 'Asset deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Delete failed' });
+  }
+});
+
+// --- Videos API ---
+
+// Public videos list
+app.get('/api/videos', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM videos
+       WHERE is_active = true
+       ORDER BY is_featured DESC, sort_order ASC, created_at DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch videos' });
+  }
+});
+
+// Admin videos list (includes inactive)
+app.get('/api/admin/videos', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM videos
+       ORDER BY is_featured DESC, sort_order ASC, created_at DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch admin videos' });
+  }
+});
+
+// Create video
+app.post('/api/videos', async (req, res) => {
+  const {
+    title,
+    description,
+    video_url,
+    source_type = 'url',
+    is_featured = false,
+    sort_order,
+    is_active = true,
+  } = req.body;
+
+  if (!title || !video_url) {
+    return res.status(400).json({ error: 'Title and video_url are required' });
+  }
+
+  try {
+    let nextOrder = sort_order;
+    if (nextOrder === undefined || nextOrder === null) {
+      const orderResult = await pool.query('SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM videos');
+      nextOrder = orderResult.rows[0].next_order;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO videos (title, description, video_url, source_type, is_featured, sort_order, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [title, description || null, video_url, source_type, is_featured, nextOrder, is_active]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create video' });
+  }
+});
+
+// Update video
+app.patch('/api/videos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, description, video_url, source_type, is_featured, sort_order, is_active } = req.body;
+
+  try {
+    let query = 'UPDATE videos SET ';
+    const params = [];
+    let count = 1;
+
+    if (title !== undefined) {
+      query += `title = $${count}, `;
+      params.push(title);
+      count++;
+    }
+    if (description !== undefined) {
+      query += `description = $${count}, `;
+      params.push(description);
+      count++;
+    }
+    if (video_url !== undefined) {
+      query += `video_url = $${count}, `;
+      params.push(video_url);
+      count++;
+    }
+    if (source_type !== undefined) {
+      query += `source_type = $${count}, `;
+      params.push(source_type);
+      count++;
+    }
+    if (is_featured !== undefined) {
+      query += `is_featured = $${count}, `;
+      params.push(is_featured);
+      count++;
+    }
+    if (sort_order !== undefined) {
+      query += `sort_order = $${count}, `;
+      params.push(sort_order);
+      count++;
+    }
+    if (is_active !== undefined) {
+      query += `is_active = $${count}, `;
+      params.push(is_active);
+      count++;
+    }
+
+    if (params.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    query += `updated_at = NOW() `;
+    query += `WHERE id = $${count} RETURNING *`;
+    params.push(id);
+
+    const result = await pool.query(query, params);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update video' });
+  }
+});
+
+// Delete video
+app.delete('/api/videos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM videos WHERE id = $1', [id]);
+    res.json({ message: 'Video deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete video' });
+  }
+});
+
+// Reorder videos by explicit id sequence
+app.patch('/api/videos/reorder', async (req, res) => {
+  const { videoIds } = req.body;
+
+  if (!Array.isArray(videoIds) || videoIds.length === 0) {
+    return res.status(400).json({ error: 'videoIds array is required' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    for (let i = 0; i < videoIds.length; i++) {
+      await client.query(
+        'UPDATE videos SET sort_order = $1, updated_at = NOW() WHERE id = $2',
+        [i, videoIds[i]]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ message: 'Video order updated' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Failed to reorder videos' });
+  } finally {
+    client.release();
   }
 });
 

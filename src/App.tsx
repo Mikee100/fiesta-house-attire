@@ -17,8 +17,10 @@ import AdminPortfolio from "./pages/AdminPortfolio.tsx";
 import AdminAssets from "./pages/AdminAssets.tsx";
 import AdminBlog from "./pages/AdminBlog.tsx";
 import AdminBlogEditor from "./pages/AdminBlogEditor.tsx";
+import AdminVideos from "./pages/AdminVideos.tsx";
 import GalleryPage from "./pages/GalleryPage.tsx";
 import MaternityGowns from "./pages/MaternityGowns.tsx";
+import Videos from "./pages/Videos.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 import ScrollToTop from "./components/ScrollToTop";
@@ -53,11 +55,13 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/portfolio/:id" element={<AdminPortfolio />} />
             <Route path="/admin/assets" element={<AdminAssets />} />
+            <Route path="/admin/videos" element={<AdminVideos />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/blog/new" element={<AdminBlogEditor />} />
             <Route path="/admin/blog/:id/edit" element={<AdminBlogEditor />} />
             <Route path="/gallery/:folderId" element={<GalleryPage />} />
             <Route path="/maternity-gowns" element={<MaternityGowns />} />
+            <Route path="/videos" element={<Videos />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

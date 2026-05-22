@@ -4,11 +4,32 @@ import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
 import MasonryImage from "@/components/site/MasonryImage";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 const MaternityGowns = () => {
   const [images, setImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [isLandscapePreview, setIsLandscapePreview] = useState<boolean | null>(null);
   const gownsFolderId = "b8b100e9-81ce-4778-bf57-0adee0b46fc0";
+
+  const gotoPrev = () => {
+    if (lightboxIdx !== null && images.length > 1) {
+      const prevIdx = (lightboxIdx - 1 + images.length) % images.length;
+      setLightboxIdx(prevIdx);
+      setLightboxSrc(images[prevIdx]?.url || null);
+    }
+  };
+
+  const gotoNext = () => {
+    if (lightboxIdx !== null && images.length > 1) {
+      const nextIdx = (lightboxIdx + 1) % images.length;
+      setLightboxIdx(nextIdx);
+      setLightboxSrc(images[nextIdx]?.url || null);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,7 +106,24 @@ const MaternityGowns = () => {
                 <div 
                   key={img.id} 
                   className="masonry-item fade-in group relative"
-                  style={{ animationDelay: `${i * 0.05}s` }}
+                  style={{ animationDelay: `${i * 0.05}s`, cursor: "zoom-in" }}
+                  onClick={() => {
+                    if (img?.url) {
+                      setLightboxIdx(i);
+                      setLightboxSrc(img.url);
+                      setLightboxOpen(true);
+                    }
+                  }}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if ((e.key === "Enter" || e.key === " ") && img?.url) {
+                      setLightboxIdx(i);
+                      setLightboxSrc(img.url);
+                      setLightboxOpen(true);
+                    }
+                  }}
+                  role="button"
+                  aria-label={`View gown image ${i + 1} enlarged`}
                 >
                   <div style={{ overflow: "hidden", borderRadius: "2px" }}>
                     <MasonryImage 
@@ -103,6 +141,83 @@ const MaternityGowns = () => {
               </div>
             )}
           </div>
+
+          <Dialog
+            open={lightboxOpen}
+            onOpenChange={(open) => {
+              setLightboxOpen(open);
+              if (!open) {
+                setLightboxIdx(null);
+                setLightboxSrc(null);
+                setIsLandscapePreview(null);
+              }
+            }}
+          >
+            <DialogContent
+              className="flex flex-col items-center justify-center border-none bg-transparent p-0 shadow-none max-w-[95vw] w-auto max-h-[95vh]"
+              aria-describedby="gown-lightbox-description"
+            >
+              <DialogTitle style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+                Gown image preview
+              </DialogTitle>
+              <DialogDescription
+                id="gown-lightbox-description"
+                style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}
+              >
+                Enlarged view of gown image {lightboxIdx !== null ? lightboxIdx + 1 : ""}
+              </DialogDescription>
+
+              {lightboxSrc ? (
+                <>
+                  <img
+                    src={lightboxSrc}
+                    alt={`Enlarged maternity gown ${lightboxIdx !== null ? lightboxIdx + 1 : ""}`}
+                    onLoad={(e) => {
+                      const image = e.currentTarget;
+                      setIsLandscapePreview(image.naturalWidth >= image.naturalHeight);
+                    }}
+                    style={{
+                      maxWidth: isLandscapePreview ? "94vw" : "80vw",
+                      maxHeight: isLandscapePreview ? "80vh" : "88vh",
+                      marginTop: "2rem",
+                      borderRadius: "4px",
+                      boxShadow: "0 8px 32px 0 rgba(0,0,0,0.25)",
+                      transition: "transform 0.25s ease-out, opacity 0.2s ease-out",
+                      objectFit: "contain",
+                      background: "rgba(0,0,0,0.92)",
+                    }}
+                  />
+                  {images.length > 1 && (
+                    <>
+                      <button
+                        onClick={gotoPrev}
+                        aria-label="Previous image"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 z-[100] flex h-10 w-10 items-center justify-center rounded-full border border-white/35 bg-black/50 text-white backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-black/70"
+                        style={{ borderWidth: 1, outline: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.35)" }}
+                      >
+                        <span style={{ fontSize: 20, lineHeight: 1, fontWeight: 700 }}>&lsaquo;</span>
+                      </button>
+                      <button
+                        onClick={gotoNext}
+                        aria-label="Next image"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 z-[100] flex h-10 w-10 items-center justify-center rounded-full border border-white/35 bg-black/50 text-white backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-black/70"
+                        style={{ borderWidth: 1, outline: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.35)" }}
+                      >
+                        <span style={{ fontSize: 20, lineHeight: 1, fontWeight: 700 }}>&rsaquo;</span>
+                      </button>
+                      {lightboxIdx !== null && (
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white text-xs bg-black/50 rounded px-2 py-1 select-none" style={{ letterSpacing: 1 }}>
+                          {lightboxIdx + 1} / {images.length}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="flex min-h-[40vh] items-center justify-center text-white text-lg">Image not available</div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </section>
 

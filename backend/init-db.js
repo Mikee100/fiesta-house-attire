@@ -58,6 +58,23 @@ const initDb = async () => {
     `);
     console.log("✓ Assets table created or already exists");
 
+    // Create Videos table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS videos (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        video_url TEXT NOT NULL,
+        source_type TEXT DEFAULT 'url',
+        is_featured BOOLEAN DEFAULT false,
+        sort_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+    console.log("✓ Videos table created or already exists");
+
     console.log("Database initialization complete!");
     process.exit(0);
   } catch (err) {

@@ -168,11 +168,18 @@ const Admin = () => {
                 </form>
 
                 <div className="pt-4 border-t border-slate-50">
-                  <Link to="/admin/assets">
-                    <Button variant="outline" className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-sky-600 transition-all">
-                      <Library className="mr-2 h-4 w-4" /> Media Library
-                    </Button>
-                  </Link>
+                  <div className="space-y-2">
+                    <Link to="/admin/assets">
+                      <Button variant="outline" className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-sky-600 transition-all">
+                        <Library className="mr-2 h-4 w-4" /> Media Library
+                      </Button>
+                    </Link>
+                    <Link to="/admin/videos">
+                      <Button variant="outline" className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-fuchsia-600 transition-all">
+                        <ImageIcon className="mr-2 h-4 w-4" /> Videos
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
             </Card>
