@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
-import { Skeleton } from "@/components/ui/skeleton";
 import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
 import MasonryImage from "@/components/site/MasonryImage";
 
@@ -15,9 +14,30 @@ const MaternityGowns = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const assetsData = await api.fetchAssets(gownsFolderId, 1, 100);
-        if (assetsData && assetsData.assets) {
-          setImages(assetsData.assets);
+        const initialPageSize = 24;
+        const firstPage = await api.fetchAssets(gownsFolderId, 1, initialPageSize);
+        const firstAssets = firstPage?.assets || [];
+
+        if (firstAssets.length > 0) {
+          setImages(firstAssets);
+        }
+
+        // Render quickly with initial images, then progressively hydrate the rest.
+        setLoading(false);
+
+        const totalPages = firstPage?.totalPages || 1;
+        if (totalPages > 1) {
+          for (let page = 2; page <= totalPages; page++) {
+            const nextPage = await api.fetchAssets(gownsFolderId, page, initialPageSize);
+            const nextAssets = nextPage?.assets || [];
+            if (nextAssets.length > 0) {
+              setImages((prev) => {
+                const existingIds = new Set(prev.map((asset: any) => asset.id));
+                const uniqueNext = nextAssets.filter((asset: any) => !existingIds.has(asset.id));
+                return uniqueNext.length ? [...prev, ...uniqueNext] : prev;
+              });
+            }
+          }
         }
       } catch (err) {
         console.error("Failed to load gowns:", err);
@@ -27,6 +47,17 @@ const MaternityGowns = () => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Warm up the first set for faster perceived display.
+    const topImages = images.slice(0, 6);
+    for (const img of topImages) {
+      if (!img?.url) continue;
+      const prefetch = new Image();
+      prefetch.decoding = "async";
+      prefetch.src = img.url;
+    }
+  }, [images]);
 
   return (
     <Layout
@@ -61,7 +92,7 @@ const MaternityGowns = () => {
                       src={img.url} 
                       alt={`Maternity Gown ${i + 1}`} 
                       className="group-hover:scale-105"
-                      priority={i < 3}
+                      priority={i < 6}
                     />
                   </div>
                 </div>

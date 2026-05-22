@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
 
 const Footer = () => {
+  const miniGalleryImages = [
+    "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg",
+    "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg",
+    "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMG_6419-scaled.jpg",
+  ];
+
   return (
     <footer
       style={{
@@ -76,7 +82,7 @@ const Footer = () => {
               {[
                 { to: "/", label: "Home" },
                 { to: "/portfolio", label: "Portfolio" },
-                { to: "/experience", label: "Experience" },
+                { to: "/about", label: "About" },
                 { to: "/pricing", label: "Pricing" },
                 { to: "/contact", label: "Book" },
               ].map((link) => (
@@ -128,6 +134,16 @@ const Footer = () => {
             <p style={{ fontSize: "0.75rem", opacity: 0.5 }}>
               info@fiestahouseattire.com · Diamond Plaza II, Nairobi
             </p>
+            <div className="footer-mini-gallery" aria-label="Footer image gallery">
+              {miniGalleryImages.map((src, index) => (
+                <img
+                  key={src}
+                  src={src}
+                  alt={`Fiesta House gallery ${index + 1}`}
+                  loading="lazy"
+                />
+              ))}
+            </div>
           </div>
         </div>
 
@@ -154,6 +170,21 @@ const Footer = () => {
         .footer-grid {
           grid-template-columns: 1.2fr 0.8fr 1.5fr;
         }
+        .footer-mini-gallery {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 0.65rem;
+          margin-top: 1rem;
+          max-width: 420px;
+        }
+        .footer-mini-gallery img {
+          width: 100%;
+          aspect-ratio: 4 / 5;
+          object-fit: cover;
+          border-radius: 2px;
+          border: 1px solid rgba(0, 0, 0, 0.06);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
         @keyframes gradientShift {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -163,6 +194,11 @@ const Footer = () => {
           .footer-grid { 
             grid-template-columns: 1fr !important;
             gap: 2rem !important;
+          }
+          .footer-mini-gallery {
+            max-width: 100%;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.55rem;
           }
         }
       `}</style>

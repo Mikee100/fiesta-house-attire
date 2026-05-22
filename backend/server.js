@@ -75,20 +75,131 @@ const initShopDb = async () => {
       );
     `);
 
-    // Seed initial packages if none exist
-    const checkPkgs = await pool.query('SELECT COUNT(*) FROM shop_packages');
-    if (parseInt(checkPkgs.rows[0].count) === 0) {
-      console.log("Seeding initial shop packages...");
-      const initialPackages = [
-        { name: "Standard Package", price: 10000, color: "#6EC1E4", features: ["6 edited images", "2 gowns"] },
-        { name: "Economy Package", price: 15000, color: "#B84FA0", features: ["12 edited images", "3 gowns"] },
-        { name: "Executive Package", price: 20000, color: "#6EC1E4", features: ["15 edited images", "4 gowns"] },
-        { name: "Gold Package", price: 30000, color: "#B84FA0", features: ["20 edited images", "Photobook"], popular: true }
-      ];
-      for (const p of initialPackages) {
+    // Ensure all packages exist and are up-to-date.
+    // This fixes old databases that were seeded with only a subset of packages.
+    const initialPackages = [
+      {
+        name: "Standard Package",
+        price: 10000,
+        duration: "1 hr 30 min",
+        images_count: "6 edited soft copy images",
+        outfits_count: "2 gowns & styling",
+        color: "#6EC1E4",
+        features: ["Professional makeup", "Full gown access", "Studio session"],
+        popular: false,
+        description: "Ideal for a quick, elegant session focused on capturing the essence of your journey."
+      },
+      {
+        name: "Economy Package",
+        price: 15000,
+        duration: "2 hrs",
+        images_count: "12 edited soft copy images",
+        outfits_count: "3 gowns & styling",
+        color: "#B84FA0",
+        features: ["Professional makeup", "Full gown access", "Studio session"],
+        popular: false,
+        description: "Our most balanced package, offering more time and a wider variety of looks."
+      },
+      {
+        name: "Executive Package",
+        price: 20000,
+        duration: "2 hrs 30 min",
+        images_count: "15 edited soft copy images",
+        outfits_count: "4 gowns & styling",
+        color: "#6EC1E4",
+        features: ["Professional makeup", "Full gown access", "1 A3 Mount included", "Studio session"],
+        popular: false,
+        description: "Level up with more outfits and a stunning A3 mount for your wall."
+      },
+      {
+        name: "Gold Package",
+        price: 30000,
+        duration: "2 hrs 30 min",
+        images_count: "20 edited soft copy images",
+        outfits_count: "4 gowns & styling",
+        color: "#B84FA0",
+        features: ["Professional makeup", "8x8\" hardpage photobook", "Full gown access", "Studio session"],
+        popular: true,
+        description: "Capture your story in a high-quality photobook that will last generations."
+      },
+      {
+        name: "Platinum Package",
+        price: 35000,
+        duration: "2 hrs 30 min",
+        images_count: "25 edited soft copy images",
+        outfits_count: "4 gowns & styling",
+        color: "#6EC1E4",
+        features: ["Professional makeup", "Customized Balloon Backdrop", "1 A3 mount included", "Full gown access"],
+        popular: true,
+        description: "Luxury meets artistry with a customized backdrop tailored to your style."
+      },
+      {
+        name: "VIP Package",
+        price: 45000,
+        duration: "3 hrs 30 min",
+        images_count: "25 edited soft copy images",
+        outfits_count: "4 gowns & styling",
+        color: "#B84FA0",
+        features: ["Professional makeup", "Customized Balloon Backdrop", "8x8\" hardpage photobook", "Extended session"],
+        popular: false,
+        description: "The ultimate luxury experience with every detail curated for perfection."
+      },
+      {
+        name: "VVIP Package",
+        price: 50000,
+        duration: "3 hrs 30 min",
+        images_count: "30 edited soft copy images",
+        outfits_count: "5 gowns & styling",
+        color: "#6EC1E4",
+        features: ["Professional makeup", "Styled Wig included", "Customized Balloon Backdrop", "8x8\" photobook + A3 mount"],
+        popular: false,
+        description: "Our most exclusive offering. Absolute luxury, more outfits, and premium styling."
+      }
+    ];
+
+    for (const p of initialPackages) {
+      const existing = await pool.query('SELECT id FROM shop_packages WHERE name = $1 LIMIT 1', [p.name]);
+
+      if (existing.rows.length > 0) {
         await pool.query(
-          `INSERT INTO shop_packages (name, price, color, features, popular) VALUES ($1, $2, $3, $4, $5)`,
-          [p.name, p.price, p.color, JSON.stringify(p.features), p.popular || false]
+          `UPDATE shop_packages
+           SET price = $2,
+               description = $3,
+               duration = $4,
+               images_count = $5,
+               outfits_count = $6,
+               color = $7,
+               popular = $8,
+               features = $9,
+               is_active = true
+           WHERE id = $1`,
+          [
+            existing.rows[0].id,
+            p.price,
+            p.description,
+            p.duration,
+            p.images_count,
+            p.outfits_count,
+            p.color,
+            p.popular || false,
+            JSON.stringify(p.features)
+          ]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO shop_packages (name, price, description, duration, images_count, outfits_count, color, popular, features, is_active)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true)`,
+          [
+            p.name,
+            p.price,
+            p.description,
+            p.duration,
+            p.images_count,
+            p.outfits_count,
+            p.color,
+            p.popular || false,
+            JSON.stringify(p.features)
+          ]
         );
       }
     }

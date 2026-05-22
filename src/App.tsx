@@ -9,6 +9,7 @@ import PortfolioCategory from "./pages/PortfolioCategory.tsx";
 import Experience from "./pages/Experience.tsx";
 import Pricing from "./pages/Pricing.tsx";
 import Contact from "./pages/Contact.tsx";
+import About from "./pages/About.tsx";
 import Blog from "./pages/Blog.tsx";
 import BlogPostPage from "./pages/BlogPost.tsx";
 import Admin from "./pages/Admin.tsx";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/portfolio/:id" element={<PortfolioCategory />} />
             <Route path="/experience" element={<Experience />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />

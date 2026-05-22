@@ -360,7 +360,7 @@ const Index = () => {
         </section>
         {/* Immersive Studio Experience - Parallax Section */}
         <section
-          className="relative min-h-screen flex items-center overflow-hidden"
+          className="relative min-h-screen flex items-center overflow-hidden py-16 md:py-24"
           style={{
             backgroundAttachment: "fixed",
             backgroundImage: "url('https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg')",
@@ -575,7 +575,7 @@ const Index = () => {
                 { q: "When is the best time for my session?", a: "We typically recommend booking your session between 28 and 34 weeks, when your bump is beautifully defined but you are still comfortable moving." },
                 { q: "What do I need to bring?", a: "Bring nothing but yourself and a change of undergarments. We provide the gowns, the makeup, and all styling accessories." },
                 { q: "Can my partner and children join?", a: "Absolutely. We encourage family participation. All our packages include options for partners and siblings to be part of the portraits." },
-                { q: "How long does it take to receive my images?", a: "A curated preview is shared within 72 hours. Your final retouched gallery is delivered within 14 working days." }
+                { q: "How long does it take to receive my images?", a: "A curated preview is shared within 10 working days. Your final retouched gallery is delivered within 14 working days." }
               ].map((faq, i) => (
                 <AccordionItem key={i} value={`item-${i}`} style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", padding: "0.5rem 0" }}>
                   <AccordionTrigger className="display" style={{ fontSize: "1.5rem", fontWeight: "300", textAlign: "left" }}>
@@ -756,7 +756,7 @@ const Index = () => {
                   Give the expectant mother in your life an experience she will never forget. Our luxury gift vouchers are the perfect way to celebrate a new chapter with art that lasts a lifetime.
                 </p>
                 <div style={{ marginTop: "2.5rem" }}>
-                  <Link to="/contact" className="btn btn-magenta">Purchase a Voucher</Link>
+                  <Link to="/shop" className="btn btn-magenta">Purchase a Voucher</Link>
                 </div>
               </div>
               <div style={{ position: "relative" }}>
@@ -855,7 +855,7 @@ const Index = () => {
         <section style={{
           backgroundColor: "white",
           color: "var(--dark)",
-          padding: "10rem 0",
+          padding: "5.5rem 0",
           position: "relative",
           overflow: "hidden",
           borderTop: "1px solid rgba(0,0,0,0.05)"
@@ -882,11 +882,11 @@ const Index = () => {
           }} />
 
           <div className="container" style={{ position: "relative", zIndex: 1 }}>
-            <div className="grid grid-2 mobile-gap-8" style={{ alignItems: "center", gap: "4rem" }}>
+            <div className="grid grid-2 mobile-gap-8" style={{ alignItems: "center", gap: "2.5rem" }}>
               <div className="mobile-center" style={{ textAlign: "left" }}>
                 <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.8rem", fontWeight: "600", display: "block", marginBottom: "1rem" }}>Your Journey Starts Here</span>
-                <h2 className="display h2-mobile" style={{ fontSize: "3rem", marginBottom: "1.5rem" }}>Ready to own the frame?</h2>
-                <p style={{ fontSize: "1.1rem", opacity: 0.6, maxWidth: "500px", margin: 0 }}>
+                <h2 className="display h2-mobile" style={{ fontSize: "clamp(2rem, 5vw, 2.5rem)", marginBottom: "1rem" }}>Ready to own the frame?</h2>
+                <p style={{ fontSize: "1rem", opacity: 0.6, maxWidth: "500px", margin: 0 }}>
                   Experience the best maternity photoshoot in Kenya. Secure your session at our Diamond Plaza sanctuary today.
                 </p>
               </div>
