@@ -50,13 +50,14 @@ interface Folder {
 }
 
 const HOME_CAROUSEL_FOLDER_ID = "185cc818-f082-4e21-9122-c629de3c34dc";
-const MAX_HERO_SLIDES = 4;
-const MAX_HERO_RENDERED = 2;
+const MAX_HERO_SLIDES = 5;
+const MAX_HERO_RENDERED = 5;
 const FALLBACK_HERO_IMAGES = [
   "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL4334-scaled.jpg",
   "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL5839-scaled.jpg",
   "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL3632-copy-scaled.jpg"
 ];
+const HERO_DESKTOP_FOCAL_POINTS = ["center 18%", "center 22%", "center 16%", "center 20%"];
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -162,23 +163,41 @@ const Index = () => {
             className="w-full h-full"
           >
             <CarouselContent className="h-screen m-0 p-0">
-              {heroImages.slice(0, MAX_HERO_RENDERED).map((url, i) => (
+              {heroImages.slice(0, MAX_HERO_RENDERED).map((url, i) => {
+                const desktopFocalPoint = HERO_DESKTOP_FOCAL_POINTS[i] || "center 20%";
+
+                return (
                 <CarouselItem key={i} className="relative h-full w-full p-0">
+                  {!isMobile && (
+                    <img
+                      src={url}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 h-full w-full object-cover scale-110 blur-sm"
+                      loading="lazy"
+                      decoding="async"
+                      style={{ objectPosition: desktopFocalPoint }}
+                    />
+                  )}
                   <img
                     src={url}
                     alt={`Fiesta House hero slide ${i + 1}`}
                     width={1920}
                     height={1080}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform hover:scale-105"
+                    className={`absolute inset-0 h-full w-full ${isMobile ? "object-cover" : "object-contain"}`}
                     loading={i === 0 ? "eager" : "lazy"}
                     fetchPriority={i === 0 ? "high" : "auto"}
                     decoding="async"
                     sizes={isMobile ? "100vw" : "100vw"}
-                    style={{ transitionDuration: "1000ms" }}
+                    style={{
+                      transitionDuration: "1000ms",
+                      objectPosition: isMobile ? "center center" : desktopFocalPoint
+                    }}
                   />
                   <div className="absolute inset-0 bg-black/30 md:bg-black/40" />
                 </CarouselItem>
-              ))}
+                );
+              })}
             </CarouselContent>
           </Carousel>
 
