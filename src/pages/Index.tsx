@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
 import Layout from "@/components/site/Layout";
 import { fetchPortfolios, fetchAssets, fetchFolders, fetchRecentBlogPosts, BlogPost } from "@/lib/api";
 import {
@@ -21,10 +20,8 @@ import BeforeAfterSlider from "@/components/site/BeforeAfterSlider";
 import MasonryImage from "@/components/site/MasonryImage";
 import InstagramFeed from "@/components/site/InstagramFeed";
 import { Mail, MapPin, Clock, Phone, Instagram, Facebook } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-import heroImg from "@/assets/hero_new.png";
-import p1 from "@/assets/portfolio-1.jpg";
-import p2 from "@/assets/portfolio-2.jpg";
 import gownImg from "@/assets/gowns.jpg";
 import FloatingScrollToTop from "@/components/FloatingScrollToTop";
 
@@ -53,6 +50,8 @@ interface Folder {
 }
 
 const HOME_CAROUSEL_FOLDER_ID = "185cc818-f082-4e21-9122-c629de3c34dc";
+const MAX_HERO_SLIDES = 4;
+const MAX_HERO_RENDERED = 2;
 const FALLBACK_HERO_IMAGES = [
   "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL4334-scaled.jpg",
   "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL5839-scaled.jpg",
@@ -60,6 +59,7 @@ const FALLBACK_HERO_IMAGES = [
 ];
 
 const Index = () => {
+  const isMobile = useIsMobile();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -75,7 +75,7 @@ const Index = () => {
           fetchAssets(undefined, 1, 12),
           fetchFolders(),
           fetchRecentBlogPosts(),
-          fetchAssets(HOME_CAROUSEL_FOLDER_ID, 1, 50)
+          fetchAssets(HOME_CAROUSEL_FOLDER_ID, 1, MAX_HERO_SLIDES)
         ]);
 
         if (portfoliosData) setPortfolios(portfoliosData);
@@ -83,7 +83,7 @@ const Index = () => {
         if (foldersData) setFolders(foldersData);
         if (postsData) setRecentPosts(postsData.slice(0, 6));
         if (heroAssetsData?.assets?.length) {
-          setHeroImages(heroAssetsData.assets.map((asset: Asset) => asset.url));
+          setHeroImages(heroAssetsData.assets.slice(0, MAX_HERO_SLIDES).map((asset: Asset) => asset.url));
         }
       } catch (err) {
         console.error("Failed to load home page data:", err);
@@ -162,30 +162,20 @@ const Index = () => {
             className="w-full h-full"
           >
             <CarouselContent className="h-screen m-0 p-0">
-              {heroImages.map((url, i) => (
+              {heroImages.slice(0, MAX_HERO_RENDERED).map((url, i) => (
                 <CarouselItem key={i} className="relative h-full w-full p-0">
                   <img
                     src={url}
                     alt={`Fiesta House hero slide ${i + 1}`}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-[10000ms] hover:scale-110 md:hidden"
+                    width={1920}
+                    height={1080}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform hover:scale-105"
                     loading={i === 0 ? "eager" : "lazy"}
+                    fetchPriority={i === 0 ? "high" : "auto"}
+                    decoding="async"
+                    sizes={isMobile ? "100vw" : "100vw"}
+                    style={{ transitionDuration: "1000ms" }}
                   />
-                  <img
-                    src={url}
-                    alt=""
-                    aria-hidden="true"
-                    className="absolute inset-0 hidden h-full w-full scale-110 object-cover blur-md md:block"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 hidden items-center justify-center p-8 md:flex lg:p-12">
-                    <img
-                      src={url}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-full w-full object-contain transition-transform duration-[10000ms] hover:scale-[1.03]"
-                      loading="lazy"
-                    />
-                  </div>
                   <div className="absolute inset-0 bg-black/30 md:bg-black/40" />
                 </CarouselItem>
               ))}
@@ -253,6 +243,10 @@ const Index = () => {
                       <img
                         src={portfolio.images[0].url}
                         alt={portfolio.title}
+                        width={1200}
+                        height={1600}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                     )}
@@ -319,7 +313,11 @@ const Index = () => {
                         <img
                           src={displayImg}
                           alt={concept.title}
-                          className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                          width={1200}
+                          height={1500}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
                       </div>
@@ -353,7 +351,7 @@ const Index = () => {
                 <Link to="/experience" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way →</Link>
               </div>
               <div style={{ position: "relative" }} className="mobile-center">
-                <img src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg" alt="Maternity Portrait" style={{ width: "100%", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
+                <img src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg" alt="Maternity Portrait" width={1200} height={1600} loading="lazy" decoding="async" style={{ width: "100%", height: "auto", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
               </div>
             </div>
           </div>
@@ -361,14 +359,18 @@ const Index = () => {
         {/* Immersive Studio Experience - Parallax Section */}
         <section
           className="relative min-h-screen flex items-center overflow-hidden py-16 md:py-24"
-          style={{
-            backgroundAttachment: "fixed",
-            backgroundImage: "url('https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg')",
-            backgroundPosition: "center",
-            backgroundSize: "cover",
-            backgroundRepeat: "no-repeat"
-          }}
+          style={{}}
         >
+          <img
+            src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg"
+            alt=""
+            aria-hidden="true"
+            width={1920}
+            height={1080}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
           <div className="container relative z-10 text-white">
             <div style={{ maxWidth: "700px" }}>
@@ -428,10 +430,10 @@ const Index = () => {
                 { name: "The Grand Chandelier", detail: "High-glamour lighting and reflections.", img: "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMG_1293-1-scaled.jpg" }
               ].map((set, i) => (
                 <div key={i} className="group cursor-default">
-                  <div className="overflow-hidden aspect-[4/5] mb-8 relative rounded-[2px] shadow-sm group-hover:shadow-xl transition-all duration-700">
-                    <img src={set.img} alt={set.name} className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" />
+                  <div className="overflow-hidden aspect-[4/5] mb-8 relative rounded-[2px] shadow-sm">
+                    <img src={set.img} alt={set.name} width={1200} height={1500} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-700" />
-                    <div className="absolute bottom-6 left-6 text-white opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
+                    <div className="absolute bottom-6 left-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform translate-y-4 group-hover:translate-y-0">
                       <span className="text-[10px] uppercase tracking-widest font-bold">SET {i + 1}</span>
                     </div>
                   </div>
@@ -462,11 +464,11 @@ const Index = () => {
                 </p>
                 <div style={{ display: "flex", gap: "2rem" }}>
                   <div>
-                    <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Natural Skin</h4>
+                    <h3 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Natural Skin</h3>
                     <p style={{ fontSize: "0.9rem", opacity: 0.6 }}>Preserving the authentic beauty of motherhood.</p>
                   </div>
                   <div>
-                    <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Eternal Glow</h4>
+                    <h3 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Eternal Glow</h3>
                     <p style={{ fontSize: "0.9rem", opacity: 0.6 }}>Soft, ethereal lighting tailored to your silhouette.</p>
                   </div>
                 </div>
@@ -480,7 +482,7 @@ const Index = () => {
           <div className="container">
             <div className="grid grid-2 mobile-gap-12" style={{ gap: "6rem", alignItems: "center" }}>
               <div className="mobile-center">
-                <img src={gownImg} alt="Designer Gowns" style={{ width: "100%", borderRadius: "2px", boxShadow: "clamp(-20px, -4vw, -10px) clamp(10px, 4vw, 20px) 0 var(--magenta-tint)" }} />
+                <img src={gownImg} alt="Designer Gowns" width={1200} height={1600} loading="lazy" decoding="async" style={{ width: "100%", height: "auto", borderRadius: "2px", boxShadow: "clamp(-20px, -4vw, -10px) clamp(10px, 4vw, 20px) 0 var(--magenta-tint)" }} />
               </div>
               <div className="mobile-center">
                 <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "500" }}>Couture Atelier</span>
@@ -495,8 +497,7 @@ const Index = () => {
                     </span>
                   ))}
                 </div>
-                <Link to="/maternity-gowns
-                 " className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>The Collection</Link>
+                <Link to="/maternity-gowns" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>The Collection</Link>
               </div>
             </div>
           </div>
@@ -553,7 +554,7 @@ const Index = () => {
                     <MasonryImage
                       src={asset.url}
                       alt="Studio Masterpiece"
-                      className="w-full h-auto object-cover group-hover:grayscale-0 transition-all duration-700"
+                      className="w-full h-auto object-cover"
                       priority={i < 3}
                     />
                     <div className="absolute inset-0 bg-magenta/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -602,7 +603,7 @@ const Index = () => {
                   <div style={{ display: "flex", gap: "1.5rem" }}>
                     <div style={{ color: "var(--sky-blue)" }}><MapPin size={24} /></div>
                     <div>
-                      <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Diamond Plaza II</h4>
+                      <h3 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Diamond Plaza II</h3>
                       <p style={{ opacity: 0.7 }}>4th Floor, Parklands, Nairobi, Kenya</p>
                     </div>
                   </div>
@@ -610,7 +611,7 @@ const Index = () => {
                   <div style={{ display: "flex", gap: "1.5rem" }}>
                     <div style={{ color: "var(--sky-blue)" }}><Clock size={24} /></div>
                     <div>
-                      <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Studio Hours</h4>
+                      <h3 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Studio Hours</h3>
                       <p style={{ opacity: 0.7 }}>Tuesday – Sunday: 9:00 AM – 6:00 PM<br />Mondays: Closed for Studio Maintenance</p>
                     </div>
                   </div>
@@ -618,15 +619,15 @@ const Index = () => {
                   <div style={{ display: "flex", gap: "1.5rem" }}>
                     <div style={{ color: "var(--sky-blue)" }}><Phone size={24} /></div>
                     <div>
-                      <h4 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Direct Line</h4>
+                      <h3 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Direct Line</h3>
                       <p style={{ opacity: 0.7 }}>+254 720 111 928</p>
                     </div>
                   </div>
                 </div>
 
                 <div style={{ marginTop: "4rem", display: "flex", gap: "1.5rem" }}>
-                  <a href="https://www.instagram.com/fiestahousematernity/" target="_blank" rel="noreferrer" style={{ color: "var(--sky-blue)" }}><Instagram /></a>
-                  <a href="#" style={{ color: "var(--sky-blue)" }}><Facebook /></a>
+                  <a href="https://www.instagram.com/fiestahousematernity/" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Instagram" style={{ color: "var(--sky-blue)" }}><Instagram /></a>
+                  <a href="https://www.facebook.com/fiestahousematernity" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Facebook" style={{ color: "var(--sky-blue)" }}><Facebook /></a>
                 </div>
               </div>
 
@@ -673,47 +674,6 @@ const Index = () => {
               </div>
             </div>
 
-            <div style={{ height: "100%", minHeight: "400px", position: "relative", overflow: "hidden", borderRadius: "2px" }}>
-              <div style={{
-                width: "100%",
-                height: "100%",
-                backgroundColor: "#e5e7eb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundImage: "url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1000')",
-                backgroundSize: "cover",
-                backgroundPosition: "center"
-              }}>
-                <div style={{
-                  backgroundColor: "white",
-                  padding: "1.5rem 2rem",
-                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                  borderRadius: "2px",
-                  textAlign: "center"
-                }}>
-                  <div className="display" style={{ fontSize: "1.2rem", color: "var(--magenta)" }}>FIESTA HOUSE</div>
-                  <div style={{ fontSize: "0.8rem", opacity: 0.6, marginTop: "0.5rem" }}>Diamond Plaza II, Nairobi</div>
-                  <a
-                    href="https://maps.google.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: "block",
-                      marginTop: "1.5rem",
-                      fontSize: "0.75rem",
-                      fontWeight: "700",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                      color: "var(--sky-blue)",
-                      borderBottom: "1px solid var(--sky-blue)"
-                    }}
-                  >
-                    Get Directions
-                  </a>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -808,6 +768,10 @@ const Index = () => {
                             <img
                               src={post.cover_image_url}
                               alt={post.title}
+                              width={1200}
+                              height={1500}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                           ) : (

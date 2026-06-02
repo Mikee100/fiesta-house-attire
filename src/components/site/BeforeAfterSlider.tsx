@@ -16,6 +16,7 @@ const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   const [sliderPos, setSliderPos] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const safeSliderPos = Math.max(sliderPos, 1);
 
   const handleMove = (clientX: number) => {
     if (!containerRef.current) return;
@@ -66,6 +67,10 @@ const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
       <img 
         src={afterImage} 
         alt="After" 
+        width={1600}
+        height={1000}
+        loading="lazy"
+        decoding="async"
         className="absolute inset-0 w-full h-full object-cover"
       />
       
@@ -77,8 +82,12 @@ const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
         <img 
           src={beforeImage} 
           alt="Before" 
+          width={1600}
+          height={1000}
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ width: `${100 / (sliderPos / 100)}%` }}
+          style={{ width: `${100 / (safeSliderPos / 100)}%` }}
         />
         
         {/* Label Before */}

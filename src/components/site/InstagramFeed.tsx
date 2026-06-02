@@ -33,8 +33,10 @@ const InstagramFeed = () => {
       <div className="container" style={{ display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 900 }}>
           <iframe
-            src="//lightwidget.com/widgets/0b97304586765d7cbebbf9922f81af47.html"
+            src="https://lightwidget.com/widgets/0b97304586765d7cbebbf9922f81af47.html"
             title="Instagram Feed"
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
             style={{ width: "100%", border: 0, overflow: "hidden" }}
             scrolling="no"
             allowTransparency={true}

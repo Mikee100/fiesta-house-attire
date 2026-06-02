@@ -1,4 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const isBrowser = typeof window !== 'undefined';
+const isLocalHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+const API_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/_/backend/api');
+
+const logApiError = (...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.error(...args);
+  }
+};
 
 export const fetchPortfolios = async () => {
   try {
@@ -6,7 +14,7 @@ export const fetchPortfolios = async () => {
     if (!res.ok) throw new Error('Failed to fetch');
     return await res.json();
   } catch (err) {
-    console.error(err);
+    logApiError(err);
     return null; // Return null to indicate a connection error
   }
 };
@@ -18,7 +26,7 @@ export const fetchPortfolio = async (idOrSlug: string) => {
     if (!res.ok) throw new Error('Failed to fetch portfolio');
     return await res.json();
   } catch (err) {
-    console.error(err);
+    logApiError(err);
     return null;
   }
 };

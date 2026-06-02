@@ -140,7 +140,10 @@ const Footer = () => {
                   key={src}
                   src={src}
                   alt={`Fiesta House gallery ${index + 1}`}
+                  width={400}
+                  height={500}
                   loading="lazy"
+                  decoding="async"
                 />
               ))}
             </div>

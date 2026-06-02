@@ -117,7 +117,7 @@ const Navbar = () => {
             );
           })}
           
-          <Link to="/cart" style={{ 
+          <Link to="/cart" aria-label="Open cart" style={{ 
             position: "relative", 
             color: solid ? "var(--dark)" : "white",
             display: "flex",
