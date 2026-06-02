@@ -1,6 +1,7 @@
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SEO from "./SEO";
+import { useLocation } from "react-router-dom";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,16 +9,39 @@ interface LayoutProps {
   description?: string;
   keywords?: string;
   ogImage?: string;
+  canonical?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, title, description, keywords, ogImage }) => {
+const SITE_URL = "https://fiestahouseattire.com";
+
+const Layout: React.FC<LayoutProps> = ({
+  children,
+  title,
+  description,
+  keywords,
+  ogImage,
+  canonical,
+  noindex = false,
+  nofollow = false,
+}) => {
+  const { pathname } = useLocation();
+  const configuredSiteUrl = (import.meta.env.VITE_SITE_URL || SITE_URL).replace(/\/$/, "");
+  const normalizedPath = pathname === "/" ? "/" : pathname.replace(/\/$/, "");
+  const resolvedCanonical = canonical || `${configuredSiteUrl}${normalizedPath}`;
+
   return (
     <div className="layout-wrapper">
       <SEO 
         title={title} 
         description={description} 
         keywords={keywords} 
-        ogImage={ogImage} 
+        ogImage={ogImage}
+        ogUrl={resolvedCanonical}
+        canonical={resolvedCanonical}
+        noindex={noindex}
+        nofollow={nofollow}
       />
       <Navbar />
       <main>{children}</main>

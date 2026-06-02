@@ -8,7 +8,11 @@ import p4 from "@/assets/portfolio-4.jpg";
 
 const Experience = () => {
   return (
-    <Layout>
+    <Layout
+      title="The Experience | Luxury Maternity Session Journey"
+      description="Discover the Fiesta House maternity experience in Nairobi, from gown selection and professional makeup to guided posing and heirloom image delivery."
+      keywords="maternity photoshoot experience nairobi, luxury maternity studio process, pregnancy session journey"
+    >
       {/* Walkthrough Section */}
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">

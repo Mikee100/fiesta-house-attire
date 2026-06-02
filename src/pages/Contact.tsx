@@ -2,7 +2,11 @@ import Layout from "@/components/site/Layout";
 
 const Contact = () => {
   return (
-    <Layout>
+    <Layout
+      title="Contact & Booking | Fiesta House Attire Nairobi"
+      description="Book your luxury maternity photoshoot at Fiesta House Attire in Nairobi. Reach us for availability, package guidance, and personalized session planning."
+      keywords="contact fiesta house attire, book maternity photoshoot nairobi, maternity studio booking kenya"
+    >
       {/* Brand color hero bar */}
       <div
         style={{

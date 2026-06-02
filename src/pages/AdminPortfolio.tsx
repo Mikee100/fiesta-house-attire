@@ -8,6 +8,7 @@ import * as api from "@/lib/api";
 import { toast } from "sonner";
 import { ChevronLeft, Plus, Trash2, Image as ImageIcon, Library, Folder, Search, CheckCircle2 } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
+import SEO from "@/components/site/SEO";
 
 const AdminPortfolio = () => {
   const { id } = useParams<{ id: string }>();
@@ -168,6 +169,7 @@ const AdminPortfolio = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <SEO title="Admin Portfolio" noindex nofollow />
       <AdminNavbar />
       <div className="max-w-6xl mx-auto p-8">
         <header className="flex items-center gap-4 mb-12">

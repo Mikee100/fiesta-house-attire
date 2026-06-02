@@ -128,7 +128,7 @@ const MaternityGowns = () => {
                   <div style={{ overflow: "hidden", borderRadius: "2px" }}>
                     <MasonryImage 
                       src={img.url} 
-                      alt={`Maternity Gown ${i + 1}`} 
+                      alt={`Designer maternity gown look ${i + 1} for photoshoot in Nairobi`} 
                       className="group-hover:scale-105"
                       priority={i < 6}
                     />
@@ -171,7 +171,7 @@ const MaternityGowns = () => {
                 <>
                   <img
                     src={lightboxSrc}
-                    alt={`Enlarged maternity gown ${lightboxIdx !== null ? lightboxIdx + 1 : ""}`}
+                    alt={`Enlarged designer maternity gown look ${lightboxIdx !== null ? lightboxIdx + 1 : ""} for Nairobi studio photoshoot`}
                     onLoad={(e) => {
                       const image = e.currentTarget;
                       setIsLandscapePreview(image.naturalWidth >= image.naturalHeight);

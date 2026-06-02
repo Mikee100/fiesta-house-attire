@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, Loader2, Plus, Trash2, Upload, Video } from "lucide
 import AdminNavbar from "@/components/admin/AdminNavbar";
 import * as api from "@/lib/api";
 import type { VideoItem } from "@/lib/api";
+import SEO from "@/components/site/SEO";
 
 const AdminVideos = () => {
   const [videos, setVideos] = useState<VideoItem[]>([]);
@@ -173,6 +174,7 @@ const AdminVideos = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <SEO title="Admin Videos" noindex nofollow />
       <AdminNavbar />
       <div className="max-w-6xl mx-auto p-8 space-y-8">
         <header className="space-y-2">

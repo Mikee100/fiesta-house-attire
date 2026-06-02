@@ -8,6 +8,7 @@ import * as api from "@/lib/api";
 import { toast } from "sonner";
 import { Folder, Image as ImageIcon, Plus, Trash2, ChevronRight, Upload, Loader2, Search, CheckCircle2, Copy } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
+import SEO from "@/components/site/SEO";
 
 const AdminAssets = () => {
   const [folders, setFolders] = useState<any[]>([]);
@@ -126,6 +127,7 @@ const AdminAssets = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <SEO title="Admin Assets" noindex nofollow />
       <AdminNavbar />
       <div className="max-w-6xl mx-auto p-8">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">

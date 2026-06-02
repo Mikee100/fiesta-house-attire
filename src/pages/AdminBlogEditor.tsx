@@ -10,6 +10,7 @@ import * as api from "@/lib/api";
 import { BlogCategory, BlogPost } from "@/lib/api";
 import { toast } from "sonner";
 import AdminNavbar from "@/components/admin/AdminNavbar";
+import SEO from "@/components/site/SEO";
 
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -137,6 +138,7 @@ const AdminBlogEditor = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50">
+        <SEO title="Admin Blog Editor" noindex nofollow />
         <AdminNavbar />
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-[var(--sky-blue)]" />
@@ -147,6 +149,7 @@ const AdminBlogEditor = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
+      <SEO title="Admin Blog Editor" noindex nofollow />
       <AdminNavbar />
       
       {/* Sticky Header */}

@@ -9,22 +9,27 @@ interface SEOProps {
   ogUrl?: string;
   ogType?: string;
   canonical?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
 }
 
 const SEO: React.FC<SEOProps> = ({ 
   title, 
   description, 
   keywords, 
-  ogImage = '/og-image.jpg', 
+  ogImage = 'https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL4334-scaled.jpg', 
   ogUrl = 'https://fiestahouseattire.com',
   ogType = 'website',
-  canonical
+  canonical,
+  noindex = false,
+  nofollow = false
 }) => {
   const fullTitle = title ? `${title} | Fiesta House Attire` : "Fiesta House Attire | Luxury Maternity Photography Nairobi";
   const defaultDescription = "Fiesta House Attire is Nairobi's premier luxury maternity studio. Exclusive designer gowns, professional makeup, and editorial photography in a private studio.";
   const metaDescription = description || defaultDescription;
   const defaultKeywords = "maternity photoshoot nairobi, luxury maternity photography, pregnancy photoshoot, nairobi maternity studio, designer maternity gowns, baby bump photoshoot kenya";
   const metaKeywords = keywords ? `${defaultKeywords}, ${keywords}` : defaultKeywords;
+  const robotsContent = `${noindex ? "noindex" : "index"}, ${nofollow ? "nofollow" : "follow"}`;
 
   return (
     <Helmet>
@@ -32,6 +37,8 @@ const SEO: React.FC<SEOProps> = ({
       <title>{fullTitle}</title>
       <meta name="description" content={metaDescription} />
       <meta name="keywords" content={metaKeywords} />
+      <meta name="robots" content={robotsContent} />
+      <meta name="googlebot" content={robotsContent} />
       {canonical && <link rel="canonical" href={canonical} />}
 
       {/* Open Graph / Facebook */}

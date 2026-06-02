@@ -10,6 +10,7 @@ import * as api from "@/lib/api";
 import { toast } from "sonner";
 import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, Library, Sparkles, FolderPlus, Search, ArrowUp, ArrowDown } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
+import SEO from "@/components/site/SEO";
 
 const Admin = () => {
   const [portfolios, setPortfolios] = useState<any[]>([]);
@@ -130,6 +131,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFCFD]">
+      <SEO title="Admin" noindex nofollow />
       <AdminNavbar />
       
       <div className="max-w-[1400px] mx-auto px-6 py-10">

@@ -150,7 +150,7 @@ const PortfolioCategory = () => {
                 }}>
                   <MasonryImage
                     src={img}
-                    alt={`${portfolio.title} Image ${i + 1}`}
+                    alt={`${portfolio.title} maternity photoshoot image ${i + 1} in Nairobi`}
                     className="group-hover:scale-105"
                     priority={i < 3}
                   />
@@ -187,7 +187,7 @@ const PortfolioCategory = () => {
                   <>
                     <img
                       src={lightboxSrc}
-                      alt={`Enlarged ${portfolio.title} Image ${lightboxIdx !== null ? lightboxIdx + 1 : ""}`}
+                      alt={`Enlarged ${portfolio.title} maternity photoshoot image ${lightboxIdx !== null ? lightboxIdx + 1 : ""}`}
                       onLoad={(e) => {
                         const img = e.currentTarget;
                         setIsLandscapePreview(img.naturalWidth >= img.naturalHeight);

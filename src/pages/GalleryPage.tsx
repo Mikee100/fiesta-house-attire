@@ -39,7 +39,11 @@ const GalleryPage = () => {
   }, [folderId]);
 
   return (
-    <Layout>
+    <Layout
+      title={folderName ? `${folderName} Gallery` : "Gallery"}
+      description={folderName ? `Browse the ${folderName} gallery by Fiesta House Attire in Nairobi.` : "Browse luxury maternity and studio imagery by Fiesta House Attire in Nairobi."}
+      keywords="maternity gallery nairobi, luxury photoshoot gallery, fiesta house portfolio"
+    >
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "6rem" }}>
@@ -78,7 +82,7 @@ const GalleryPage = () => {
                   <div style={{ overflow: "hidden", borderRadius: "2px" }}>
                     <MasonryImage 
                       src={img.url} 
-                      alt={`Gallery item ${i + 1}`} 
+                      alt={`${folderName || "Fiesta House"} gallery photo ${i + 1} in Nairobi`} 
                       className="group-hover:scale-105"
                       priority={i < 3}
                     />

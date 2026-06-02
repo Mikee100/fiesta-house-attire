@@ -60,6 +60,8 @@ const Checkout = () => {
     <Layout
       title="Checkout | Fiesta House Attire"
       description="Securely complete your purchase of luxury photography packages."
+      noindex
+      nofollow
     >
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)" }}>
         <div className="container">

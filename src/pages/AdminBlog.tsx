@@ -9,6 +9,7 @@ import { BlogPost } from "@/lib/api";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Globe, FileText, Search } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
+import SEO from "@/components/site/SEO";
 
 const AdminBlog = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -70,6 +71,7 @@ const AdminBlog = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <SEO title="Admin Blog" noindex nofollow />
       <AdminNavbar />
       <div className="max-w-6xl mx-auto p-8">
         
