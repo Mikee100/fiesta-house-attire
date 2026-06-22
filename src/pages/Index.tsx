@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import BeforeAfterSlider from "@/components/site/BeforeAfterSlider";
 import MasonryImage from "@/components/site/MasonryImage";
 import InstagramFeed from "@/components/site/InstagramFeed";
-import { Mail, MapPin, Clock, Phone, Instagram, Facebook } from "lucide-react";
+import { Mail, MapPin, Clock, Phone, Instagram, Facebook, ArrowRight, CalendarDays, Images } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import gownImg from "@/assets/gowns.jpg";
@@ -216,9 +216,42 @@ const Index = () => {
               }}>
                 Nairobi's premier luxury maternity studio
               </p>
-              <div style={{ display: "flex", gap: "1.5rem", justifyContent: "center" }}>
-                <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--magenta)", border: "none" }}>Book a Session</Link>
-                <Link to="/portfolio" className="btn btn-outline" style={{ borderColor: "white", color: "white" }}>View Portfolio</Link>
+              <div className="mx-auto mt-2 flex w-full max-w-3xl flex-col gap-4 sm:flex-row sm:justify-center">
+                <Link
+                  to="/contact"
+                  className="group relative flex min-h-[128px] flex-1 overflow-hidden rounded-2xl border border-white/25 bg-white/10 p-5 text-left shadow-[0_16px_35px_rgba(0,0,0,0.22)] backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white/18 hover:shadow-[0_20px_45px_rgba(0,0,0,0.3)]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#B84FA0]/35 via-transparent to-transparent opacity-80" />
+                  <div className="relative flex w-full items-start justify-between gap-4">
+                    <div>
+                      <span className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/90">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        Priority Booking
+                      </span>
+                      <h3 className="text-xl font-semibold text-white">Book a Session</h3>
+                      <p className="mt-1 text-sm text-white/85">Reserve your preferred date with our studio team.</p>
+                    </div>
+                    <ArrowRight className="mt-1 h-5 w-5 text-white/80 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </Link>
+
+                <Link
+                  to="/portfolio"
+                  className="group relative flex min-h-[128px] flex-1 overflow-hidden rounded-2xl border border-white/25 bg-white/8 p-5 text-left shadow-[0_16px_35px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white/16 hover:shadow-[0_20px_45px_rgba(0,0,0,0.28)]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#6EC1E4]/32 via-transparent to-transparent opacity-80" />
+                  <div className="relative flex w-full items-start justify-between gap-4">
+                    <div>
+                      <span className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/90">
+                        <Images className="h-3.5 w-3.5" />
+                        Signature Work
+                      </span>
+                      <h3 className="text-xl font-semibold text-white">View Portfolio</h3>
+                      <p className="mt-1 text-sm text-white/85">Explore curated collections and latest studio sets.</p>
+                    </div>
+                    <ArrowRight className="mt-1 h-5 w-5 text-white/80 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </Link>
               </div>
             </div>
           </div>
