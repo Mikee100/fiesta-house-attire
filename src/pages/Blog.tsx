@@ -132,7 +132,8 @@ const Blog = () => {
                             <img 
                               src={post.cover_image_url} 
                               alt={post.title} 
-                              className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                              className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                              style={{ transitionDuration: "1500ms" }}
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">

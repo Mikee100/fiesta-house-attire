@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowDown, ArrowUp, Loader2, Plus, Trash2, Upload, Video } from "lucide-react";
-import AdminNavbar from "@/components/admin/AdminNavbar";
+import AdminPage from "@/components/admin/AdminPage";
+import AdminSection from "@/components/admin/AdminSection";
+import AdminStatusPill from "@/components/admin/AdminStatusPill";
 import * as api from "@/lib/api";
 import type { VideoItem } from "@/lib/api";
 import SEO from "@/components/site/SEO";
@@ -173,16 +175,15 @@ const AdminVideos = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <>
       <SEO title="Admin Videos" noindex nofollow />
-      <AdminNavbar />
-      <div className="max-w-6xl mx-auto p-8 space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Admin Videos</h1>
-          <p className="text-slate-500">Add videos via URL or upload, then manage visibility and order.</p>
-        </header>
-
-        <form onSubmit={handleCreate} className="bg-white rounded-xl border p-6 space-y-4">
+      <AdminPage
+        title="Admin Videos"
+        description="Add videos via URL or upload, then manage visibility and order."
+        maxWidthClassName="max-w-6xl"
+      >
+        <AdminSection title="Create Video" description="Publish a new video item to your public videos page.">
+          <form onSubmit={handleCreate} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs uppercase tracking-wider text-slate-500">Title</label>
@@ -245,13 +246,14 @@ const AdminVideos = () => {
               {saving ? "Saving..." : "Add Video"}
             </Button>
           </div>
-        </form>
+          </form>
+        </AdminSection>
 
-        <section className="bg-white rounded-xl border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Saved Videos</h2>
-            <span className="text-sm text-slate-500">{videos.length} items</span>
-          </div>
+        <AdminSection
+          title="Saved Videos"
+          description="Reorder, feature, hide, and delete existing videos."
+          actions={<AdminStatusPill label={`${videos.length} items`} />}
+        >
 
           {loading ? (
             <div className="py-10 text-center text-slate-500">Loading videos...</div>
@@ -307,9 +309,9 @@ const AdminVideos = () => {
               ))}
             </div>
           )}
-        </section>
-      </div>
-    </div>
+        </AdminSection>
+      </AdminPage>
+    </>
   );
 };
 

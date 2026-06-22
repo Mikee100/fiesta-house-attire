@@ -8,7 +8,10 @@ import * as api from "@/lib/api";
 import { BlogPost } from "@/lib/api";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Globe, FileText, Search } from "lucide-react";
-import AdminNavbar from "@/components/admin/AdminNavbar";
+import AdminPage from "@/components/admin/AdminPage";
+import AdminSection from "@/components/admin/AdminSection";
+import AdminToolbar from "@/components/admin/AdminToolbar";
+import AdminStatusPill from "@/components/admin/AdminStatusPill";
 import SEO from "@/components/site/SEO";
 
 const AdminBlog = () => {
@@ -70,37 +73,36 @@ const AdminBlog = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <>
       <SEO title="Admin Blog" noindex nofollow />
-      <AdminNavbar />
-      <div className="max-w-6xl mx-auto p-8">
-        
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Blog Posts</h1>
-            <p className="text-muted-foreground">Manage your articles and categories</p>
-          </div>
+      <AdminPage
+        title="Blog Posts"
+        description="Manage your articles and categories"
+        maxWidthClassName="max-w-6xl"
+        actions={
           <Link to="/admin/blog/new">
             <Button className="bg-[var(--sky-blue)] hover:bg-[#5AAFD1] text-white">
               <Plus className="mr-2 h-4 w-4" /> New Post
             </Button>
           </Link>
-        </header>
-
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex gap-4 items-center">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input 
-                placeholder="Search posts..." 
-                className="pl-9 bg-white"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="text-sm text-slate-500 font-medium">
-              {filteredPosts.length} posts
-            </div>
+        }
+      >
+        <AdminSection className="overflow-hidden" contentClassName="p-0" title="All Posts" description="Search, edit, publish, and delete blog content.">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+            <AdminToolbar
+              left={
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search posts..."
+                    className="pl-9 bg-white"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+              }
+              right={<AdminStatusPill label={`${filteredPosts.length} posts`} tone="neutral" />}
+            />
           </div>
 
           <div className="overflow-x-auto">
@@ -184,9 +186,9 @@ const AdminBlog = () => {
               </TableBody>
             </Table>
           </div>
-        </div>
-      </div>
-    </div>
+        </AdminSection>
+      </AdminPage>
+    </>
   );
 };
 

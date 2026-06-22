@@ -1,3 +1,5 @@
+import { authenticatedFetch } from "@/lib/adminAuth";
+
 const isBrowser = typeof window !== 'undefined';
 const isLocalHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
 const API_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/_/backend/api');
@@ -32,7 +34,7 @@ export const fetchPortfolio = async (idOrSlug: string) => {
 };
 
 export const createPortfolio = async (title: string) => {
-  const res = await fetch(`${API_URL}/portfolios`, {
+  const res = await authenticatedFetch(`${API_URL}/portfolios`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title })
@@ -41,14 +43,14 @@ export const createPortfolio = async (title: string) => {
 };
 
 export const deletePortfolio = async (id: string) => {
-  const res = await fetch(`${API_URL}/portfolios/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/portfolios/${id}`, {
     method: 'DELETE'
   });
   return await res.json();
 };
 
 export const updatePortfolio = async (id: string, data: { cover_image_url?: string; title?: string; order?: number }) => {
-  const res = await fetch(`${API_URL}/portfolios/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/portfolios/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -57,7 +59,7 @@ export const updatePortfolio = async (id: string, data: { cover_image_url?: stri
 };
 
 export const reorderPortfolios = async (portfolioIds: string[]) => {
-  const res = await fetch(`${API_URL}/portfolios/reorder`, {
+  const res = await authenticatedFetch(`${API_URL}/portfolios/reorder`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ portfolioIds })
@@ -66,7 +68,7 @@ export const reorderPortfolios = async (portfolioIds: string[]) => {
 };
 
 export const addImageToPortfolio = async (portfolioId: string, url: string) => {
-  const res = await fetch(`${API_URL}/portfolios/${portfolioId}/images`, {
+  const res = await authenticatedFetch(`${API_URL}/portfolios/${portfolioId}/images`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url })
@@ -75,7 +77,7 @@ export const addImageToPortfolio = async (portfolioId: string, url: string) => {
 };
 
 export const addImagesToPortfolioBulk = async (portfolioId: string, urls: string[]) => {
-  const res = await fetch(`${API_URL}/portfolios/${portfolioId}/images/bulk`, {
+  const res = await authenticatedFetch(`${API_URL}/portfolios/${portfolioId}/images/bulk`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ urls })
@@ -84,14 +86,14 @@ export const addImagesToPortfolioBulk = async (portfolioId: string, urls: string
 };
 
 export const deduplicatePortfolioImages = async (portfolioId: string) => {
-  const res = await fetch(`${API_URL}/portfolios/${portfolioId}/deduplicate`, {
+  const res = await authenticatedFetch(`${API_URL}/portfolios/${portfolioId}/deduplicate`, {
     method: 'POST'
   });
   return await res.json();
 };
 
 export const deleteImage = async (imageId: string) => {
-  const res = await fetch(`${API_URL}/portfolio-images/${imageId}`, {
+  const res = await authenticatedFetch(`${API_URL}/portfolio-images/${imageId}`, {
     method: 'DELETE'
   });
   return await res.json();
@@ -105,7 +107,7 @@ export const fetchFolders = async () => {
 };
 
 export const createFolder = async (name: string, parentId?: string) => {
-  const res = await fetch(`${API_URL}/folders`, {
+  const res = await authenticatedFetch(`${API_URL}/folders`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, parent_id: parentId })
@@ -114,7 +116,7 @@ export const createFolder = async (name: string, parentId?: string) => {
 };
 
 export const updateFolder = async (id: string, data: { cover_image_url?: string; name?: string }) => {
-  const res = await fetch(`${API_URL}/folders/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/folders/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -132,7 +134,7 @@ export const fetchAssets = async (folderId?: string, page: number = 1, limit: nu
 };
 
 export const addAssetsBulk = async (urls: string[], folderId?: string) => {
-  const res = await fetch(`${API_URL}/assets/bulk`, {
+  const res = await authenticatedFetch(`${API_URL}/assets/bulk`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ urls, folder_id: folderId })
@@ -141,7 +143,7 @@ export const addAssetsBulk = async (urls: string[], folderId?: string) => {
 };
 
 export const deleteAsset = async (id: string) => {
-  const res = await fetch(`${API_URL}/assets/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/assets/${id}`, {
     method: 'DELETE'
   });
   return await res.json();
@@ -151,7 +153,7 @@ export const uploadFile = async (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
 
-  const res = await fetch(`${API_URL.replace('/api', '')}/api/upload`, {
+  const res = await authenticatedFetch(`${API_URL.replace('/api', '')}/api/upload`, {
     method: 'POST',
     body: formData
   });
@@ -159,7 +161,7 @@ export const uploadFile = async (file: File) => {
 };
 
 export const createAsset = async (url: string, folderId?: string) => {
-  const res = await fetch(`${API_URL}/assets`, {
+  const res = await authenticatedFetch(`${API_URL}/assets`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, folder_id: folderId })
@@ -196,7 +198,7 @@ export const fetchBlogCategories = async (): Promise<BlogCategory[]> => {
 };
 
 export const createBlogCategory = async (name: string) => {
-  const res = await fetch(`${API_URL}/blog-categories`, {
+  const res = await authenticatedFetch(`${API_URL}/blog-categories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name })
@@ -217,7 +219,7 @@ export const fetchBlogPosts = async (page = 1, category?: string): Promise<{
 };
 
 export const fetchAllBlogPosts = async (): Promise<BlogPost[]> => {
-  const res = await fetch(`${API_URL}/blog-posts/all`);
+  const res = await authenticatedFetch(`${API_URL}/blog-posts/all`);
   return await res.json();
 };
 
@@ -237,7 +239,7 @@ export const fetchRecentBlogPosts = async () => {
 };
 
 export const createBlogPost = async (data: Partial<BlogPost> & { category_ids?: string[] }) => {
-  const res = await fetch(`${API_URL}/blog-posts`, {
+  const res = await authenticatedFetch(`${API_URL}/blog-posts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -246,7 +248,7 @@ export const createBlogPost = async (data: Partial<BlogPost> & { category_ids?: 
 };
 
 export const updateBlogPost = async (id: string, data: Partial<BlogPost> & { category_ids?: string[] }) => {
-  const res = await fetch(`${API_URL}/blog-posts/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/blog-posts/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -255,7 +257,7 @@ export const updateBlogPost = async (id: string, data: Partial<BlogPost> & { cat
 };
 
 export const deleteBlogPost = async (id: string) => {
-  const res = await fetch(`${API_URL}/blog-posts/${id}`, { method: 'DELETE' });
+  const res = await authenticatedFetch(`${API_URL}/blog-posts/${id}`, { method: 'DELETE' });
   return await res.json();
 };
 
@@ -302,7 +304,7 @@ export const fetchVideos = async (): Promise<VideoItem[]> => {
 };
 
 export const fetchAdminVideos = async (): Promise<VideoItem[]> => {
-  const res = await fetch(`${API_URL}/admin/videos`);
+  const res = await authenticatedFetch(`${API_URL}/admin/videos`);
   return await res.json();
 };
 
@@ -315,7 +317,7 @@ export const createVideo = async (payload: {
   is_active?: boolean;
   sort_order?: number;
 }) => {
-  const res = await fetch(`${API_URL}/videos`, {
+  const res = await authenticatedFetch(`${API_URL}/videos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -324,7 +326,7 @@ export const createVideo = async (payload: {
 };
 
 export const updateVideo = async (id: string, payload: Partial<VideoItem>) => {
-  const res = await fetch(`${API_URL}/videos/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/videos/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -333,14 +335,14 @@ export const updateVideo = async (id: string, payload: Partial<VideoItem>) => {
 };
 
 export const deleteVideo = async (id: string) => {
-  const res = await fetch(`${API_URL}/videos/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/videos/${id}`, {
     method: 'DELETE'
   });
   return await res.json();
 };
 
 export const reorderVideos = async (videoIds: string[]) => {
-  const res = await fetch(`${API_URL}/videos/reorder`, {
+  const res = await authenticatedFetch(`${API_URL}/videos/reorder`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ videoIds })

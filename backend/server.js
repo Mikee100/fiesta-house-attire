@@ -1,20 +1,42 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 5000;
+const useSsl = process.env.DATABASE_SSL !== 'false';
+const isProduction = process.env.NODE_ENV === 'production';
+
+const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET || 'change-me-access-secret';
+const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || 'change-me-refresh-secret';
+const ACCESS_TOKEN_TTL = process.env.JWT_ACCESS_TTL || '15m';
+const REFRESH_TOKEN_TTL = process.env.JWT_REFRESH_TTL || '30d';
+const REFRESH_TOKEN_COOKIE = 'fh_refresh_token';
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,https://fiestahouseattire.vercel.app')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (!isProduction && (ACCESS_TOKEN_SECRET === 'change-me-access-secret' || REFRESH_TOKEN_SECRET === 'change-me-refresh-secret')) {
+  console.warn('Using default JWT secrets in development. Set JWT_ACCESS_SECRET and JWT_REFRESH_SECRET in production.');
+}
 
 // Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // Required for Supabase/hosted DBs
-  }
+  ssl: useSsl
+    ? {
+        rejectUnauthorized: false // Required for Supabase/hosted DBs
+      }
+    : false
 });
 
 // Supabase Storage Client
@@ -26,8 +48,135 @@ const supabase = createClient(
 // Multer setup
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.use(cors());
+app.set('trust proxy', 1);
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error('CORS origin not allowed'));
+  },
+  credentials: true
+}));
+app.use(cookieParser());
 app.use(express.json());
+
+app.use('/api', (req, res, next) => {
+  const isAuthRoute = req.path.startsWith('/auth');
+  const isAdminRoute = req.path.startsWith('/admin');
+  const isWriteMethod = req.method !== 'GET';
+
+  if (isAuthRoute || isAdminRoute || isWriteMethod) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    return next();
+  }
+
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=120');
+  next();
+});
+
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+const getRefreshCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
+  path: '/api/auth',
+  maxAge: 30 * 24 * 60 * 60 * 1000
+});
+
+const generateAccessToken = (user) => jwt.sign(
+  { sub: user.id, email: user.email, role: user.role, type: 'access' },
+  ACCESS_TOKEN_SECRET,
+  { expiresIn: ACCESS_TOKEN_TTL }
+);
+
+const generateRefreshToken = (user, tokenId) => jwt.sign(
+  { sub: user.id, type: 'refresh', tid: tokenId },
+  REFRESH_TOKEN_SECRET,
+  { expiresIn: REFRESH_TOKEN_TTL }
+);
+
+const persistRefreshToken = async ({ userId, refreshToken, userAgent, ipAddress }) => {
+  const payload = jwt.decode(refreshToken);
+  const expiresAt = new Date((payload.exp || 0) * 1000);
+
+  await pool.query(
+    `INSERT INTO user_refresh_tokens (user_id, token_hash, expires_at, user_agent, ip_address)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [userId, hashToken(refreshToken), expiresAt, userAgent || null, ipAddress || null]
+  );
+};
+
+const issueAuthTokens = async (user, req, res) => {
+  const tokenId = crypto.randomUUID();
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user, tokenId);
+
+  await persistRefreshToken({
+    userId: user.id,
+    refreshToken,
+    userAgent: req.get('user-agent'),
+    ipAddress: req.ip
+  });
+
+  res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, getRefreshCookieOptions());
+
+  return {
+    accessToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role
+    }
+  };
+};
+
+const requireAdminAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing access token' });
+  }
+
+  const token = authHeader.slice(7);
+
+  try {
+    const payload = jwt.verify(token, ACCESS_TOKEN_SECRET);
+    if (payload.type !== 'access' || payload.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    req.user = payload;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid or expired access token' });
+  }
+};
+
+const initAuthDb = async () => {
+  try {
+    await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_refresh_tokens (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        revoked_at TIMESTAMP WITH TIME ZONE,
+        replaced_by_token_hash TEXT,
+        user_agent TEXT,
+        ip_address TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON user_refresh_tokens(user_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON user_refresh_tokens(expires_at)');
+    console.log('✓ Auth token tables initialized');
+  } catch (err) {
+    console.error('Auth DB Init Error:', err);
+  }
+};
 
 // Initialize Shop Database
 const initShopDb = async () => {
@@ -236,8 +385,182 @@ const initVideosDb = async () => {
 };
 
 initVideosDb();
+initAuthDb();
 
 // Routes
+
+// --- Authentication API ---
+
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body || {};
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  try {
+    const userResult = await pool.query(
+      `SELECT id, email, password_hash, full_name, role, is_active
+       FROM users
+       WHERE lower(email) = lower($1)
+       LIMIT 1`,
+      [email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = userResult.rows[0];
+    if (!user.is_active || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Account is not allowed to sign in' });
+    }
+
+    const passwordCheck = await pool.query(
+      'SELECT $1 = crypt($2, $1) AS valid',
+      [user.password_hash, password]
+    );
+
+    if (!passwordCheck.rows[0].valid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const authResponse = await issueAuthTokens(user, req, res);
+    res.json(authResponse);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.post('/api/auth/refresh', async (req, res) => {
+  const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
+
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'Missing refresh token' });
+  }
+
+  try {
+    const payload = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
+    if (payload.type !== 'refresh') {
+      return res.status(401).json({ error: 'Invalid refresh token' });
+    }
+
+    const currentTokenHash = hashToken(refreshToken);
+
+    const tokenResult = await pool.query(
+      `SELECT rt.id, rt.user_id, rt.revoked_at, rt.expires_at, u.email, u.full_name, u.role, u.is_active
+       FROM user_refresh_tokens rt
+       JOIN users u ON u.id = rt.user_id
+       WHERE rt.token_hash = $1
+       LIMIT 1`,
+      [currentTokenHash]
+    );
+
+    if (tokenResult.rows.length === 0) {
+      res.clearCookie(REFRESH_TOKEN_COOKIE, getRefreshCookieOptions());
+      return res.status(401).json({ error: 'Refresh token not recognized' });
+    }
+
+    const tokenRow = tokenResult.rows[0];
+    if (tokenRow.revoked_at || new Date(tokenRow.expires_at) < new Date() || !tokenRow.is_active) {
+      res.clearCookie(REFRESH_TOKEN_COOKIE, getRefreshCookieOptions());
+      return res.status(401).json({ error: 'Refresh token expired or revoked' });
+    }
+
+    const user = {
+      id: tokenRow.user_id,
+      email: tokenRow.email,
+      full_name: tokenRow.full_name,
+      role: tokenRow.role
+    };
+
+    const tokenId = crypto.randomUUID();
+    const newAccessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user, tokenId);
+    const newRefreshTokenHash = hashToken(newRefreshToken);
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `UPDATE user_refresh_tokens
+         SET revoked_at = NOW(), replaced_by_token_hash = $1
+         WHERE token_hash = $2`,
+        [newRefreshTokenHash, currentTokenHash]
+      );
+
+      const decodedRefresh = jwt.decode(newRefreshToken);
+      const expiresAt = new Date((decodedRefresh.exp || 0) * 1000);
+      await client.query(
+        `INSERT INTO user_refresh_tokens (user_id, token_hash, expires_at, user_agent, ip_address)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [user.id, newRefreshTokenHash, expiresAt, req.get('user-agent') || null, req.ip || null]
+      );
+
+      await client.query('COMMIT');
+    } catch (txError) {
+      await client.query('ROLLBACK');
+      throw txError;
+    } finally {
+      client.release();
+    }
+
+    res.cookie(REFRESH_TOKEN_COOKIE, newRefreshToken, getRefreshCookieOptions());
+    res.json({
+      accessToken: newAccessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    res.clearCookie(REFRESH_TOKEN_COOKIE, getRefreshCookieOptions());
+    return res.status(401).json({ error: 'Failed to refresh session' });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
+
+  if (refreshToken) {
+    const tokenHash = hashToken(refreshToken);
+    await pool.query(
+      'UPDATE user_refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1 AND revoked_at IS NULL',
+      [tokenHash]
+    );
+  }
+
+  res.clearCookie(REFRESH_TOKEN_COOKIE, getRefreshCookieOptions());
+  res.json({ message: 'Logged out successfully' });
+});
+
+app.get('/api/auth/me', requireAdminAuth, async (req, res) => {
+  try {
+    const userResult = await pool.query(
+      'SELECT id, email, full_name, role, is_active FROM users WHERE id = $1 LIMIT 1',
+      [req.user.sub]
+    );
+
+    if (userResult.rows.length === 0 || !userResult.rows[0].is_active) {
+      return res.status(401).json({ error: 'Account not available' });
+    }
+
+    const user = userResult.rows[0];
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch current user' });
+  }
+});
 
 // Get all portfolios with their images
 app.get('/api/portfolios', async (req, res) => {
@@ -288,7 +611,7 @@ app.get('/api/portfolios/:idOrSlug', async (req, res) => {
 });
 
 // Create a new portfolio
-app.post('/api/portfolios', async (req, res) => {
+app.post('/api/portfolios', requireAdminAuth, async (req, res) => {
   const { title } = req.body;
   if (!title) return res.status(400).json({ error: 'Title is required' });
 
@@ -310,7 +633,7 @@ app.post('/api/portfolios', async (req, res) => {
 });
 
 // Add image to portfolio
-app.post('/api/portfolios/:id/images', async (req, res) => {
+app.post('/api/portfolios/:id/images', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { url } = req.body;
 
@@ -329,7 +652,7 @@ app.post('/api/portfolios/:id/images', async (req, res) => {
 });
 
 // Bulk add images to portfolio
-app.post('/api/portfolios/:id/images/bulk', async (req, res) => {
+app.post('/api/portfolios/:id/images/bulk', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { urls } = req.body;
   if (!urls || !Array.isArray(urls)) return res.status(400).json({ error: 'URLs array is required' });
@@ -353,7 +676,7 @@ app.post('/api/portfolios/:id/images/bulk', async (req, res) => {
 });
 
 // Deduplicate portfolio images
-app.post('/api/portfolios/:id/deduplicate', async (req, res) => {
+app.post('/api/portfolios/:id/deduplicate', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(`
@@ -377,7 +700,7 @@ app.post('/api/portfolios/:id/deduplicate', async (req, res) => {
 });
 
 // Delete portfolio
-app.delete('/api/portfolios/:id', async (req, res) => {
+app.delete('/api/portfolios/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM portfolios WHERE id = $1', [id]);
@@ -389,7 +712,7 @@ app.delete('/api/portfolios/:id', async (req, res) => {
 });
 
 // Reorder portfolios by explicit id sequence
-app.patch('/api/portfolios/reorder', async (req, res) => {
+app.patch('/api/portfolios/reorder', requireAdminAuth, async (req, res) => {
   const { portfolioIds } = req.body;
 
   if (!Array.isArray(portfolioIds) || portfolioIds.length === 0) {
@@ -419,7 +742,7 @@ app.patch('/api/portfolios/reorder', async (req, res) => {
 });
 
 // Update portfolio (e.g., set cover image)
-app.patch('/api/portfolios/:id', async (req, res) => {
+app.patch('/api/portfolios/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { cover_image_url, title, order } = req.body;
   
@@ -460,7 +783,7 @@ app.patch('/api/portfolios/:id', async (req, res) => {
 });
 
 // Delete image
-app.delete('/api/portfolio-images/:id', async (req, res) => {
+app.delete('/api/portfolio-images/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM portfolio_images WHERE id = $1', [id]);
@@ -484,7 +807,7 @@ app.get('/api/folders', async (req, res) => {
 });
 
 // Create folder
-app.post('/api/folders', async (req, res) => {
+app.post('/api/folders', requireAdminAuth, async (req, res) => {
   const { name, parent_id } = req.body;
   try {
     const result = await pool.query(
@@ -498,7 +821,7 @@ app.post('/api/folders', async (req, res) => {
 });
 
 // Update folder (e.g., set cover image)
-app.patch('/api/folders/:id', async (req, res) => {
+app.patch('/api/folders/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { cover_image_url, name } = req.body;
   
@@ -579,7 +902,7 @@ app.get('/api/assets', async (req, res) => {
 });
 
 // Bulk add assets by URL (existing)
-app.post('/api/assets/bulk', async (req, res) => {
+app.post('/api/assets/bulk', requireAdminAuth, async (req, res) => {
   const { urls, folder_id } = req.body;
   if (!urls || !Array.isArray(urls)) return res.status(400).json({ error: 'URLs array is required' });
 
@@ -599,7 +922,7 @@ app.post('/api/assets/bulk', async (req, res) => {
 });
 
 // Single file upload to storage
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   try {
@@ -626,7 +949,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 });
 
 // Create asset after upload (Convenience endpoint)
-app.post('/api/assets', async (req, res) => {
+app.post('/api/assets', requireAdminAuth, async (req, res) => {
   const { url, folder_id } = req.body;
   try {
     const result = await pool.query(
@@ -640,7 +963,7 @@ app.post('/api/assets', async (req, res) => {
 });
 
 // Delete asset
-app.delete('/api/assets/:id', async (req, res) => {
+app.delete('/api/assets/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM assets WHERE id = $1', [id]);
@@ -668,7 +991,7 @@ app.get('/api/videos', async (req, res) => {
 });
 
 // Admin videos list (includes inactive)
-app.get('/api/admin/videos', async (req, res) => {
+app.get('/api/admin/videos', requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM videos
@@ -682,7 +1005,7 @@ app.get('/api/admin/videos', async (req, res) => {
 });
 
 // Create video
-app.post('/api/videos', async (req, res) => {
+app.post('/api/videos', requireAdminAuth, async (req, res) => {
   const {
     title,
     description,
@@ -719,7 +1042,7 @@ app.post('/api/videos', async (req, res) => {
 });
 
 // Update video
-app.patch('/api/videos/:id', async (req, res) => {
+app.patch('/api/videos/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { title, description, video_url, source_type, is_featured, sort_order, is_active } = req.body;
 
@@ -785,7 +1108,7 @@ app.patch('/api/videos/:id', async (req, res) => {
 });
 
 // Delete video
-app.delete('/api/videos/:id', async (req, res) => {
+app.delete('/api/videos/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM videos WHERE id = $1', [id]);
@@ -797,7 +1120,7 @@ app.delete('/api/videos/:id', async (req, res) => {
 });
 
 // Reorder videos by explicit id sequence
-app.patch('/api/videos/reorder', async (req, res) => {
+app.patch('/api/videos/reorder', requireAdminAuth, async (req, res) => {
   const { videoIds } = req.body;
 
   if (!Array.isArray(videoIds) || videoIds.length === 0) {
@@ -839,7 +1162,7 @@ app.get('/api/blog-categories', async (req, res) => {
 });
 
 // POST /api/blog-categories — create category
-app.post('/api/blog-categories', async (req, res) => {
+app.post('/api/blog-categories', requireAdminAuth, async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Name is required' });
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -911,7 +1234,7 @@ app.get('/api/blog-posts', async (req, res) => {
 });
 
 // GET /api/blog-posts/all — ALL posts including drafts (admin)
-app.get('/api/blog-posts/all', async (req, res) => {
+app.get('/api/blog-posts/all', requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT p.*,
@@ -956,7 +1279,7 @@ app.get('/api/blog-posts/:slug', async (req, res) => {
 });
 
 // POST /api/blog-posts — create post
-app.post('/api/blog-posts', async (req, res) => {
+app.post('/api/blog-posts', requireAdminAuth, async (req, res) => {
   const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids } = req.body;
   if (!title || !slug) return res.status(400).json({ error: 'Title and slug are required' });
   try {
@@ -984,7 +1307,7 @@ app.post('/api/blog-posts', async (req, res) => {
 });
 
 // PUT /api/blog-posts/:id — update post
-app.put('/api/blog-posts/:id', async (req, res) => {
+app.put('/api/blog-posts/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids } = req.body;
   try {
@@ -1017,7 +1340,7 @@ app.put('/api/blog-posts/:id', async (req, res) => {
 });
 
 // DELETE /api/blog-posts/:id
-app.delete('/api/blog-posts/:id', async (req, res) => {
+app.delete('/api/blog-posts/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM blog_posts WHERE id = $1', [id]);

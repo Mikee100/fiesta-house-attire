@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
 import { Folder, Image as ImageIcon, Plus, Trash2, ChevronRight, Upload, Loader2, Search, CheckCircle2, Copy } from "lucide-react";
-import AdminNavbar from "@/components/admin/AdminNavbar";
+import AdminPage from "@/components/admin/AdminPage";
+import AdminSection from "@/components/admin/AdminSection";
 import SEO from "@/components/site/SEO";
 
 const AdminAssets = () => {
@@ -126,34 +127,28 @@ const AdminAssets = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <>
       <SEO title="Admin Assets" noindex nofollow />
-      <AdminNavbar />
-      <div className="max-w-6xl mx-auto p-8">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-          <div>
-             <h1 className="text-3xl font-bold tracking-tight">Media Library</h1>
-             <p className="text-muted-foreground">Bulk upload and organize your photography assets</p>
-          </div>
+      <AdminPage
+        title="Media Library"
+        description="Bulk upload and organize your photography assets"
+        maxWidthClassName="max-w-6xl"
+        actions={
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search images by URL..." 
+            <Input
+              placeholder="Search images by URL..."
               className="pl-10 bg-white"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-        </header>
-
+        }
+      >
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar: Folders & Uploads */}
           <div className="lg:col-span-1 space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">New Folder</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <AdminSection title="New Folder" contentClassName="space-y-4">
                 <Input 
                   placeholder="Folder Name" 
                   value={newFolderName}
@@ -162,14 +157,9 @@ const AdminAssets = () => {
                 <Button className="w-full" onClick={handleCreateFolder}>
                   <Plus className="mr-2 h-4 w-4" /> Create
                 </Button>
-              </CardContent>
-            </Card>
+            </AdminSection>
 
-            <Card className="border-sky-200 bg-sky-50/50">
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Upload from Computer</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <AdminSection className="border-sky-200 bg-sky-50/50" title="Upload from Computer" contentClassName="space-y-4">
                 <p className="text-xs text-muted-foreground">Select one or more images to upload to this folder.</p>
                 <input 
                   type="file" 
@@ -188,14 +178,9 @@ const AdminAssets = () => {
                   {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                   {uploading ? "Uploading..." : "Select Files"}
                 </Button>
-              </CardContent>
-            </Card>
+            </AdminSection>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Bulk Add via URL</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <AdminSection title="Bulk Add via URL" contentClassName="space-y-4">
                 <p className="text-xs text-muted-foreground">Paste multiple image URLs (one per line)</p>
                 <Textarea 
                   className="min-h-[150px] text-xs font-mono"
@@ -206,8 +191,7 @@ const AdminAssets = () => {
                 <Button className="w-full" variant="outline" onClick={handleBulkAdd}>
                   <ImageIcon className="mr-2 h-4 w-4" /> Add URLs
                 </Button>
-              </CardContent>
-            </Card>
+            </AdminSection>
           </div>
 
           {/* Main Content: Folder Navigation & Assets */}
@@ -331,8 +315,8 @@ const AdminAssets = () => {
               )}
           </div>
         </div>
-      </div>
-    </div>
+      </AdminPage>
+    </>
   );
 };
 

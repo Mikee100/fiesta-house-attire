@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ScrollToTop from "./components/ScrollToTop";
 import { CartProvider } from "./context/CartContext";
+import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Portfolio = lazy(() => import("./pages/Portfolio.tsx"));
@@ -22,6 +23,7 @@ const AdminAssets = lazy(() => import("./pages/AdminAssets.tsx"));
 const AdminBlog = lazy(() => import("./pages/AdminBlog.tsx"));
 const AdminBlogEditor = lazy(() => import("./pages/AdminBlogEditor.tsx"));
 const AdminVideos = lazy(() => import("./pages/AdminVideos.tsx"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin.tsx"));
 const GalleryPage = lazy(() => import("./pages/GalleryPage.tsx"));
 const MaternityGowns = lazy(() => import("./pages/MaternityGowns.tsx"));
 const Videos = lazy(() => import("./pages/Videos.tsx"));
@@ -70,13 +72,14 @@ const App = () => (
               <Route path="/shop" element={<Shop />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/portfolio/:id" element={<AdminPortfolio />} />
-              <Route path="/admin/assets" element={<AdminAssets />} />
-              <Route path="/admin/videos" element={<AdminVideos />} />
-              <Route path="/admin/blog" element={<AdminBlog />} />
-              <Route path="/admin/blog/new" element={<AdminBlogEditor />} />
-              <Route path="/admin/blog/:id/edit" element={<AdminBlogEditor />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<ProtectedAdminRoute><Admin /></ProtectedAdminRoute>} />
+              <Route path="/admin/portfolio/:id" element={<ProtectedAdminRoute><AdminPortfolio /></ProtectedAdminRoute>} />
+              <Route path="/admin/assets" element={<ProtectedAdminRoute><AdminAssets /></ProtectedAdminRoute>} />
+              <Route path="/admin/videos" element={<ProtectedAdminRoute><AdminVideos /></ProtectedAdminRoute>} />
+              <Route path="/admin/blog" element={<ProtectedAdminRoute><AdminBlog /></ProtectedAdminRoute>} />
+              <Route path="/admin/blog/new" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
+              <Route path="/admin/blog/:id/edit" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
               <Route path="/gallery/:folderId" element={<GalleryPage />} />
               <Route path="/maternity-gowns" element={<MaternityGowns />} />
               <Route path="/videos" element={<Videos />} />

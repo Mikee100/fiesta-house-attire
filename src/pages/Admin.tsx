@@ -3,13 +3,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/lib/supabase";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, Library, Sparkles, FolderPlus, Search, ArrowUp, ArrowDown } from "lucide-react";
-import AdminNavbar from "@/components/admin/AdminNavbar";
+import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, Library, Sparkles, Search, ArrowUp, ArrowDown } from "lucide-react";
+import AdminPage from "@/components/admin/AdminPage";
 import SEO from "@/components/site/SEO";
 
 const Admin = () => {
@@ -129,19 +127,38 @@ const Admin = () => {
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalImages = portfolios.reduce((acc, p) => acc + (Array.isArray(p.images) ? p.images.length : 0), 0);
+
   return (
-    <div className="min-h-screen bg-[#FDFCFD]">
+    <>
       <SEO title="Admin" noindex nofollow />
-      <AdminNavbar />
-      
-      <div className="max-w-[1400px] mx-auto px-6 py-10">
+      <AdminPage
+        title="Studio"
+        description="Manage your collections, media, and publishing workflow."
+        maxWidthClassName="max-w-[1400px]"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+          <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold">Collections</p>
+            <p className="text-2xl font-bold text-slate-900 mt-1">{portfolios.length}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold">Images</p>
+            <p className="text-2xl font-bold text-slate-900 mt-1">{totalImages}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold">Data Source</p>
+            <p className="text-2xl font-bold text-slate-900 mt-1">{useMock ? "Mock" : "Live"}</p>
+          </div>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-10">
           
           {/* Sidebar Actions */}
           <aside className="w-full lg:w-80 space-y-8">
             <div className="space-y-2">
-              <h1 className="text-4xl font-serif italic text-slate-900 tracking-tight">Studio</h1>
-              <p className="text-slate-500 text-sm">Manage your professional collections</p>
+              <h2 className="text-3xl font-serif italic text-slate-900 tracking-tight">Collections</h2>
+              <p className="text-slate-500 text-sm">Create, organize, and reorder your portfolio groups</p>
             </div>
 
             <Card className="border-none shadow-sm bg-white overflow-hidden">
@@ -186,16 +203,6 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-xl shadow-sky-100 relative overflow-hidden group">
-               <div className="relative z-10">
-                 <Sparkles className="h-8 w-8 mb-4 opacity-80" />
-                 <h3 className="font-bold text-lg leading-tight mb-2">Portfolio Management</h3>
-                 <p className="text-sky-100 text-xs">Organize your masterpieces and showcase your best work to clients.</p>
-               </div>
-               <div className="absolute -right-4 -bottom-4 opacity-10 transform rotate-12 group-hover:scale-110 transition-transform duration-700">
-                 <ImageIcon size={120} />
-               </div>
-            </div>
           </aside>
 
           {/* Main Content Area */}
@@ -326,8 +333,8 @@ const Admin = () => {
             </p>
           </main>
         </div>
-      </div>
-    </div>
+      </AdminPage>
+    </>
   );
 };
 

@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Save, Globe, Loader2 } from "lucide-react";
 import * as api from "@/lib/api";
 import { BlogCategory, BlogPost } from "@/lib/api";
 import { toast } from "sonner";
-import AdminNavbar from "@/components/admin/AdminNavbar";
+import AdminPage from "@/components/admin/AdminPage";
+import AdminSection from "@/components/admin/AdminSection";
+import AdminStatusPill from "@/components/admin/AdminStatusPill";
 import SEO from "@/components/site/SEO";
 
 import ReactQuill from 'react-quill';
@@ -137,58 +138,54 @@ const AdminBlogEditor = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <>
         <SEO title="Admin Blog Editor" noindex nofollow />
-        <AdminNavbar />
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--sky-blue)]" />
-        </div>
-      </div>
+        <AdminPage title="Blog Editor" description="Loading post editor..." maxWidthClassName="max-w-6xl">
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--sky-blue)]" />
+          </div>
+        </AdminPage>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <>
       <SEO title="Admin Blog Editor" noindex nofollow />
-      <AdminNavbar />
-      
-      {/* Sticky Header */}
-      <div className="sticky top-16 z-40 bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center shadow-sm">
-        <div className="flex items-center gap-4">
-          <Link to="/admin/blog">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <ArrowLeft className="h-5 w-5 text-slate-600" />
+      <AdminPage
+        title={isEditing ? "Edit Post" : "New Post"}
+        description="Write and publish blog content with metadata and categories."
+        maxWidthClassName="max-w-6xl"
+        actions={
+          <>
+            <Link to="/admin/blog">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back to Posts
+              </Button>
+            </Link>
+            <AdminStatusPill label={formData.status.toUpperCase()} tone={formData.status === "published" ? "success" : "warning"} />
+            <Button
+              variant="outline"
+              onClick={() => handleSave("draft")}
+              disabled={saving}
+            >
+              <Save className="h-4 w-4 mr-2" /> Save Draft
             </Button>
-          </Link>
-          <h1 className="text-xl font-bold text-slate-900">{isEditing ? 'Edit Post' : 'New Post'}</h1>
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${formData.status === 'published' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
-            {formData.status.toUpperCase()}
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            onClick={() => handleSave("draft")}
-            disabled={saving}
-          >
-            <Save className="h-4 w-4 mr-2" /> Save Draft
-          </Button>
-          <Button 
-            className="bg-[var(--sky-blue)] hover:bg-[#5AAFD1] text-white"
-            onClick={() => handleSave("published")}
-            disabled={saving}
-          >
-            <Globe className="h-4 w-4 mr-2" /> Publish
-          </Button>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <Button
+              className="bg-[var(--sky-blue)] hover:bg-[#5AAFD1] text-white"
+              onClick={() => handleSave("published")}
+              disabled={saving}
+            >
+              <Globe className="h-4 w-4 mr-2" /> Publish
+            </Button>
+          </>
+        }
+      >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Main Editor */}
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardContent className="p-6 space-y-6">
+          <AdminSection title="Editor" description="Compose title, excerpt, and rich text content." contentClassName="space-y-6">
               
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-base font-semibold">Title</Label>
@@ -242,15 +239,12 @@ const AdminBlogEditor = () => {
                   />
                 </div>
               </div>
-
-            </CardContent>
-          </Card>
+            </AdminSection>
         </div>
 
         {/* Sidebar Settings */}
         <div className="space-y-6">
-          <Card>
-            <CardContent className="p-6 space-y-6">
+            <AdminSection title="Post Settings" description="Set cover image and categories." contentClassName="space-y-6">
               
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Cover Image URL</Label>
@@ -290,12 +284,12 @@ const AdminBlogEditor = () => {
                 </div>
               </div>
 
-            </CardContent>
-          </Card>
+          </AdminSection>
         </div>
 
       </div>
-    </div>
+      </AdminPage>
+    </>
   );
 };
 
