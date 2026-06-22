@@ -20,10 +20,30 @@ const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || 'change-me-refres
 const ACCESS_TOKEN_TTL = process.env.JWT_ACCESS_TTL || '15m';
 const REFRESH_TOKEN_TTL = process.env.JWT_REFRESH_TTL || '30d';
 const REFRESH_TOKEN_COOKIE = 'fh_refresh_token';
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,https://fiestahouseattire.vercel.app')
+const defaultAllowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://fiestahouseattire.vercel.app',
+  'https://app.fiestahouseattire.com'
+];
+
+const configuredOrigins = (process.env.CORS_ORIGINS || defaultAllowedOrigins.join(','))
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...configuredOrigins])];
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  // Allow production subdomains on the same parent domain.
+  if (/^https:\/\/[a-z0-9-]+\.fiestahouseattire\.com$/i.test(origin)) {
+    return true;
+  }
+
+  return false;
+};
 
 if (!isProduction && (ACCESS_TOKEN_SECRET === 'change-me-access-secret' || REFRESH_TOKEN_SECRET === 'change-me-refresh-secret')) {
   console.warn('Using default JWT secrets in development. Set JWT_ACCESS_SECRET and JWT_REFRESH_SECRET in production.');
@@ -51,11 +71,13 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.set('trust proxy', 1);
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
       return;
     }
-    callback(new Error('CORS origin not allowed'));
+
+    // Do not throw here; thrown CORS errors bubble as 500 responses.
+    callback(null, false);
   },
   credentials: true
 }));
