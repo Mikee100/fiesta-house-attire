@@ -23,7 +23,7 @@ const prerenderRoutes = [
   "/shop",
 ];
 
-const apiUrl = process.env.PRERENDER_API_URL || process.env.VITE_API_URL || "http://localhost:5000/api";
+const rawApiUrl = process.env.PRERENDER_API_URL || process.env.VITE_API_URL || "http://localhost:5000/api";
 const buildDate = new Date().toISOString().slice(0, 10);
 
 const contentTypes = {
@@ -165,6 +165,22 @@ function normalizeRoute(route) {
   return trimmed.replace(/\/$/, "");
 }
 
+function resolveApiBaseUrl() {
+  if (!rawApiUrl || typeof rawApiUrl !== "string") return null;
+  const trimmed = rawApiUrl.trim().replace(/\/$/, "");
+  if (!trimmed) return null;
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return `${siteUrl}${trimmed}`;
+  }
+
+  return null;
+}
+
 async function fetchJson(url) {
   const response = await fetch(url, { headers: { Accept: "application/json" } });
   if (!response.ok) {
@@ -173,12 +189,40 @@ async function fetchJson(url) {
   return response.json();
 }
 
+async function fetchPublishedBlogPosts(apiBaseUrl) {
+  const firstPage = await fetchJson(`${apiBaseUrl}/blog-posts?page=1&limit=100`);
+  const initialPosts = Array.isArray(firstPage?.posts) ? firstPage.posts : [];
+  const totalPages = Number.isFinite(firstPage?.totalPages) ? firstPage.totalPages : 1;
+
+  if (totalPages <= 1) return initialPosts;
+
+  const pages = [];
+  for (let page = 2; page <= totalPages; page += 1) {
+    pages.push(fetchJson(`${apiBaseUrl}/blog-posts?page=${page}&limit=100`));
+  }
+
+  const results = await Promise.allSettled(pages);
+  for (const result of results) {
+    if (result.status !== "fulfilled") continue;
+    const posts = Array.isArray(result.value?.posts) ? result.value.posts : [];
+    initialPosts.push(...posts);
+  }
+
+  return initialPosts;
+}
+
 async function discoverDynamicRoutes() {
   const discovered = new Set();
   const imageEntries = [];
+  const apiBaseUrl = resolveApiBaseUrl();
+
+  if (!apiBaseUrl) {
+    console.warn(`[prerender] dynamic route discovery skipped: invalid API URL '${rawApiUrl}'`);
+    return { routes: [], imageEntries: [] };
+  }
 
   try {
-    const portfolios = await fetchJson(`${apiUrl}/portfolios`);
+    const portfolios = await fetchJson(`${apiBaseUrl}/portfolios`);
     if (Array.isArray(portfolios)) {
       for (const item of portfolios) {
         const slug = typeof item?.slug === "string" ? item.slug : null;
@@ -202,12 +246,11 @@ async function discoverDynamicRoutes() {
   }
 
   try {
-    const posts = await fetchJson(`${apiUrl}/blog-posts/all`);
+    const posts = await fetchPublishedBlogPosts(apiBaseUrl);
     if (Array.isArray(posts)) {
       for (const item of posts) {
         const slug = typeof item?.slug === "string" ? item.slug : null;
-        const isPublished = item?.status === "published";
-        if (!slug || !isPublished) continue;
+        if (!slug) continue;
 
         const route = `/blog/${encodeURIComponent(slug)}`;
         discovered.add(route);
@@ -302,7 +345,23 @@ async function generateSitemaps(routes, imageEntries) {
 }
 
 async function prerenderRoutesToHtml(baseUrl, routes) {
-  const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+  if (process.env.PRERENDER_SKIP_BROWSER === "true") {
+    console.warn("[prerender] browser prerender skipped via PRERENDER_SKIP_BROWSER=true");
+    return false;
+  }
+
+  let browser;
+  try {
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      ...(executablePath ? { executablePath } : {}),
+    });
+  } catch (error) {
+    console.warn(`[prerender] browser launch failed, skipping HTML prerender: ${error.message}`);
+    return false;
+  }
 
   try {
     console.log(`[prerender] route count: ${routes.length}`);
@@ -326,6 +385,8 @@ async function prerenderRoutesToHtml(baseUrl, routes) {
         await page.close();
       }
     }
+
+    return true;
   } finally {
     await browser.close();
   }
@@ -357,7 +418,10 @@ async function main() {
     const routeSet = new Set([...prerenderRoutes, ...dynamicData.routes].map(normalizeRoute).filter(Boolean));
     const allRoutes = [...routeSet];
 
-    await prerenderRoutesToHtml(baseUrl, allRoutes);
+    const prerendered = await prerenderRoutesToHtml(baseUrl, allRoutes);
+    if (!prerendered) {
+      console.warn("[prerender] continuing without HTML snapshots (sitemaps will still be generated)");
+    }
     await generateSitemaps(allRoutes, dynamicData.imageEntries);
     console.log("[prerender] complete");
   } finally {
