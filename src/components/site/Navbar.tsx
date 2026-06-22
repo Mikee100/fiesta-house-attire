@@ -13,6 +13,9 @@ const navLinks = [
   { to: "/shop", label: "Shop" },
 ];
 
+const NAV_PRIMARY = "var(--magenta)";
+const NAV_SECONDARY = "var(--sky-blue)";
+
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,6 +32,14 @@ const Navbar = () => {
   useEffect(() => setMenuOpen(false), [location.pathname]);
 
   const solid = scrolled || !isHome;
+
+  const handleLinkMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.color = NAV_SECONDARY;
+  };
+
+  const handleLinkMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.color = NAV_PRIMARY;
+  };
 
   return (
     <nav
@@ -98,17 +109,13 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 className="nav-link"
+                onMouseEnter={handleLinkMouseEnter}
+                onMouseLeave={handleLinkMouseLeave}
                 style={{
-                  color: solid
-                    ? isActive
-                      ? "var(--sky-blue)"
-                      : "var(--dark)"
-                    : isActive
-                    ? "var(--sky-blue)"
-                    : "rgba(255,255,255,0.9)",
-                  borderBottom: isActive ? "2px solid var(--sky-blue)" : "2px solid transparent",
+                  color: NAV_PRIMARY,
+                  borderBottom: isActive ? "2px solid var(--magenta)" : "2px solid transparent",
                   paddingBottom: "3px",
-                  fontWeight: isActive ? "500" : "400",
+                  fontWeight: isActive ? "700" : "600",
                   transition: "all 0.3s ease",
                 }}
               >
@@ -117,9 +124,14 @@ const Navbar = () => {
             );
           })}
           
-          <Link to="/cart" aria-label="Open cart" style={{ 
+          <Link
+            to="/cart"
+            aria-label="Open cart"
+            onMouseEnter={handleLinkMouseEnter}
+            onMouseLeave={handleLinkMouseLeave}
+            style={{ 
             position: "relative", 
-            color: solid ? "var(--dark)" : "white",
+            color: NAV_PRIMARY,
             display: "flex",
             alignItems: "center"
           }}>
@@ -186,13 +198,16 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
+                onMouseEnter={handleLinkMouseEnter}
+                onMouseLeave={handleLinkMouseLeave}
                 style={{
                   fontSize: "0.9rem",
                   textTransform: "uppercase",
                   letterSpacing: "0.15em",
-                  color: isActive ? "var(--sky-blue)" : "var(--dark)",
-                  fontWeight: isActive ? "600" : "400",
+                  color: NAV_PRIMARY,
+                  fontWeight: isActive ? "700" : "600",
                   textDecoration: "none",
+                  transition: "color 0.3s ease",
                 }}
               >
                 {link.label}
@@ -201,16 +216,19 @@ const Navbar = () => {
           })}
           <Link
             to="/cart"
+            onMouseEnter={handleLinkMouseEnter}
+            onMouseLeave={handleLinkMouseLeave}
             style={{
               fontSize: "0.9rem",
               textTransform: "uppercase",
               letterSpacing: "0.15em",
-              color: "var(--dark)",
-              fontWeight: "400",
+              color: NAV_PRIMARY,
+              fontWeight: "600",
               textDecoration: "none",
               display: "flex",
               alignItems: "center",
-              gap: "0.8rem"
+              gap: "0.8rem",
+              transition: "color 0.3s ease",
             }}
           >
             <ShoppingCart size={18} /> Cart ({cartCount})

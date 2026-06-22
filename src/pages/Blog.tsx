@@ -201,52 +201,84 @@ const Blog = () => {
               )}
             </div>
 
-            {/* Sidebar content integrated as a footer-like section */}
-            <div className="grid grid-1 lg:grid-cols-2 gap-12 pt-8 fade-in" style={{ animationDelay: '500ms' }}>
-              
-              {/* About Section */}
-              <div className="bg-white rounded-3xl p-10 border border-slate-50 shadow-sm flex flex-col md:flex-row items-center gap-8">
-                <div className="w-32 h-32 bg-slate-100 rounded-full flex-shrink-0 overflow-hidden shadow-inner">
-                   <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300&h=300" alt="Fiesta House" className="w-full h-full object-cover" />
-                </div>
-                <div className="text-center md:text-left">
-                  <h3 className="font-display text-3xl font-medium mb-3">The Fiesta House Story</h3>
-                  <p className="text-slate-500 text-sm mb-6 max-w-md leading-relaxed">
-                    We believe every pregnancy is a masterpiece waiting to be captured. Our blog is a curated space for inspiration, styling tips, and the stories behind our most iconic sessions in Nairobi.
-                  </p>
-                  {/* Book Your Session button removed for minimalism */}
-                </div>
-              </div>
-
-              {/* Recent Stories Integrated */}
-              {recentPosts.length > 0 && (
-                <div className="bg-[var(--sky-blue-tint)] rounded-3xl p-10 border border-white/50">
-                  <h3 className="font-display text-2xl font-medium mb-8 flex items-center">
-                    More Stories
-                  </h3>
-                  <div className="grid grid-1 sm:grid-cols-2 gap-6">
-                    {recentPosts.slice(0, 2).map(post => (
-                      <Link key={post.id} to={`/blog/${post.slug}`} className="flex flex-col group bg-white/40 p-4 rounded-2xl hover:bg-white/80 transition-all duration-300">
-                        <div className="aspect-video rounded-xl overflow-hidden mb-4 bg-white">
-                          {post.cover_image_url && (
-                            <img src={post.cover_image_url} alt={post.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                          )}
+            {/* Editorial story strip */}
+            <section
+              className="pt-10 border-t border-slate-200/80 fade-in"
+              style={{ animationDelay: "500ms" }}
+              aria-label="Fiesta House story and recent posts"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+                <div className="lg:col-span-5">
+                  <div className="bg-white rounded-[2rem] border border-slate-200/70 shadow-sm overflow-hidden">
+                    <div className="h-2 w-full bg-gradient-to-r from-[var(--magenta)] via-[#D98CC7] to-[var(--sky-blue)]" />
+                    <div className="p-8">
+                      <div className="flex items-center gap-5 mb-6">
+                        <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 shadow-inner shrink-0">
+                          <img
+                            src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300&h=300"
+                            alt="Fiesta House"
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <div>
-                          <h4 className="font-medium text-sm leading-tight text-[var(--text)] group-hover:text-[var(--sky-blue)] transition-colors line-clamp-2 mb-2">
-                            {post.title}
-                          </h4>
-                          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-                            {post.published_at ? format(new Date(post.published_at), 'MMM d, yyyy') : ''}
-                          </span>
+                          <p className="text-[10px] uppercase tracking-[0.28em] text-[var(--magenta)] font-bold mb-1">
+                            Editorial Note
+                          </p>
+                          <h3 className="font-display text-3xl leading-tight text-[var(--text)]">
+                            The Fiesta House Story
+                          </h3>
                         </div>
-                      </Link>
-                    ))}
+                      </div>
+
+                      <p className="text-slate-600 leading-relaxed text-[15px]">
+                        We believe every pregnancy is a masterpiece waiting to be captured. Our blog is a curated space for inspiration, styling tips, and the stories behind our most iconic sessions in Nairobi.
+                      </p>
+
+                      <p className="mt-5 text-[11px] uppercase tracking-[0.2em] text-slate-400 font-semibold">
+                        Crafted for modern maternity storytelling
+                      </p>
+                    </div>
                   </div>
                 </div>
-              )}
 
-            </div>
+                {recentPosts.length > 0 && (
+                  <div className="lg:col-span-7">
+                    <div className="flex items-end justify-between mb-5">
+                      <h3 className="font-display text-3xl text-[var(--text)] leading-none">More Stories</h3>
+                      <span className="text-[10px] uppercase tracking-[0.22em] text-slate-400 font-bold">Latest Reads</span>
+                    </div>
+
+                    <div className="divide-y divide-slate-200/80 rounded-3xl border border-slate-200/70 bg-gradient-to-br from-white to-slate-50/60 overflow-hidden">
+                      {recentPosts.slice(0, 2).map((post) => (
+                        <Link
+                          key={post.id}
+                          to={`/blog/${post.slug}`}
+                          className="group grid grid-cols-[96px_1fr] gap-4 p-5 hover:bg-white/90 transition-colors"
+                        >
+                          <div className="w-24 h-24 rounded-xl overflow-hidden bg-slate-100">
+                            {post.cover_image_url && (
+                              <img
+                                src={post.cover_image_url}
+                                alt={post.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-display text-[1.35rem] leading-[1.2] text-[var(--text)] group-hover:text-[var(--magenta)] transition-colors line-clamp-2 mb-2">
+                              {post.title}
+                            </h4>
+                            <div className="text-[11px] uppercase tracking-[0.2em] text-slate-400 font-semibold">
+                              {post.published_at ? format(new Date(post.published_at), "MMM d, yyyy") : "Draft"}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
         </div>
       </main>
