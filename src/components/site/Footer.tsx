@@ -1,6 +1,27 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
+  const [loadMiniGallery, setLoadMiniGallery] = useState(false);
+  const miniGalleryRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!miniGalleryRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setLoadMiniGallery(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px 0px", threshold: 0.01 },
+    );
+
+    observer.observe(miniGalleryRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const miniGalleryImages = [
     "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg",
     "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg",
@@ -134,18 +155,22 @@ const Footer = () => {
             <p style={{ fontSize: "0.75rem", opacity: 0.5 }}>
               info@fiestahouseattire.com · Diamond Plaza II, Nairobi
             </p>
-            <div className="footer-mini-gallery" aria-label="Footer image gallery">
-              {miniGalleryImages.map((src, index) => (
-                <img
-                  key={src}
-                  src={src}
-                  alt={`Fiesta House gallery ${index + 1}`}
-                  width={400}
-                  height={500}
-                  loading="lazy"
-                  decoding="async"
-                />
-              ))}
+            <div className="footer-mini-gallery" aria-label="Footer image gallery" ref={miniGalleryRef}>
+              {loadMiniGallery
+                ? miniGalleryImages.map((src, index) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt={`Fiesta House gallery ${index + 1}`}
+                      width={400}
+                      height={500}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ))
+                : miniGalleryImages.map((_, index) => (
+                    <div key={`placeholder-${index}`} className="footer-mini-gallery-ph" aria-hidden="true" />
+                  ))}
             </div>
           </div>
         </div>
@@ -187,6 +212,13 @@ const Footer = () => {
           border-radius: 2px;
           border: 1px solid rgba(0, 0, 0, 0.06);
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .footer-mini-gallery-ph {
+          width: 100%;
+          aspect-ratio: 4 / 5;
+          border-radius: 2px;
+          border: 1px solid rgba(0, 0, 0, 0.04);
+          background: linear-gradient(145deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.06));
         }
         @keyframes gradientShift {
           0% { background-position: 0% 50%; }

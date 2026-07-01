@@ -51,10 +51,13 @@ type DisplayVideo = {
 
 type ModalState = { video_url: string; title: string; desc: string } | null;
 
+const HERO_BACKGROUND_VIDEO_URL = "https://www.youtube.com/watch?v=V7CwmmVwn94";
+const HERO_BACKGROUND_VIDEO_TITLE = "17 March 2022";
+
 const getYouTubeId = (value: string) => {
   const url = value.trim();
   if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   return match ? match[1] : null;
 };
 
@@ -72,11 +75,11 @@ const buildPreviewMedia = (videoUrl: string, title: string) => {
   if (ytId) {
     return (
       <iframe
-        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&modestbranding=1&playsinline=1&rel=0`}
-        style={{ width: "100%", height: "100%", border: "none", display: "block", pointerEvents: "none" }}
-        allow="autoplay; fullscreen"
+        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1`}
+        title={`${title} preview`}
+        allow="autoplay; encrypted-media; picture-in-picture"
         loading="lazy"
-        title={title}
+        style={{ width: "100%", height: "100%", border: "none", pointerEvents: "none" }}
       />
     );
   }
@@ -85,11 +88,11 @@ const buildPreviewMedia = (videoUrl: string, title: string) => {
   if (vimeoId) {
     return (
       <iframe
-        src={`https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&muted=1`}
-        style={{ width: "100%", height: "100%", border: "none", display: "block", pointerEvents: "none" }}
-        allow="autoplay; fullscreen"
+        src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&loop=1&background=1&title=0&byline=0&portrait=0`}
+        title={`${title} preview`}
+        allow="autoplay; fullscreen; picture-in-picture"
         loading="lazy"
-        title={title}
+        style={{ width: "100%", height: "100%", border: "none", pointerEvents: "none" }}
       />
     );
   }
@@ -98,11 +101,9 @@ const buildPreviewMedia = (videoUrl: string, title: string) => {
     return (
       <video
         src={videoUrl}
-        autoPlay
         muted
-        loop
         playsInline
-        preload="metadata"
+        preload="none"
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }}
       />
     );
@@ -153,6 +154,40 @@ const buildModalMedia = (videoUrl: string, title: string) => {
   }
 
   return <div style={{ color: "white", textAlign: "center", paddingTop: "2rem" }}>Invalid video URL</div>;
+};
+
+const buildHeroMedia = (videoUrl: string, title: string) => {
+  const ytId = getYouTubeId(videoUrl);
+  if (ytId) {
+    return (
+      <iframe
+        className="vp-hero-video"
+        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1`}
+        title={`${title} hero background`}
+        allow="autoplay; fullscreen; picture-in-picture"
+        loading="eager"
+      />
+    );
+  }
+
+  const vimeoId = getVimeoId(videoUrl);
+  if (vimeoId) {
+    return (
+      <iframe
+        className="vp-hero-video"
+        src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&loop=1&background=1&title=0&byline=0&portrait=0`}
+        title={`${title} hero background`}
+        allow="autoplay; fullscreen; picture-in-picture"
+        loading="eager"
+      />
+    );
+  }
+
+  if (isDirectVideoFile(videoUrl)) {
+    return <video className="vp-hero-video" src={videoUrl} autoPlay muted loop playsInline />;
+  }
+
+  return null;
 };
 
 function PlayIcon({ size = 14 }: { size?: number }) {
@@ -220,7 +255,7 @@ export default function Videos() {
     : fallbackVideos;
 
   const featured = galleryVideos.slice(0, 3).map((v, idx) => ({ ...v, num: `0${idx + 1}` }));
-  const more = galleryVideos.slice(3, 5);
+  const more = galleryVideos.slice(3);
 
   const overlayStyle: CSSProperties = {
     position: "absolute",
@@ -298,19 +333,20 @@ export default function Videos() {
           background: "#2C2C2A",
         }}
       >
-        <div style={{ position: "absolute", inset: 0, overflow: "hidden" }} aria-hidden="true">
-          <iframe
-            src="https://www.youtube.com/embed/V7CwmmVwn94?autoplay=1&mute=1&loop=1&playlist=V7CwmmVwn94&controls=0&modestbranding=1&playsinline=1&rel=0&iv_load_policy=3"
-            title="Hero background video"
-            allow="autoplay; fullscreen"
-            className="vp-hero-video"
-          />
-        </div>
+        {buildHeroMedia(HERO_BACKGROUND_VIDEO_URL, HERO_BACKGROUND_VIDEO_TITLE)}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.62) 100%), radial-gradient(ellipse 60% 70% at 50% 40%,rgba(196,92,130,.18) 0%,transparent 70%)",
+            background: "radial-gradient(ellipse 70% 60% at 50% 35%, rgba(196,92,130,.14) 0%, rgba(44,44,42,.40) 62%, rgba(29,29,28,.28) 100%)",
+          }}
+          aria-hidden="true"
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(to bottom, rgba(0,0,0,.22) 0%, rgba(0,0,0,.12) 45%, rgba(0,0,0,.28) 100%), radial-gradient(ellipse 60% 70% at 50% 40%, rgba(196,92,130,.10) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -391,7 +427,7 @@ export default function Videos() {
         </div>
       </section>
 
-      <section className="vp-fade" ref={addRef} style={{ padding: "6rem clamp(1.5rem,5vw,3rem)", maxWidth: "1200px", margin: "0 auto" }}>
+      <section className="vp-fade" ref={addRef} style={{ padding: "6rem clamp(1.5rem,5vw,3rem)", maxWidth: "1200px", margin: "0 auto", contentVisibility: "auto", containIntrinsicSize: "1000px" }}>
         <div style={{ fontSize: ".65rem", letterSpacing: ".35em", textTransform: "uppercase", color: "var(--magenta,#C45C82)", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
           <span style={{ display: "block", width: "2rem", height: ".5px", background: "var(--magenta,#C45C82)" }} />
           Featured Films
@@ -431,11 +467,13 @@ export default function Videos() {
         </div>
       </section>
 
-      <section style={{ background: "#F5F0E8", padding: "6rem clamp(1.5rem,5vw,3rem)" }}>
+      <section style={{ background: "#F5F0E8", padding: "6rem clamp(1.5rem,5vw,3rem)", contentVisibility: "auto", containIntrinsicSize: "1200px" }}>
         <div className="vp-fade" ref={addRef} style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "3rem", borderBottom: ".5px solid rgba(44,44,42,.1)", paddingBottom: "1.5rem" }}>
             <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(1.8rem,3vw,2.8rem)", fontWeight: 300 }}>More Films</h2>
-            <span style={{ fontSize: ".65rem", letterSpacing: ".2em", textTransform: "uppercase", color: "#7A7873" }}>05 Sessions</span>
+            <span style={{ fontSize: ".65rem", letterSpacing: ".2em", textTransform: "uppercase", color: "#7A7873" }}>
+              {String(galleryVideos.length).padStart(2, "0")} Sessions
+            </span>
           </div>
 
           <div className="vp-more-grid">
@@ -466,7 +504,7 @@ export default function Videos() {
         </div>
       </section>
 
-      <section className="vp-fade" ref={addRef} style={{ padding: "7rem clamp(1.5rem,5vw,3rem)", textAlign: "center", position: "relative", overflow: "hidden" }}>
+      <section className="vp-fade" ref={addRef} style={{ padding: "7rem clamp(1.5rem,5vw,3rem)", textAlign: "center", position: "relative", overflow: "hidden", contentVisibility: "auto", containIntrinsicSize: "900px" }}>
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40rem", height: "40rem", borderRadius: "50%", background: "radial-gradient(circle,rgba(196,92,130,.06) 0%,transparent 70%)", pointerEvents: "none" }} />
         <div style={{ position: "relative", zIndex: 1 }}>
           <p style={{ fontSize: ".65rem", letterSpacing: ".35em", textTransform: "uppercase", color: "#C9A96E", marginBottom: "1.5rem" }}>Begin your story</p>
