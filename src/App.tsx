@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ScrollToTop from "./components/ScrollToTop";
 import { CartProvider } from "./context/CartContext";
 import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
+import LuxuryRouteLoader from "./components/site/LuxuryRouteLoader";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Portfolio = lazy(() => import("./pages/Portfolio.tsx"));
@@ -34,21 +35,7 @@ const Checkout = lazy(() => import("./pages/Checkout.tsx"));
 
 const queryClient = new QueryClient();
 
-const RouteFallback = () => (
-  <div
-    style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "var(--font-sans)",
-      color: "var(--dark)",
-      backgroundColor: "var(--bg)",
-    }}
-  >
-    Loading...
-  </div>
-);
+const RouteFallback = () => <LuxuryRouteLoader />;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
