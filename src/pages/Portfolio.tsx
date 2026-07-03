@@ -7,7 +7,7 @@ import { PortfolioCardSkeleton } from "@/components/ui/SkeletonCards";
 import MasonryImage from "@/components/site/MasonryImage";
 
 const Portfolio = () => {
-  const [portfolios, setPortfolios] = useState<any[]>([]);
+  const [portfolios, setPortfolios] = useState<api.PortfolioRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const prefetchedPortfoliosRef = useRef<Set<string>>(new Set());
 
@@ -21,7 +21,7 @@ const Portfolio = () => {
     const imageUrls = Array.isArray(portfolio.images)
       ? portfolio.images
           .slice(0, 4)
-          .map((img: any) => (typeof img === "string" ? img : img?.url))
+          .map((img) => (typeof img === "string" ? img : img?.url))
           .filter(Boolean)
       : [];
 
@@ -42,9 +42,9 @@ const Portfolio = () => {
         setPortfolios(MOCK_PORTFOLIOS);
       } else {
         // Map backend structure (images is an array of objects)
-        const formattedData = data.map((p: any) => ({
+        const formattedData = data.map((p) => ({
           ...p,
-          images: p.images.map((img: any) => img.url),
+          images: p.images.map((img) => (typeof img === "string" ? img : img.url)),
           cover_image_url: p.cover_image_url || null
         }));
         setPortfolios(formattedData);

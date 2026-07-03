@@ -10,14 +10,41 @@ import AdminPage from "@/components/admin/AdminPage";
 import AdminSection from "@/components/admin/AdminSection";
 import SEO from "@/components/site/SEO";
 
+type PortfolioImage = {
+  id: string;
+  url: string;
+};
+
+type PortfolioItem = {
+  id: string;
+  title: string;
+  images: PortfolioImage[];
+  cover_image_url?: string | null;
+};
+
+type AssetItem = {
+  id: string;
+  url: string;
+};
+
+type FolderItem = {
+  id: string;
+  name: string;
+};
+
+type AssetsResponse = {
+  assets: AssetItem[];
+  totalPages: number;
+};
+
 const AdminPortfolio = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [portfolio, setPortfolio] = useState<any>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioItem | null>(null);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [loading, setLoading] = useState(true);
-  const [assets, setAssets] = useState<any[]>([]);
-  const [folders, setFolders] = useState<any[]>([]);
+  const [assets, setAssets] = useState<AssetItem[]>([]);
+  const [folders, setFolders] = useState<FolderItem[]>([]);
   const [currentLibraryFolderId, setCurrentLibraryFolderId] = useState<string | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
@@ -51,7 +78,9 @@ const AdminPortfolio = () => {
   const fetchPortfolioDetails = async () => {
     setLoading(true);
     const portfolios = await api.fetchPortfolios();
-    const found = portfolios?.find((p: any) => p.id === id);
+    const found = Array.isArray(portfolios)
+      ? (portfolios as PortfolioItem[]).find((p) => p.id === id)
+      : undefined;
     if (found) {
       setPortfolio(found);
     } else {
@@ -63,15 +92,16 @@ const AdminPortfolio = () => {
 
   const loadFolders = async () => {
     if (!isLibraryOpen) return;
-    const foldersData = await api.fetchFolders();
-    setFolders(foldersData || []);
+    const foldersData: unknown = await api.fetchFolders();
+    setFolders(Array.isArray(foldersData) ? (foldersData as FolderItem[]) : []);
   };
 
   const loadAssets = async () => {
     if (!isLibraryOpen) return;
-    const assetsData = await api.fetchAssets(currentLibraryFolderId || undefined, currentPage, 12, debouncedSearch);
-    setAssets(assetsData?.assets || []);
-    setTotalPages(assetsData?.totalPages || 1);
+    const assetsData: unknown = await api.fetchAssets(currentLibraryFolderId || undefined, currentPage, 12, debouncedSearch);
+    const parsed = (assetsData && typeof assetsData === "object") ? (assetsData as Partial<AssetsResponse>) : {};
+    setAssets(Array.isArray(parsed.assets) ? parsed.assets : []);
+    setTotalPages(typeof parsed.totalPages === "number" ? parsed.totalPages : 1);
   };
 
   const toggleAssetSelection = (url: string) => {
@@ -99,8 +129,9 @@ const AdminPortfolio = () => {
     if (!currentLibraryFolderId || !id) return;
 
     setIsProcessing(true);
-    const assetsData = await api.fetchAssets(currentLibraryFolderId, 1, 100);
-    const urls = assetsData?.assets?.map((a: any) => a.url) || [];
+    const assetsData: unknown = await api.fetchAssets(currentLibraryFolderId, 1, 100);
+    const parsed = (assetsData && typeof assetsData === "object") ? (assetsData as Partial<AssetsResponse>) : {};
+    const urls = Array.isArray(parsed.assets) ? parsed.assets.map((a) => a.url) : [];
 
     if (urls.length === 0) {
       toast.error("Folder is empty");
@@ -422,8 +453,8 @@ const AdminPortfolio = () => {
             >
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 {portfolio?.images
-                  ?.filter((img: any) => !localSearch || img.url.toLowerCase().includes(localSearch.toLowerCase()))
-                  .map((img: any) => (
+                  ?.filter((img) => !localSearch || img.url.toLowerCase().includes(localSearch.toLowerCase()))
+                  .map((img) => (
                     <div key={img.id} className="group relative aspect-[4/5] bg-slate-200 rounded-lg overflow-hidden border">
                       <img src={img.url} alt="" className="object-cover w-full h-full" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">

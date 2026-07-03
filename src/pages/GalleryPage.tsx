@@ -7,7 +7,7 @@ import MasonryImage from "@/components/site/MasonryImage";
 
 const GalleryPage = () => {
   const { folderId } = useParams<{ folderId: string }>();
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<api.AssetRecord[]>([]);
   const [folderName, setFolderName] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +21,7 @@ const GalleryPage = () => {
         ]);
 
         if (foldersData) {
-          const folder = foldersData.find((f: any) => f.id === folderId);
+          const folder = foldersData.find((f) => f.id === folderId);
           if (folder) setFolderName(folder.name);
         }
 

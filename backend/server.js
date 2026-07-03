@@ -23,6 +23,7 @@ const REFRESH_TOKEN_COOKIE = 'fh_refresh_token';
 const defaultAllowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:5374',
   'https://fiestahouseattire.vercel.app',
   'https://app.fiestahouseattire.com'
 ];

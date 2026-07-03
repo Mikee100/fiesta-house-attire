@@ -263,7 +263,7 @@ export default function About() {
           }}
         >
           {/* left: heading */}
-          <div className="about-fade" ref={ref as any}>
+          <div className="about-fade" ref={ref}>
             <div
               style={{
                 fontSize: "0.68rem",
@@ -303,7 +303,7 @@ export default function About() {
           {/* right: stats */}
           <div
             className="about-fade"
-            ref={ref as any}
+            ref={ref}
             style={{
               display: "flex",
               flexDirection: "column",
@@ -351,7 +351,7 @@ export default function About() {
       >
         <div
           className="about-fade"
-          ref={ref as any}
+          ref={ref}
           style={{ maxWidth: "900px", margin: "0 auto", position: "relative", zIndex: 1 }}
         >
           <p style={{ fontSize: "0.68rem", letterSpacing: "0.35em", textTransform: "uppercase", color: "#C9A96E", marginBottom: "2.5rem" }}>
@@ -390,19 +390,19 @@ export default function About() {
           <div>
             <p
               className="about-fade"
-              ref={ref as any}
+              ref={ref}
               style={{ fontSize: "0.68rem", letterSpacing: "0.35em", textTransform: "uppercase", color: "var(--muted, #7A7873)", marginBottom: "1.5rem" }}
             >
               Who We Are
             </p>
             <h2
               className="about-fade"
-              ref={ref as any}
+              ref={ref}
               style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.8rem, 3vw, 2.8rem)", fontWeight: 300, lineHeight: 1.2 }}
             >
               A studio built on intention
             </h2>
-            <div className="about-fade" ref={ref as any} style={{ marginTop: "2rem", border: "1px solid rgba(44,44,42,0.12)", padding: "0.6rem" }}>
+            <div className="about-fade" ref={ref} style={{ marginTop: "2rem", border: "1px solid rgba(44,44,42,0.12)", padding: "0.6rem" }}>
               <img
                 src={storyImg}
                 alt="Expectant mother portrait in studio"
@@ -411,7 +411,7 @@ export default function About() {
               />
             </div>
           </div>
-          <div className="about-fade" ref={ref as any} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          <div className="about-fade" ref={ref} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             {[
               <>Fiesta House Attire was born from a simple belief: <strong>every expecting mother deserves to feel like the most beautiful woman in the world.</strong> We are a Nairobi-based luxury maternity photography studio dedicated to creating portraits that are as timeless as the love you carry.</>,
               <>Our studio is a sanctuary — a calm, elegantly styled space where you can arrive, exhale, and be celebrated. We handle everything: the wardrobe, the lighting, the posing, the atmosphere. Your only job is to show up and feel.</>,
@@ -431,7 +431,7 @@ export default function About() {
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div
             className="about-fade"
-            ref={ref as any}
+            ref={ref}
             style={{
               display: "flex",
               alignItems: "baseline",
@@ -453,7 +453,7 @@ export default function About() {
               <div
                 key={i}
                 className="about-fade"
-                ref={ref as any}
+                ref={ref}
                 style={{
                   padding: "3rem clamp(1rem, 2.5vw, 2.5rem)",
                   borderRight: i < values.length - 1 ? "1px solid rgba(44,44,42,0.12)" : "none",
@@ -580,7 +580,7 @@ export default function About() {
           overflow: "hidden",
         }}
       >
-        <div className="about-fade" ref={ref as any} style={{ position: "relative", zIndex: 1 }}>
+        <div className="about-fade" ref={ref} style={{ position: "relative", zIndex: 1 }}>
           <p style={{ fontSize: "0.7rem", letterSpacing: "0.3em", textTransform: "uppercase", color: "#C9A96E", marginBottom: "1.5rem" }}>
             Ready to begin?
           </p>

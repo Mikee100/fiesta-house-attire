@@ -9,9 +9,23 @@ export interface CartItem {
   image?: string;
 }
 
+type AddToCartInput = Pick<CartItem, "id" | "name" | "price"> &
+  Partial<Pick<CartItem, "description" | "image">>;
+
+const isCartItem = (value: unknown): value is CartItem => {
+  if (typeof value !== "object" || value === null) return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === "string" &&
+    typeof item.name === "string" &&
+    typeof item.price === "number" &&
+    typeof item.quantity === "number"
+  );
+};
+
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (item: any) => void;
+  addToCart: (item: AddToCartInput) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -29,7 +43,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedCart = localStorage.getItem('fiesta_cart');
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart));
+        const parsed: unknown = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) {
+          setCart(parsed.filter(isCartItem));
+        }
       } catch (e) {
         console.error('Failed to parse cart', e);
       }
@@ -41,7 +58,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('fiesta_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: AddToCartInput) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
       if (existingItem) {

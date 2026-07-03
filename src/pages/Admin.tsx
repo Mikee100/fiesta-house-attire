@@ -11,7 +11,7 @@ import AdminPage from "@/components/admin/AdminPage";
 import SEO from "@/components/site/SEO";
 
 const Admin = () => {
-  const [portfolios, setPortfolios] = useState<any[]>([]);
+  const [portfolios, setPortfolios] = useState<api.PortfolioRecord[]>([]);
   const [newPortfolioTitle, setNewPortfolioTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [useMock, setUseMock] = useState(false);
@@ -38,9 +38,9 @@ const Admin = () => {
         setPortfolios(data);
         setUseMock(false);
       }
-    } catch (err) {
+    } catch {
       setUseMock(true);
-      setPortfolios(MOCK_PORTFOLIOS);
+      setPortfolios(MOCK_PORTFOLIOS as api.PortfolioRecord[]);
     }
     setLoading(false);
   };
@@ -123,7 +123,7 @@ const Admin = () => {
     }
   };
 
-  const filteredPortfolios = portfolios.filter(p => 
+  const filteredPortfolios = portfolios.filter((p) => 
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 

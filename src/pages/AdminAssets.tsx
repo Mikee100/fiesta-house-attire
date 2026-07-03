@@ -12,8 +12,8 @@ import AdminSection from "@/components/admin/AdminSection";
 import SEO from "@/components/site/SEO";
 
 const AdminAssets = () => {
-  const [folders, setFolders] = useState<any[]>([]);
-  const [assets, setAssets] = useState<any[]>([]);
+  const [folders, setFolders] = useState<api.FolderRecord[]>([]);
+  const [assets, setAssets] = useState<api.AssetRecord[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [bulkUrls, setBulkUrls] = useState("");
@@ -91,8 +91,9 @@ const AdminAssets = () => {
       }
       toast.success("Upload complete");
       loadData();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to upload files");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to upload files";
+      toast.error(message);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

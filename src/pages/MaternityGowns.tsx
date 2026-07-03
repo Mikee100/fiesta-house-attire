@@ -7,7 +7,7 @@ import MasonryImage from "@/components/site/MasonryImage";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 const MaternityGowns = () => {
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<api.AssetRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
@@ -53,8 +53,8 @@ const MaternityGowns = () => {
             const nextAssets = nextPage?.assets || [];
             if (nextAssets.length > 0) {
               setImages((prev) => {
-                const existingIds = new Set(prev.map((asset: any) => asset.id));
-                const uniqueNext = nextAssets.filter((asset: any) => !existingIds.has(asset.id));
+                const existingIds = new Set(prev.map((asset) => asset.id));
+                const uniqueNext = nextAssets.filter((asset) => !existingIds.has(asset.id));
                 return uniqueNext.length ? [...prev, ...uniqueNext] : prev;
               });
             }

@@ -10,7 +10,7 @@ import MasonryImage from "@/components/site/MasonryImage";
 
 const PortfolioCategory = () => {
   const { id } = useParams<{ id: string }>();
-  const [portfolio, setPortfolio] = useState<any>(null);
+  const [portfolio, setPortfolio] = useState<api.PortfolioRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Lightbox state
@@ -22,7 +22,7 @@ const PortfolioCategory = () => {
   useEffect(() => {
     const fetchPortfolio = async () => {
       setLoading(true);
-      let found: any = null;
+      let found: api.PortfolioRecord | null = null;
 
       if (id) {
         found = await api.fetchPortfolio(id);
@@ -30,13 +30,13 @@ const PortfolioCategory = () => {
 
       if (!found) {
         // Try mock data
-        found = MOCK_PORTFOLIOS.find((p: any) => p.id === id || p.slug === id);
+        found = (MOCK_PORTFOLIOS as api.PortfolioRecord[]).find((p) => p.id === id || p.slug === id) || null;
       }
 
       if (found) {
         // Handle images mapping if they are objects from backend
         const images = Array.isArray(found.images) 
-          ? found.images.map((img: any) => typeof img === 'string' ? img : img.url)
+          ? found.images.map((img) => typeof img === 'string' ? img : img.url)
           : [];
         setPortfolio({ ...found, images });
       }

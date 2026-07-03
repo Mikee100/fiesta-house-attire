@@ -49,9 +49,10 @@ const Checkout = () => {
       } else {
         throw new Error(data.error || "Failed to place order");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Order error:", error);
-      toast.error(error.message || "An error occurred while processing your order.");
+      const message = error instanceof Error ? error.message : "An error occurred while processing your order.";
+      toast.error(message);
       setLoading(false);
     }
   };

@@ -10,7 +10,37 @@ const logApiError = (...args: unknown[]) => {
   }
 };
 
-export const fetchPortfolios = async () => {
+export interface PortfolioImage {
+  id: string;
+  url: string;
+}
+
+export interface PortfolioRecord {
+  id: string;
+  title: string;
+  slug?: string;
+  images: Array<PortfolioImage | string>;
+  cover_image_url?: string | null;
+}
+
+export interface FolderRecord {
+  id: string;
+  name: string;
+  parent_id?: string | null;
+  cover_image_url?: string | null;
+}
+
+export interface AssetRecord {
+  id: string;
+  url: string;
+}
+
+export interface PaginatedAssets {
+  assets: AssetRecord[];
+  totalPages: number;
+}
+
+export const fetchPortfolios = async (): Promise<PortfolioRecord[] | null> => {
   try {
     const res = await fetch(`${API_URL}/portfolios`);
     if (!res.ok) throw new Error('Failed to fetch');
@@ -21,7 +51,7 @@ export const fetchPortfolios = async () => {
   }
 };
 
-export const fetchPortfolio = async (idOrSlug: string) => {
+export const fetchPortfolio = async (idOrSlug: string): Promise<PortfolioRecord | null> => {
   try {
     const res = await fetch(`${API_URL}/portfolios/${encodeURIComponent(idOrSlug)}`);
     if (res.status === 404) return null;
@@ -101,7 +131,7 @@ export const deleteImage = async (imageId: string) => {
 
 // --- Media Library ---
 
-export const fetchFolders = async () => {
+export const fetchFolders = async (): Promise<FolderRecord[]> => {
   const res = await fetch(`${API_URL}/folders`);
   return await res.json();
 };
@@ -124,7 +154,7 @@ export const updateFolder = async (id: string, data: { cover_image_url?: string;
   return await res.json();
 };
 
-export const fetchAssets = async (folderId?: string, page: number = 1, limit: number = 20, search?: string) => {
+export const fetchAssets = async (folderId?: string, page: number = 1, limit: number = 20, search?: string): Promise<PaginatedAssets> => {
   let url = `${API_URL}/assets?page=${page}&limit=${limit}`;
   if (folderId) url += `&folder_id=${folderId}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -263,18 +293,40 @@ export const deleteBlogPost = async (id: string) => {
 
 // --- Shop ---
 
-export const fetchShopPackages = async () => {
+export interface ShopPackage {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  duration?: string;
+  images_count?: string;
+  outfits_count?: string;
+  features?: string[];
+  popular?: boolean;
+  color?: string;
+}
+
+export interface ShopOrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export interface CreateShopOrderPayload {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  items: ShopOrderItem[];
+  total_amount: number;
+}
+
+export const fetchShopPackages = async (): Promise<ShopPackage[]> => {
   const res = await fetch(`${API_URL}/shop/packages`);
   return await res.json();
 };
 
-export const createShopOrder = async (payload: {
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  items: any[];
-  total_amount: number;
-}) => {
+export const createShopOrder = async (payload: CreateShopOrderPayload) => {
   const res = await fetch(`${API_URL}/shop/orders`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

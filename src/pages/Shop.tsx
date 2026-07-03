@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import * as api from "@/lib/api";
 
 const Shop = () => {
-  const [packages, setPackages] = useState<any[]>([]);
+  const [packages, setPackages] = useState<api.ShopPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart, cartCount } = useCart();
 
@@ -33,7 +33,7 @@ const Shop = () => {
     fetchPackages();
   }, []);
 
-  const handleAddToCart = (pkg: any) => {
+  const handleAddToCart = (pkg: api.ShopPackage) => {
     addToCart(pkg);
     toast.success(`${pkg.name} added to cart!`, {
       description: "You can view your cart to proceed with the order.",
