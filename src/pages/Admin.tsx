@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,8 @@ const Admin = () => {
   const [isReordering, setIsReordering] = useState(false);
 
   // Use brand colors for consistent luxury feel
-  const brandSky = "#6EC1E4";
-  const brandMagenta = "#B84FA0";
+  const brandSky = "#B09345";
+  const brandMagenta = "#660032";
 
   useEffect(() => {
     fetchPortfolios();
@@ -162,7 +162,7 @@ const Admin = () => {
             </div>
 
             <Card className="border-none shadow-sm bg-white overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-[#6EC1E4] to-[#B84FA0]" />
+              <div className="h-1 bg-gradient-to-r from-[#B09345] to-[#660032]" />
               <CardHeader className="pb-4">
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider text-slate-400">Quick Actions</CardTitle>
               </CardHeader>
@@ -262,7 +262,7 @@ const Admin = () => {
 
                     <div className="absolute top-4 left-4">
                       <div className="bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-slate-900 shadow-sm border border-white/20">
-                        #{idx + 1} • {p.images?.length || 0} ITEMS
+                        #{idx + 1} * {p.images?.length || 0} ITEMS
                       </div>
                     </div>
 
@@ -339,3 +339,6 @@ const Admin = () => {
 };
 
 export default Admin;
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -174,7 +174,7 @@ const AdminAssets = () => {
                   className="w-full" 
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  style={{ backgroundColor: "#6EC1E4" }}
+                  style={{ backgroundColor: "#B09345" }}
                 >
                   {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                   {uploading ? "Uploading..." : "Select Files"}
@@ -322,3 +322,5 @@ const AdminAssets = () => {
 };
 
 export default AdminAssets;
+
+

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import logoDark from "@/assets/logo-dark.jpg";
 
 const Footer = () => {
   const [loadMiniGallery, setLoadMiniGallery] = useState(false);
@@ -31,10 +32,10 @@ const Footer = () => {
   return (
     <footer
       style={{
-        backgroundColor: "var(--magenta-tint)",
-        color: "var(--dark)",
+        backgroundColor: "var(--plum)", // Espresso Plum background
+        color: "#FFFFFF", // White body text
         paddingTop: 0,
-        borderTop: "1px solid rgba(184,79,160,0.1)"
+        borderTop: "1px solid var(--sky-blue-tint)" // pale blush border
       }}
     >
       {/* Gradient Brand Strip */}
@@ -60,27 +61,26 @@ const Footer = () => {
           <div>
             <div
               className="display"
-              style={{ fontSize: "1.5rem", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "1rem" }}
+              style={{ marginBottom: "1rem" }}
             >
-              <span style={{ 
-                fontFamily: "'Bodoni Moda', serif",
-                fontStyle: "italic",
-                fontSize: "2.2rem",
-                fontWeight: "400",
-                background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}>
-                Fiesta House
-              </span>
+              <img 
+                src={logoDark} 
+                alt="Fiesta House Maternity" 
+                style={{ 
+                  height: "55px", 
+                  width: "auto",
+                  objectFit: "contain",
+                  display: "block",
+                  marginBottom: "1rem"
+                }} 
+              />
             </div>
-            <p style={{ fontSize: "0.85rem", opacity: 0.7, lineHeight: "1.6", maxWidth: "260px", marginBottom: "1rem" }}>
+            <p style={{ fontSize: "0.95rem", opacity: 0.8, lineHeight: "1.6", maxWidth: "320px", marginBottom: "1rem", color: "#FFFFFF" }}>
               Nairobi's premier luxury maternity studio. We transform pregnancy into art at our Diamond Plaza sanctuary.
             </p>
             <div style={{ display: "flex", gap: "1rem" }}>
-               <a href="https://instagram.com/fiestahousematernity" target="_blank" rel="noreferrer" style={{ color: "var(--magenta)", fontSize: "0.8rem", fontWeight: "600" }}>Instagram</a>
-               <a href="https://wa.me/254720111928" target="_blank" rel="noreferrer" style={{ color: "var(--sky-blue)", fontSize: "0.8rem", fontWeight: "600" }}>WhatsApp</a>
+              <a href="https://instagram.com/fiestahousematernity" target="_blank" rel="noreferrer" style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "0.92rem", fontWeight: "600", transition: "color 0.3s" }} onMouseEnter={e => e.currentTarget.style.color = "var(--sky-blue)"} onMouseLeave={e => e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)"}>Instagram</a>
+              <a href="https://wa.me/254720111928" target="_blank" rel="noreferrer" style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "0.92rem", fontWeight: "600", transition: "color 0.3s" }} onMouseEnter={e => e.currentTarget.style.color = "var(--sky-blue)"} onMouseLeave={e => e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)"}>WhatsApp</a>
             </div>
           </div>
 
@@ -88,44 +88,44 @@ const Footer = () => {
           <div>
             <p
               style={{
-                fontSize: "0.7rem",
+                fontSize: "0.78rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.15em",
-                color: "var(--dark)",
+                color: "#FFFFFF",
                 fontWeight: "700",
                 marginBottom: "1.2rem",
-                opacity: 0.4
+                opacity: 0.5
               }}
             >
               Navigate
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-              {[
-                { to: "/", label: "Home" },
-                { to: "/portfolio", label: "Portfolio" },
-                { to: "/about", label: "About" },
-                { to: "/pricing", label: "Pricing" },
-                { to: "/contact", label: "Book" },
-              ].map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  style={{
-                    fontSize: "0.8rem",
-                    color: "var(--dark)",
-                    textDecoration: "none",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = "var(--magenta)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = "var(--dark)";
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
+               {[
+                 { to: "/", label: "Home" },
+                 { to: "/portfolio", label: "Portfolio" },
+                 { to: "/about", label: "About" },
+                 { to: "/pricing", label: "Pricing" },
+                 { to: "/contact", label: "Book" },
+               ].map((link) => (
+                 <Link
+                   key={link.to}
+                   to={link.to}
+                   style={{
+                     fontSize: "0.92rem",
+                     color: "rgba(255, 255, 255, 0.8)",
+                     textDecoration: "none",
+                     transition: "all 0.3s ease",
+                   }}
+                   onMouseEnter={(e) => {
+                     (e.currentTarget as HTMLElement).style.color = "var(--sky-blue)"; // gold hover
+                   }}
+                   onMouseLeave={(e) => {
+                     (e.currentTarget as HTMLElement).style.color = "rgba(255, 255, 255, 0.8)";
+                   }}
+                 >
+                   {link.label}
+                 </Link>
+               ))}
             </div>
           </div>
 
@@ -133,10 +133,10 @@ const Footer = () => {
           <div>
             <p
               style={{
-                fontSize: "0.7rem",
+                fontSize: "0.78rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.15em",
-                color: "var(--dark)",
+                color: "#FFFFFF",
                 fontWeight: "700",
                 marginBottom: "1.2rem",
                 opacity: 0.4
@@ -145,14 +145,14 @@ const Footer = () => {
               Photography Copyright
             </p>
             <p style={{ 
-              fontSize: "0.8rem", 
+              fontSize: "0.92rem", 
               lineHeight: "1.6", 
               opacity: 0.6,
               marginBottom: "1rem"
             }}>
               Fiesta House Attire owns the copyrights to all the images and has exclusive right to use, edit, print, reproduce, and distribute their images without permission.
             </p>
-            <p style={{ fontSize: "0.75rem", opacity: 0.5 }}>
+            <p style={{ fontSize: "0.86rem", opacity: 0.5 }}>
               info@fiestahouseattire.com · Diamond Plaza II, Nairobi
             </p>
             <div className="footer-mini-gallery" aria-label="Footer image gallery" ref={miniGalleryRef}>
@@ -179,13 +179,13 @@ const Footer = () => {
         <div
           className="container"
           style={{
-            borderTop: "1px solid rgba(0,0,0,0.05)",
+            borderTop: "1px solid rgba(255,255,255,0.14)",
             paddingTop: "1.5rem",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             opacity: 0.4,
-            fontSize: "0.7rem",
+            fontSize: "0.78rem",
             letterSpacing: "0.05em"
           }}
         >

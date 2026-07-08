@@ -100,17 +100,19 @@ const Layout: React.FC<LayoutProps> = ({
         
         @media (max-width: 768px) {
           .social-fixed-bar {
-            gap: 0.4rem;
-            padding: 0.45rem 0.3rem;
-            border-radius: 10px 0 0 10px;
+            right: 0.45rem;
+            gap: 0.45rem;
+            padding: 0.55rem 0.4rem;
+            border-radius: 12px;
+            border-right: 1px solid rgba(255, 255, 255, 0.4);
           }
           .social-btn {
-            width: 26px;
-            height: 26px;
+            width: 30px;
+            height: 30px;
           }
           .social-btn svg {
-            width: 13px !important;
-            height: 13px !important;
+            width: 14px !important;
+            height: 14px !important;
           }
         }
         

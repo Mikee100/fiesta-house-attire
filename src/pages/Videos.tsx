@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+﻿import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
@@ -292,7 +292,7 @@ export default function Videos() {
       <style>{`
         .vp-fade { opacity:0; transform:translateY(24px); transition:opacity .8s ease,transform .8s ease; }
         .vp-in   { opacity:1 !important; transform:translateY(0) !important; }
-        .vp-card:hover .vp-play { background:var(--magenta,#C45C82)!important; border-color:var(--magenta,#C45C82)!important; transform:translate(-50%,-50%) scale(1.1)!important; }
+        .vp-card:hover .vp-play { background:var(--magenta,#660032)!important; border-color:var(--magenta,#660032)!important; transform:translate(-50%,-50%) scale(1.1)!important; }
         .vp-card:hover .vp-overlay { background:linear-gradient(to top,rgba(0,0,0,.9) 0%,rgba(0,0,0,.3) 50%,rgba(0,0,0,.1) 100%)!important; }
         .vp-featured-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start; }
         .vp-more-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
@@ -399,7 +399,7 @@ export default function Videos() {
           >
             See the
             <br />
-            <em style={{ fontStyle: "italic", color: "var(--magenta,#C45C82)" }}>glow</em> move.
+            <em style={{ fontStyle: "italic", color: "var(--magenta,#660032)" }}>glow</em> move.
           </h1>
           <p style={{ fontSize: ".85rem", lineHeight: 1.8, color: "rgba(255,255,255,.45)", fontWeight: 300, maxWidth: "42ch", margin: "0 auto" }}>
             Still images capture a moment. Film captures how it <em style={{ fontStyle: "italic", color: "rgba(255,255,255,.7)" }}>felt</em>. Watch our luxury maternity sessions come to life - movement, light, and the quiet beauty of expecting.
@@ -428,8 +428,8 @@ export default function Videos() {
       </section>
 
       <section className="vp-fade" ref={addRef} style={{ padding: "6rem clamp(1.5rem,5vw,3rem)", maxWidth: "1200px", margin: "0 auto", contentVisibility: "auto", containIntrinsicSize: "1000px" }}>
-        <div style={{ fontSize: ".65rem", letterSpacing: ".35em", textTransform: "uppercase", color: "var(--magenta,#C45C82)", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-          <span style={{ display: "block", width: "2rem", height: ".5px", background: "var(--magenta,#C45C82)" }} />
+        <div style={{ fontSize: ".65rem", letterSpacing: ".35em", textTransform: "uppercase", color: "var(--magenta,#660032)", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+          <span style={{ display: "block", width: "2rem", height: ".5px", background: "var(--magenta,#660032)" }} />
           Featured Films
         </div>
 
@@ -511,9 +511,9 @@ export default function Videos() {
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(2.5rem,5vw,5rem)", fontWeight: 300, fontStyle: "italic", lineHeight: 1.1, marginBottom: "2.5rem" }}>
             Your pregnancy deserves
             <br />
-            to be <em style={{ fontStyle: "normal", color: "var(--magenta,#C45C82)" }}>felt</em>, not just seen.
+            to be <em style={{ fontStyle: "normal", color: "var(--magenta,#660032)" }}>felt</em>, not just seen.
           </h2>
-          <Link to="/contact" style={{ display: "inline-block", padding: ".9rem 2.8rem", background: "var(--magenta,#C45C82)", color: "#fff", textDecoration: "none", fontSize: ".68rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
+          <Link to="/contact" style={{ display: "inline-block", padding: ".9rem 2.8rem", background: "var(--magenta,#660032)", color: "#fff", textDecoration: "none", fontSize: ".68rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
             Book Your Film Session
           </Link>
         </div>
@@ -541,3 +541,5 @@ export default function Videos() {
     </Layout>
   );
 }
+
+

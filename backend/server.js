@@ -24,6 +24,8 @@ const defaultAllowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:5374',
+  'http://localhost:5373',
+  'http://127.0.0.1:5174',
   'https://fiestahouseattire.vercel.app',
   'https://app.fiestahouseattire.com'
 ];
