@@ -1000,6 +1000,26 @@ app.delete('/api/assets/:id', requireAdminAuth, async (req, res) => {
 
 // --- Videos API ---
 
+const normalizeVideoUrl = (value) => {
+  if (typeof value !== 'string') return value;
+
+  let url = value.trim().replace(/\s+/g, '');
+  if (!url) return url;
+
+  // Ensure protocol for common platform URLs.
+  if (/^(www\.)?youtube\.com\//i.test(url)) url = `https://${url.replace(/^https?:\/\//i, '')}`;
+  if (/^youtu\.be\//i.test(url)) url = `https://${url}`;
+  if (/^vimeo\.com\//i.test(url)) url = `https://${url}`;
+
+  // Normalize malformed YouTube short variants observed in production.
+  url = url
+    .replace(/https?:\/\/(www\.)?youtube\.comshorts\//i, 'https://youtube.com/shorts/')
+    .replace(/https?:\/\/(www\.)?youtube\.comshort\//i, 'https://youtube.com/shorts/')
+    .replace(/https?:\/\/(www\.)?youtube\.com\/short\//i, 'https://youtube.com/shorts/');
+
+  return url;
+};
+
 // Public videos list
 app.get('/api/videos', async (req, res) => {
   try {
@@ -1008,7 +1028,7 @@ app.get('/api/videos', async (req, res) => {
        WHERE is_active = true
        ORDER BY is_featured DESC, sort_order ASC, created_at DESC`
     );
-    res.json(result.rows);
+    res.json(result.rows.map((row) => ({ ...row, video_url: normalizeVideoUrl(row.video_url) })));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch videos' });
@@ -1022,7 +1042,7 @@ app.get('/api/admin/videos', requireAdminAuth, async (req, res) => {
       `SELECT * FROM videos
        ORDER BY is_featured DESC, sort_order ASC, created_at DESC`
     );
-    res.json(result.rows);
+    res.json(result.rows.map((row) => ({ ...row, video_url: normalizeVideoUrl(row.video_url) })));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch admin videos' });
@@ -1041,7 +1061,9 @@ app.post('/api/videos', requireAdminAuth, async (req, res) => {
     is_active = true,
   } = req.body;
 
-  if (!title || !video_url) {
+  const normalizedVideoUrl = normalizeVideoUrl(video_url);
+
+  if (!title || !normalizedVideoUrl) {
     return res.status(400).json({ error: 'Title and video_url are required' });
   }
 
@@ -1056,7 +1078,7 @@ app.post('/api/videos', requireAdminAuth, async (req, res) => {
       `INSERT INTO videos (title, description, video_url, source_type, is_featured, sort_order, is_active)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [title, description || null, video_url, source_type, is_featured, nextOrder, is_active]
+      [title, description || null, normalizedVideoUrl, source_type, is_featured, nextOrder, is_active]
     );
 
     res.json(result.rows[0]);
@@ -1088,7 +1110,7 @@ app.patch('/api/videos/:id', requireAdminAuth, async (req, res) => {
     }
     if (video_url !== undefined) {
       query += `video_url = $${count}, `;
-      params.push(video_url);
+      params.push(normalizeVideoUrl(video_url));
       count++;
     }
     if (source_type !== undefined) {

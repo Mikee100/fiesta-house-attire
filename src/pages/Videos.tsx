@@ -55,10 +55,24 @@ const HERO_BACKGROUND_VIDEO_URL = "https://www.youtube.com/watch?v=V7CwmmVwn94";
 const HERO_BACKGROUND_VIDEO_TITLE = "17 March 2022";
 
 const getYouTubeId = (value: string) => {
-  const url = value.trim();
-  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  return match ? match[1] : null;
+  const raw = value.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
+
+  // Normalize common malformed variants seen in production data.
+  const normalized = raw
+    .replace(/\s+/g, "")
+    .replace(/youtube\.comshorts\//i, "youtube.com/shorts/")
+    .replace(/youtube\.com\/short\//i, "youtube.com/shorts/")
+    .replace(/youtube\.comshort\//i, "youtube.com/shorts/");
+
+  const match = normalized.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts?\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i,
+  );
+  if (match) return match[1];
+
+  // Last-resort extraction for malformed URLs that still contain an 11-char ID token.
+  const tailToken = normalized.match(/([a-zA-Z0-9_-]{11})(?:\?|&|\/|$)/);
+  return tailToken ? tailToken[1] : null;
 };
 
 const getVimeoId = (value: string) => {
