@@ -427,7 +427,7 @@ export default function Videos() {
         </div>
       </section>
 
-      <section className="vp-fade" ref={addRef} style={{ padding: "6rem clamp(1.5rem,5vw,3rem)", maxWidth: "1200px", margin: "0 auto", contentVisibility: "auto", containIntrinsicSize: "1000px" }}>
+      <section className="vp-fade" ref={addRef} style={{ padding: "6rem clamp(1.5rem,5vw,3rem)", maxWidth: "1200px", margin: "0 auto" }}>
         <div style={{ fontSize: ".65rem", letterSpacing: ".35em", textTransform: "uppercase", color: "var(--magenta,#660032)", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
           <span style={{ display: "block", width: "2rem", height: ".5px", background: "var(--magenta,#660032)" }} />
           Featured Films
@@ -467,7 +467,7 @@ export default function Videos() {
         </div>
       </section>
 
-      <section style={{ background: "#F5F0E8", padding: "6rem clamp(1.5rem,5vw,3rem)", contentVisibility: "auto", containIntrinsicSize: "1200px" }}>
+      <section style={{ background: "#F5F0E8", padding: "6rem clamp(1.5rem,5vw,3rem)" }}>
         <div className="vp-fade" ref={addRef} style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "3rem", borderBottom: ".5px solid rgba(44,44,42,.1)", paddingBottom: "1.5rem" }}>
             <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(1.8rem,3vw,2.8rem)", fontWeight: 300 }}>More Films</h2>
@@ -504,7 +504,7 @@ export default function Videos() {
         </div>
       </section>
 
-      <section className="vp-fade" ref={addRef} style={{ padding: "7rem clamp(1.5rem,5vw,3rem)", textAlign: "center", position: "relative", overflow: "hidden", contentVisibility: "auto", containIntrinsicSize: "900px" }}>
+      <section className="vp-fade" ref={addRef} style={{ padding: "7rem clamp(1.5rem,5vw,3rem)", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "40rem", height: "40rem", borderRadius: "50%", background: "radial-gradient(circle,rgba(196,92,130,.06) 0%,transparent 70%)", pointerEvents: "none" }} />
         <div style={{ position: "relative", zIndex: 1 }}>
           <p style={{ fontSize: ".65rem", letterSpacing: ".35em", textTransform: "uppercase", color: "#C9A96E", marginBottom: "1.5rem" }}>Begin your story</p>
