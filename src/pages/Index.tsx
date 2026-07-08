@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import { fetchPortfolios, fetchAssets, fetchFolders, fetchRecentBlogPosts, BlogPost } from "@/lib/api";
@@ -203,19 +203,28 @@ const Index = () => {
 
           <div className="absolute inset-0 flex items-center justify-center text-center z-10 pointer-events-none">
             <div className="container fade-in mobile-center" style={{ color: "white", pointerEvents: "auto" }}>
-              <h1 className="display h1-mobile" style={{ fontSize: "clamp(3rem, 10vw, 7rem)", marginBottom: "1rem", textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
-                Fiesta House Attire
-              </h1>
-              <p style={{
-                fontSize: "clamp(1rem, 2vw, 1.4rem)",
-                textTransform: "uppercase",
-                letterSpacing: "0.4em",
-                marginBottom: "3rem",
-                fontWeight: "400",
-                color: "var(--sky-blue)"
-              }}>
-                Nairobi's premier luxury maternity studio
-              </p>
+              <div
+                style={{
+                  display: "inline-flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <h1 className="display h1-mobile" style={{ fontSize: "clamp(3rem, 10vw, 7rem)", marginBottom: "1rem", textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
+                  Fiesta House Attire
+                </h1>
+                <p style={{
+                  fontSize: "clamp(1rem, 2vw, 1.4rem)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.28em",
+                  marginBottom: "2rem",
+                  fontWeight: "400",
+                  color: "#FFFFFF"
+                }}>
+                  Nairobi's premier luxury maternity studio
+                </p>
+                
+              </div>
             </div>
           </div>
         </section>
@@ -223,18 +232,18 @@ const Index = () => {
         
         {/* Maternity Photoshoot Description Section */}
         <section className="section-padding" style={{ background: "#f8f9fb" }}>
-          <div className="container" style={{ maxWidth: 900, margin: "0 auto" }}>
-            <h2 style={{ color: "var(--magenta)", fontSize: "2.2rem", fontWeight: 700, marginBottom: 12, textAlign: "center", letterSpacing: "0.02em" }}>
+          <div className="container" style={{ maxWidth: 930, margin: "0 auto" }}>
+            <h2 style={{ color: "var(--magenta)", fontSize: "clamp(2.15rem, 3.2vw, 2.6rem)", fontWeight: 700, marginBottom: 12, textAlign: "center", letterSpacing: "0.02em" }}>
               Best Maternity Photoshoot in Kenya
             </h2>
-            <h3 style={{ color: "#222", fontSize: "1.3rem", fontWeight: 600, marginBottom: 24, textAlign: "center" }}>
+            <h3 style={{ color: "#222", fontSize: "clamp(1.28rem, 1.9vw, 1.55rem)", fontWeight: 600, marginBottom: 24, textAlign: "center" }}>
               Maternity Photography in Nairobi | Fiesta House
             </h3>
-            <p style={{ fontSize: "1.15rem", color: "#444", marginBottom: 18, textAlign: "center" }}>
-              Fiesta House is not a typical photoshoot studio. It is a private, fully curated maternity sanctuary designed exclusively for expectant mothers who refuse to be ordinary. We transform pregnancy into art through our iconic, one-of-a-kind studio sets — from the cinematic Boat Set to the regal Master Staircase, immersive Flower Gardens, elegant Swings, and grand Chandeliers. These are not ordinary backdrops, but meticulously designed environments created to produce imagery that cannot be replicated anywhere else.
+            <p style={{ fontSize: "clamp(1.08rem, 1.5vw, 1.2rem)", color: "#444", marginBottom: 18, textAlign: "center", lineHeight: "1.68" }}>
+              Fiesta House is not a typical photoshoot studio. It is a private, fully curated maternity sanctuary designed exclusively for expectant mothers who refuse to be ordinary. We transform pregnancy into art through our iconic, one-of-a-kind studio sets - from the cinematic Boat Set to the regal Master Staircase, immersive Flower Gardens, elegant Swings, and grand Chandeliers. These are not ordinary backdrops, but meticulously designed environments created to produce imagery that cannot be replicated anywhere else.
             </p>
-            <p style={{ fontSize: "1.15rem", color: "#444", marginBottom: 18, textAlign: "center" }}>
-              Every detail is intentional. From rare designer maternity gowns and professional makeup artistry to guided posing and an all-women team trained specifically to care for expectant mothers, everything is executed at a world-class standard. Most importantly, your comfort comes first — from the ambiance to the pacing of your session, every moment is designed to ensure you feel safe, supported, and celebrated. This is where confidence meets couture, and motherhood is captured without compromise.
+            <p style={{ fontSize: "clamp(1.08rem, 1.5vw, 1.2rem)", color: "#444", marginBottom: 18, textAlign: "center", lineHeight: "1.68" }}>
+              Every detail is intentional. From rare designer maternity gowns and professional makeup artistry to guided posing and an all-women team trained specifically to care for expectant mothers, everything is executed at a world-class standard. Most importantly, your comfort comes first - from the ambiance to the pacing of your session, every moment is designed to ensure you feel safe, supported, and celebrated. This is where confidence meets couture, and motherhood is captured without compromise.
             </p>
           </div>
         </section>
@@ -267,7 +276,7 @@ const Index = () => {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                       <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{portfolio.title}</h3>
-                      <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "0.8rem" }}>View Collection →</span>
+                      <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "0.8rem" }}>View Collection â†’</span>
                     </div>
                   </Link>
                 ))
@@ -313,7 +322,7 @@ const Index = () => {
                   id: "1aea11b8-fd79-4602-9c44-af400754ebec",
                   title: "Suspending Concept",
                   subtitle: "Cinematic Art",
-                  desc: "Elevate your maternity story with Fiesta House’s suspending concept—where gravity meets grace.",
+                  desc: "Elevate your maternity story with Fiesta House's suspending concept-where gravity meets grace.",
                   fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg",
                   link: "/gallery/1aea11b8-fd79-4602-9c44-af400754ebec"
                 }
@@ -340,7 +349,7 @@ const Index = () => {
                       <h3 className="display" style={{ fontSize: "2.4rem", margin: "0.5rem 0 1rem" }}>{concept.title}</h3>
                       <p style={{ opacity: 0.6, lineHeight: "1.6", marginBottom: "1.5rem" }}>{concept.desc}</p>
                       <span className="inline-block" style={{ borderBottom: "2px solid var(--sky-blue)", paddingBottom: "2px", fontSize: "0.9rem", fontWeight: "600", color: "var(--sky-blue)" }}>
-                        Explore Collection →
+                        Explore Collection
                       </span>
                     </Link>
                   </div>
@@ -363,7 +372,7 @@ const Index = () => {
                 <p>
                   Every detail is intentional. From rare designer maternity gowns and professional makeup artistry to guided posing and an all-women team trained specifically to care for expectant mothers, everything is executed at a world-class standard.
                 </p>
-                <Link to="/experience" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way →</Link>
+                <Link to="/experience" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way</Link>
               </div>
               <div style={{ position: "relative" }} className="mobile-center">
                 <img src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg" alt="Maternity Portrait" width={1200} height={1600} loading="lazy" decoding="async" style={{ width: "100%", height: "auto", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
@@ -422,7 +431,7 @@ const Index = () => {
                 fontSize: "1rem",
                 letterSpacing: "0.1em",
                 boxShadow: "0 10px 30px rgba(110, 193, 228, 0.3)"
-              }}>Discover the Atelier →</Link>
+              }}>Discover the Atelier</Link>
             </div>
           </div>
         </section>
@@ -627,7 +636,7 @@ const Index = () => {
                     <div style={{ color: "var(--sky-blue)" }}><Clock size={24} /></div>
                     <div>
                       <h3 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Studio Hours</h3>
-                      <p style={{ opacity: 0.7 }}>Tuesday – Sunday: 9:00 AM – 6:00 PM<br />Mondays: Closed for Studio Maintenance</p>
+                      <p style={{ opacity: 0.7 }}>Tuesday - Sunday: 9:00 AM - 6:00 PM<br />Mondays: Closed for Studio Maintenance</p>
                     </div>
                   </div>
 
@@ -693,12 +702,12 @@ const Index = () => {
         </section>
 
         {/* Testimonials */}
-        <section className="section-padding" style={{ backgroundColor: "white" }}>
+        <section className="section-padding" style={{ backgroundColor: "#FBF6F3" }}>
           <div className="container">
             <div className="grid grid-2 mobile-gap-12" style={{ gap: "6rem" }}>
               {[
                 {
-                  text: "I have never felt more beautiful in my life. The gowns, the makeup, the way they made me feel — it was the most special day of my pregnancy.",
+                  text: "I have never felt more beautiful in my life. The gowns, the makeup, the way they made me feel - it was the most special day of my pregnancy.",
                   author: "Wanjiru K."
                 },
                 {
@@ -707,12 +716,12 @@ const Index = () => {
                 }
               ].map((t, i) => (
                 <div key={i} style={{ fontStyle: "italic", position: "relative", padding: "2rem" }}>
-                  <span style={{ position: "absolute", top: 0, left: 0, fontSize: "4rem", color: "var(--sky-blue-tint)", zIndex: 0 }}>"</span>
-                  <p style={{ fontSize: "1.8rem", lineHeight: "1.4", marginBottom: "1.5rem", fontFamily: "var(--font-display)", position: "relative", zIndex: 1 }}>
+                  <span style={{ position: "absolute", top: 0, left: 0, fontSize: "4rem", color: "rgba(102, 0, 50, 0.2)", zIndex: 0 }}>"</span>
+                  <p style={{ fontSize: "1.8rem", lineHeight: "1.4", marginBottom: "1.5rem", fontFamily: "var(--font-display)", position: "relative", zIndex: 1, color: "var(--magenta)" }}>
                     {t.text}
                   </p>
-                  <cite style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: "600", color: "var(--magenta)" }}>
-                    — {t.author}
+                  <cite style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: "600", color: "var(--sky-blue)" }}>
+                    - {t.author}
                   </cite>
                 </div>
               ))}
@@ -758,7 +767,7 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Latest Stories Carousel */}
+                {/* Latest Stories Carousel */}
         {recentPosts.length > 0 && (
           <section className="section-padding" style={{ backgroundColor: "white" }}>
             <div className="container">
@@ -774,58 +783,46 @@ const Index = () => {
                 }}
                 className="w-full"
               >
-                <CarouselContent className="-ml-8">
+                <CarouselContent>
                   {recentPosts.map((post) => (
-                    <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-1/3 pl-8">
-                      <Link to={`/blog/${post.slug}`} className="group block">
-                        <div className="aspect-[4/5] rounded-2xl overflow-hidden mb-6 relative">
+                    <CarouselItem key={post.id} className="md:basis-1/2 lg:basis-1/3">
+                      <Link to={`/blog/${post.slug}`} className="group block h-full">
+                        <div style={{ border: "1px solid var(--sky-blue-tint)", background: "#FFFFFF", height: "100%" }}>
                           {post.cover_image_url ? (
                             <img
                               src={post.cover_image_url}
                               alt={post.title}
                               width={1200}
-                              height={1500}
+                              height={900}
                               loading="lazy"
                               decoding="async"
-                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                              style={{ width: "100%", aspectRatio: "16 / 10", objectFit: "cover" }}
                             />
                           ) : (
-                            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-                              <span className="font-display italic text-2xl">Fiesta House</span>
-                            </div>
+                            <div style={{ width: "100%", aspectRatio: "16 / 10", background: "#FBF6F3" }} />
                           )}
-                          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
-                        </div>
-                        <div className="space-y-3">
-                          <span className="text-[10px] text-[var(--magenta)] uppercase tracking-widest font-bold">
-                            {post.categories?.[0]?.name || "Story"}
-                          </span>
-                          <h3 className="font-display text-2xl leading-tight group-hover:text-[var(--sky-blue)] transition-colors line-clamp-2">
-                            {post.title}
-                          </h3>
-                          <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
-                            {post.excerpt || 'Read more about this maternity journey and the stories that make each session unique...'}
-                          </p>
+                          <div style={{ padding: "1.2rem" }}>
+                            <h3 className="display" style={{ fontSize: "1.6rem", marginBottom: "0.6rem", color: "var(--magenta)" }}>
+                              {post.title}
+                            </h3>
+                            <p style={{ fontSize: "0.9rem", color: "rgba(43,35,32,0.8)", lineHeight: "1.6", marginBottom: "1rem" }}>
+                              {post.excerpt || "Explore this story from the Fiesta House sanctuary."}
+                            </p>
+                            <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.16em", color: "var(--sky-blue)", fontWeight: 600 }}>
+                              Read Story
+                            </span>
+                          </div>
                         </div>
                       </Link>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <div className="flex justify-center gap-4 mt-12">
-                  <CarouselPrevious className="static translate-y-0" />
-                  <CarouselNext className="static translate-y-0" />
-                </div>
+                <CarouselPrevious />
+                <CarouselNext />
               </Carousel>
-
-              <div className="text-center mt-16">
-                <Link to="/blog" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>
-                  View All Stories
-                </Link>
-              </div>
             </div>
           </section>
         )}
-
 
         {/* Instagram Feed Section */}
         <InstagramFeed />
@@ -886,3 +883,5 @@ const Index = () => {
 };
 
 export default Index;
+
+

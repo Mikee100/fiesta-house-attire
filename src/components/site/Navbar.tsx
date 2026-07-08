@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import logoLight from "@/assets/logo-light.jpg";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -15,13 +16,16 @@ const navLinks = [
 
 const NAV_PRIMARY = "var(--magenta)";
 const NAV_SECONDARY = "var(--sky-blue)";
+const NAV_LIGHT = "#FFFFFF";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const { cartCount } = useCart();
-  const isHome = location.pathname === "/";
+  const isHomePage = location.pathname === "/";
+  const showSolidNavbar = !isHomePage || scrolled || menuOpen;
+  const currentNavColor = showSolidNavbar ? NAV_PRIMARY : NAV_LIGHT;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -31,14 +35,12 @@ const Navbar = () => {
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
 
-  const solid = scrolled || !isHome;
-
   const handleLinkMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
     e.currentTarget.style.color = NAV_SECONDARY;
   };
 
   const handleLinkMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.style.color = NAV_PRIMARY;
+    e.currentTarget.style.color = currentNavColor;
   };
 
   return (
@@ -50,54 +52,48 @@ const Navbar = () => {
         width: "100%",
         zIndex: 1000,
         transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
-        backgroundColor: solid ? "rgba(255,255,255,0.97)" : "transparent",
-        backdropFilter: solid ? "blur(16px)" : "none",
-        borderBottom: solid ? "2px solid var(--sky-blue)" : "none",
-        boxShadow: solid ? "0 4px 24px rgba(110,193,228,0.12)" : "none",
+        backgroundColor: showSolidNavbar ? "var(--cream)" : "transparent",
+        backdropFilter: showSolidNavbar ? "blur(16px)" : "none",
+        borderBottom: showSolidNavbar ? "1px solid var(--sky-blue-tint)" : "1px solid transparent",
+        boxShadow: showSolidNavbar ? "0 4px 20px rgba(51, 11, 37, 0.04)" : "none",
         padding: scrolled ? "0.3rem 0" : "0.7rem 0",
       }}
     >
       <div className="container nav-container">
-        {/* Logo */}
         <Link
           to="/"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.75rem",
+            gap: "0.7rem",
             textDecoration: "none",
           }}
         >
-          <img 
-            src="/favicon.ico" 
-            alt="Fiesta House" 
-            style={{ 
-              width: "36px", 
-              height: "36px",
-              borderRadius: "4px", // Slight rounding instead of full circle
-              boxShadow: solid ? "0 4px 12px rgba(0,0,0,0.08)" : "0 4px 12px rgba(255,255,255,0.15)"
-            }} 
+          <img
+            src={logoLight}
+            alt="Fiesta House Maternity"
+            style={{
+              height: "44px",
+              width: "auto",
+              objectFit: "contain",
+              display: "block",
+              borderRadius: "10px",
+            }}
           />
           <span
+            className="display"
             style={{
-              fontFamily: "'Bodoni Moda', serif",
-              fontStyle: "italic",
-              fontSize: "1.85rem",
-              fontWeight: "700",
-              letterSpacing: "0.02em",
-              background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              transition: "opacity 0.4s ease",
-              textShadow: "none"
+              fontSize: "1.45rem",
+              fontWeight: 500,
+              letterSpacing: "0.01em",
+              lineHeight: 1,
+              color: currentNavColor,
             }}
           >
             Fiesta House
           </span>
         </Link>
 
-        {/* Desktop Links */}
         <div className="nav-links" style={{ alignItems: "center", gap: "2.5rem" }}>
           {navLinks.map((link) => {
             const isActive =
@@ -112,8 +108,8 @@ const Navbar = () => {
                 onMouseEnter={handleLinkMouseEnter}
                 onMouseLeave={handleLinkMouseLeave}
                 style={{
-                  color: NAV_PRIMARY,
-                  borderBottom: isActive ? "2px solid var(--magenta)" : "2px solid transparent",
+                  color: currentNavColor,
+                  borderBottom: isActive ? "2px solid var(--sky-blue)" : "2px solid transparent",
                   paddingBottom: "3px",
                   fontWeight: isActive ? "700" : "600",
                   transition: "all 0.3s ease",
@@ -123,43 +119,73 @@ const Navbar = () => {
               </Link>
             );
           })}
-          
+
           <Link
             to="/cart"
             aria-label="Open cart"
             onMouseEnter={handleLinkMouseEnter}
             onMouseLeave={handleLinkMouseLeave}
-            style={{ 
-            position: "relative", 
-            color: NAV_PRIMARY,
-            display: "flex",
-            alignItems: "center"
-          }}>
+            style={{
+              position: "relative",
+              color: currentNavColor,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
             <ShoppingCart size={22} />
             {cartCount > 0 && (
-              <span style={{ 
-                position: "absolute", 
-                top: "-8px", 
-                right: "-8px", 
-                backgroundColor: "var(--magenta)", 
-                color: "white", 
-                fontSize: "10px", 
-                fontWeight: "700",
-                width: "18px", 
-                height: "18px", 
-                borderRadius: "50%", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
-              }}>
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-8px",
+                  right: "-8px",
+                  backgroundColor: "var(--sky-blue)",
+                  color: "white",
+                  fontSize: "10px",
+                  fontWeight: "700",
+                  width: "18px",
+                  height: "18px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                }}
+              >
                 {cartCount}
               </span>
             )}
           </Link>
+
+          <Link
+            to="/contact"
+            style={{
+              background: "var(--sky-blue)",
+              color: "white",
+              padding: "0.55rem 1.35rem",
+              borderRadius: "100px",
+              textAlign: "center",
+              fontSize: "0.72rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              fontWeight: "600",
+              textDecoration: "none",
+              transition: "all 0.3s ease",
+              boxShadow: "0 4px 12px rgba(176,147,69,0.2)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--magenta)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--sky-blue)";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            Book Now
+          </Link>
         </div>
 
-        {/* Mobile Hamburger */}
         <button
           onClick={() => setMenuOpen((v) => !v)}
           aria-label="Toggle menu"
@@ -168,7 +194,7 @@ const Navbar = () => {
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: solid ? "var(--dark)" : "white",
+            color: currentNavColor,
             padding: "0.5rem",
           }}
           className="nav-hamburger"
@@ -177,7 +203,6 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu Dropdown */}
       {menuOpen && (
         <div
           style={{
@@ -236,19 +261,27 @@ const Navbar = () => {
           <Link
             to="/contact"
             style={{
-              background: "linear-gradient(135deg, var(--magenta), #8B3A78)",
+              background: "var(--sky-blue)",
               color: "white",
-              padding: "0.9rem 2rem",
+              padding: "0.7rem 1.5rem",
               borderRadius: "100px",
               textAlign: "center",
-              fontSize: "0.85rem",
+              fontSize: "0.78rem",
               textTransform: "uppercase",
-              letterSpacing: "0.15em",
+              letterSpacing: "0.12em",
               fontWeight: "600",
               textDecoration: "none",
+              transition: "all 0.3s ease",
+              boxShadow: "0 4px 12px rgba(176,147,69,0.2)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--magenta)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--sky-blue)";
             }}
           >
-            Book a Session
+            Book Now
           </Link>
         </div>
       )}

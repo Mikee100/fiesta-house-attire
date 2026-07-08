@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -252,7 +252,7 @@ const AdminPortfolio = () => {
                 className="w-full"
                 onClick={handleAddImageViaUrl}
                 disabled={isProcessing || !newImageUrl}
-                style={{ backgroundColor: "#6EC1E4" }}
+                style={{ backgroundColor: "#B09345" }}
               >
                 <Plus className="mr-2 h-4 w-4" /> {isProcessing ? "Adding..." : "Add to Portfolio"}
               </Button>
@@ -506,3 +506,5 @@ const AdminPortfolio = () => {
 };
 
 export default AdminPortfolio;
+
+

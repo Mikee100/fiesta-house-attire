@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 
@@ -9,7 +9,7 @@ const expImg2 = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/publ
 
 const stats = [
   { num: "500", suffix: "+", label: "Sessions Photographed" },
-  { num: "5",   suffix: "★", label: "Client Satisfaction" },
+  { num: "5",   suffix: "â˜…", label: "Client Satisfaction" },
   { num: "6",   suffix: "+", label: "Years in Nairobi" },
 ];
 
@@ -17,17 +17,17 @@ const values = [
   {
     num: "01",
     name: "Intentional Luxury",
-    desc: "Every detail — from the fabrics on your body to the quality of light in the frame — is considered. We don't cut corners, because your portraits will outlive us all.",
+    desc: "Every detail - from the fabrics on your body to the quality of light in the frame - is considered. We don't cut corners, because your portraits will outlive us all.",
   },
   {
     num: "02",
     name: "Feminine Reverence",
-    desc: "We approach every session with deep respect for the woman in front of our lens. Pregnancy is sacred. We photograph it that way — with softness, power, and grace.",
+    desc: "We approach every session with deep respect for the woman in front of our lens. Pregnancy is sacred. We photograph it that way - with softness, power, and grace.",
   },
   {
     num: "03",
     name: "Effortless Experience",
-    desc: "You should leave your session feeling pampered, not stressed. We guide you through every pose, every outfit change, every moment — so all you have to do is glow.",
+    desc: "You should leave your session feeling pampered, not stressed. We guide you through every pose, every outfit change, every moment - so all you have to do is glow.",
   },
 ];
 
@@ -53,7 +53,7 @@ const steps = [
   {
     num: "03",
     title: "Your Session",
-    desc: "A relaxed, guided 2-hour session in our Nairobi studio. We handle the posing — you handle the feeling.",
+    desc: "A relaxed, guided 2-hour session in our Nairobi studio. We handle the posing - you handle the feeling.",
     tag: "Shoot Day",
     time: "Approx. 2 hours",
     loc: "Diamond Plaza, Nairobi",
@@ -192,12 +192,12 @@ export default function About() {
           height: 100%;
           width: 100%;
           transform-origin: left;
-          background: linear-gradient(90deg, var(--magenta, #C45C82), #d99bb7);
+          background: linear-gradient(90deg, var(--magenta, #660032), #d99bb7);
           animation: expFill 3.2s linear forwards;
         }
         .exp-step:first-child .exp-dot {
-          background: var(--magenta, #C45C82);
-          border-color: var(--magenta, #C45C82);
+          background: var(--magenta, #660032);
+          border-color: var(--magenta, #660032);
           color: #fff;
         }
         @media (max-width: 900px) {
@@ -207,7 +207,7 @@ export default function About() {
         }
       `}</style>
 
-      {/* ── HERO ── */}
+      {/* â”€â”€ HERO â”€â”€ */}
       <section
         style={{
           paddingTop: "120px",
@@ -253,30 +253,25 @@ export default function About() {
         <div
           style={{
             width: "100%",
-            maxWidth: "1200px",
+            maxWidth: "1100px",
             margin: "0 auto",
             padding: "0 clamp(1.5rem, 5vw, 3rem) 5rem",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            alignItems: "end",
-            gap: "4rem",
           }}
         >
-          {/* left: heading */}
           <div className="about-fade" ref={ref}>
             <div
               style={{
                 fontSize: "0.68rem",
                 letterSpacing: "0.35em",
                 textTransform: "uppercase",
-                color: "var(--magenta, #C45C82)",
+                color: "var(--magenta, #660032)",
                 marginBottom: "1.5rem",
                 display: "flex",
                 alignItems: "center",
                 gap: "1rem",
               }}
             >
-              <span style={{ display: "block", width: "2rem", height: "1px", background: "var(--magenta, #C45C82)" }} />
+              <span style={{ display: "block", width: "2rem", height: "1px", background: "var(--magenta, #660032)" }} />
               Our Story
             </div>
             <h1
@@ -289,56 +284,65 @@ export default function About() {
               }}
             >
               Where{" "}
-              <em style={{ fontStyle: "italic", color: "var(--magenta, #C45C82)" }}>
+              <em style={{ fontStyle: "italic", color: "var(--magenta, #660032)" }}>
                 motherhood
               </em>
               <br />
               meets artistry
             </h1>
             <p style={{ fontSize: "0.9rem", lineHeight: 1.8, color: "var(--muted, #7A7873)", maxWidth: "38ch", fontWeight: 300 }}>
-              Nairobi's premier luxury maternity studio — crafting timeless portraits that celebrate the beauty, power, and grace of pregnancy.
+              Nairobi's premier luxury maternity studio - crafting timeless portraits that celebrate the beauty, power, and grace of pregnancy.
             </p>
-          </div>
-
-          {/* right: stats */}
-          <div
-            className="about-fade"
-            ref={ref}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "2rem",
-              borderLeft: "1px solid rgba(44,44,42,0.12)",
-              paddingLeft: "clamp(1.5rem, 4vw, 4rem)",
-              transitionDelay: "0.2s",
-            }}
-          >
-            {stats.map((s, i) => (
-              <div key={i}>
-                <div
-                  style={{
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontSize: "3.5rem",
-                    fontWeight: 300,
-                    lineHeight: 1,
-                  }}
-                >
-                  {s.num}
-                  <span style={{ fontSize: "1.5rem", color: "var(--magenta, #C45C82)" }}>{s.suffix}</span>
-                </div>
-                <div style={{ fontSize: "0.68rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--muted, #7A7873)", marginTop: "0.4rem" }}>
-                  {s.label}
-                </div>
-                {i < stats.length - 1 && (
-                  <div style={{ width: "100%", height: "1px", background: "rgba(44,44,42,0.12)", marginTop: "2rem" }} />
-                )}
-              </div>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* ── PHILOSOPHY ── */}
+      <section
+        style={{
+          background: "#330B25",
+          padding: "2.5rem clamp(1.5rem, 5vw, 3rem)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "1.5rem",
+          }}
+        >
+          {stats.map((s, i) => (
+            <div key={i} className="about-fade" ref={ref} style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: "clamp(2.2rem, 6vw, 3.5rem)",
+                  fontWeight: 300,
+                  lineHeight: 1,
+                  color: "#FFFFFF",
+                }}
+              >
+                {s.num}
+                <span style={{ fontSize: "1.5rem", color: "#B09345" }}>{s.suffix}</span>
+              </div>
+              <div
+                style={{
+                  fontSize: "0.68rem",
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "#B09345",
+                  marginTop: "0.5rem",
+                }}
+              >
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* â”€â”€ PHILOSOPHY â”€â”€ */}
       <section
         style={{
           background: "#2C2C2A",
@@ -369,15 +373,15 @@ export default function About() {
               padding: 0,
             }}
           >
-            "Pregnancy is not just a moment in time — it is a transformation. We are here to make sure you never forget how breathtaking it looked."
+            "Pregnancy is not just a moment in time - it is a transformation. We are here to make sure you never forget how breathtaking it looked."
           </blockquote>
           <p style={{ fontSize: "0.7rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
-            — Fiesta House Attire
+            - Fiesta House Attire
           </p>
         </div>
       </section>
 
-      {/* ── STORY ── */}
+      {/* â”€â”€ STORY â”€â”€ */}
       <section style={{ padding: "8rem clamp(1.5rem, 5vw, 3rem)", maxWidth: "1200px", margin: "0 auto" }}>
         <div
           style={{
@@ -414,9 +418,9 @@ export default function About() {
           <div className="about-fade" ref={ref} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             {[
               <>Fiesta House Attire was born from a simple belief: <strong>every expecting mother deserves to feel like the most beautiful woman in the world.</strong> We are a Nairobi-based luxury maternity photography studio dedicated to creating portraits that are as timeless as the love you carry.</>,
-              <>Our studio is a sanctuary — a calm, elegantly styled space where you can arrive, exhale, and be celebrated. We handle everything: the wardrobe, the lighting, the posing, the atmosphere. Your only job is to show up and feel.</>,
+              <>Our studio is a sanctuary - a calm, elegantly styled space where you can arrive, exhale, and be celebrated. We handle everything: the wardrobe, the lighting, the posing, the atmosphere. Your only job is to show up and feel.</>,
               <>We work with a <strong>curated wardrobe of flowing gowns, silks, and wraps</strong> sourced specifically for maternity photography. Every piece is chosen to flatter the beauty of a pregnant body, not conceal it.</>,
-              <>Whether you are 28 weeks or 36 weeks, a first-time mother or adding to your family — <strong>this session is yours.</strong> We photograph women of every background, body type, and story with equal care and reverence.</>,
+              <>Whether you are 28 weeks or 36 weeks, a first-time mother or adding to your family - <strong>this session is yours.</strong> We photograph women of every background, body type, and story with equal care and reverence.</>,
             ].map((text, i) => (
               <p key={i} style={{ fontSize: "0.95rem", lineHeight: 1.9, color: "var(--muted, #7A7873)", fontWeight: 300 }}>
                 {text}
@@ -426,7 +430,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* ── VALUES ── */}
+      {/* â”€â”€ VALUES â”€â”€ */}
       <section style={{ background: "#F5F0E8", padding: "8rem clamp(1.5rem, 5vw, 3rem)" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div
@@ -460,7 +464,7 @@ export default function About() {
                   transitionDelay: `${i * 0.15}s`,
                 }}
               >
-                <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", fontSize: "0.85rem", color: "var(--magenta, #C45C82)", marginBottom: "1.5rem", letterSpacing: "0.1em" }}>
+                <span style={{ display: "block", fontFamily: "'Cormorant Garamond', serif", fontSize: "0.85rem", color: "var(--magenta, #660032)", marginBottom: "1.5rem", letterSpacing: "0.1em" }}>
                   {v.num}
                 </span>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.6rem", fontWeight: 400, marginBottom: "1rem", lineHeight: 1.2 }}>
@@ -475,8 +479,8 @@ export default function About() {
         </div>
       </section>
 
-      {/* ── EXPERIENCE ── */}
-     {/* ── EXPERIENCE ── */}
+      {/* â”€â”€ EXPERIENCE â”€â”€ */}
+     {/* â”€â”€ EXPERIENCE â”€â”€ */}
 <section style={{ padding: "6rem clamp(1.5rem, 5vw, 3rem)", maxWidth: "1200px", margin: "0 auto" }}>
   <div style={{
     display: "flex", alignItems: "baseline", justifyContent: "space-between",
@@ -560,7 +564,7 @@ export default function About() {
 
   {/* Nav arrows */}
   <div style={{ display: "flex", gap: "8px", marginTop: "2rem", justifyContent: "flex-end" }}>
-    {["←", "→"].map((arrow, i) => (
+    {["â†", "â†’"].map((arrow, i) => (
       <button key={i} onClick={() => setActiveStep(i === 0 ? (activeStep + 3) % 4 : (activeStep + 1) % 4)}
         style={{ width: "36px", height: "36px", borderRadius: "50%", border: "0.5px solid rgba(44,44,42,0.2)", background: "transparent", cursor: "pointer", fontSize: "16px", color: "var(--muted)", transition: "all 0.2s" }}
         onMouseEnter={e => { e.currentTarget.style.background = "var(--magenta)"; e.currentTarget.style.color = "white"; e.currentTarget.style.borderColor = "var(--magenta)"; }}
@@ -570,7 +574,7 @@ export default function About() {
   </div>
 </section>
 
-      {/* ── CTA ── */}
+      {/* â”€â”€ CTA â”€â”€ */}
       <section
         style={{
           background: "#2C2C2A",
@@ -602,7 +606,7 @@ export default function About() {
             style={{
               display: "inline-block",
               padding: "1rem 3rem",
-              background: "var(--magenta, #C45C82)",
+              background: "var(--magenta, #660032)",
               color: "white",
               textDecoration: "none",
               fontSize: "0.72rem",
@@ -617,3 +621,5 @@ export default function About() {
     </Layout>
   );
 }
+
+
