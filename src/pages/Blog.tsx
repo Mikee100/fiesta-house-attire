@@ -232,6 +232,8 @@ const Blog = () => {
                           <img
                             src="https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=300&h=300"
                             alt="Fiesta House"
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -275,6 +277,8 @@ const Blog = () => {
                               <img
                                 src={post.cover_image_url}
                                 alt={post.title}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                               />
                             )}

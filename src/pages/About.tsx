@@ -410,6 +410,8 @@ export default function About() {
               <img
                 src={storyImg}
                 alt="Expectant mother portrait in studio"
+                loading="lazy"
+                decoding="async"
                 style={{ width: "100%", aspectRatio: "4/5", objectFit: "cover" }}
                 loading="lazy"
               />

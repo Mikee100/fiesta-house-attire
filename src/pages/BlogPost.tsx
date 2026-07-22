@@ -156,7 +156,7 @@ const BlogPostPage = () => {
                       <Link key={rp.id} to={`/blog/${rp.slug}`} className="block group">
                         {rp.cover_image_url && (
                           <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-slate-100">
-                            <img src={rp.cover_image_url} alt={rp.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            <img src={rp.cover_image_url} alt={rp.title} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                           </div>
                         )}
                         <h4 className="font-medium text-base leading-tight text-[var(--text)] group-hover:text-[var(--sky-blue)] transition-colors line-clamp-3 mb-2">
