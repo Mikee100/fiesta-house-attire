@@ -403,6 +403,10 @@ const initVideosDb = async () => {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_videos_public_feed
+      ON videos (is_active, is_featured DESC, sort_order ASC, created_at DESC);
+    `);
     console.log("✓ Videos database initialized");
   } catch (err) {
     console.error("Videos DB Init Error:", err);
@@ -1020,15 +1024,48 @@ const normalizeVideoUrl = (value) => {
   return url;
 };
 
+const VIDEOS_PUBLIC_CACHE_TTL_MS = 60 * 1000;
+let publicVideosCache = {
+  data: null,
+  cachedAt: 0,
+};
+
+const getCachedPublicVideos = () => {
+  if (!publicVideosCache.data) return null;
+  const isFresh = Date.now() - publicVideosCache.cachedAt < VIDEOS_PUBLIC_CACHE_TTL_MS;
+  return isFresh ? publicVideosCache.data : null;
+};
+
+const setCachedPublicVideos = (videos) => {
+  publicVideosCache = {
+    data: videos,
+    cachedAt: Date.now(),
+  };
+};
+
+const invalidatePublicVideosCache = () => {
+  publicVideosCache = {
+    data: null,
+    cachedAt: 0,
+  };
+};
+
 // Public videos list
 app.get('/api/videos', async (req, res) => {
   try {
+    const cached = getCachedPublicVideos();
+    if (cached) {
+      return res.json(cached);
+    }
+
     const result = await pool.query(
       `SELECT * FROM videos
        WHERE is_active = true
        ORDER BY is_featured DESC, sort_order ASC, created_at DESC`
     );
-    res.json(result.rows.map((row) => ({ ...row, video_url: normalizeVideoUrl(row.video_url) })));
+    const normalized = result.rows.map((row) => ({ ...row, video_url: normalizeVideoUrl(row.video_url) }));
+    setCachedPublicVideos(normalized);
+    res.json(normalized);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch videos' });
@@ -1081,6 +1118,7 @@ app.post('/api/videos', requireAdminAuth, async (req, res) => {
       [title, description || null, normalizedVideoUrl, source_type, is_featured, nextOrder, is_active]
     );
 
+    invalidatePublicVideosCache();
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -1147,6 +1185,7 @@ app.patch('/api/videos/:id', requireAdminAuth, async (req, res) => {
       return res.status(404).json({ error: 'Video not found' });
     }
 
+    invalidatePublicVideosCache();
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -1159,6 +1198,7 @@ app.delete('/api/videos/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM videos WHERE id = $1', [id]);
+    invalidatePublicVideosCache();
     res.json({ message: 'Video deleted' });
   } catch (err) {
     console.error(err);
@@ -1186,6 +1226,7 @@ app.patch('/api/videos/reorder', requireAdminAuth, async (req, res) => {
     }
 
     await client.query('COMMIT');
+    invalidatePublicVideosCache();
     res.json({ message: 'Video order updated' });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -1609,6 +1650,133 @@ async function sendOrderEmails(order, items) {
     html: customerEmailContent
   });
 }
+
+// ─── Live SEO endpoints (sitemap, image sitemap, robots) ─────────────────────
+// Served fresh from the database on every request — publish a blog post or a
+// portfolio and it appears here immediately, no deploy needed.
+// The public site URL comes from one env var so a future domain change is a
+// single setting: set SITE_URL in Vercel and everything follows.
+
+const SITEMAP_SITE_URL = (process.env.SITE_URL || 'https://app.fiestahouseattire.com').replace(/\/$/, '');
+
+const STATIC_ROUTES = [
+  { path: '/', priority: '1.0' },
+  { path: '/portfolio', priority: '0.8' },
+  { path: '/maternity-gowns', priority: '0.8' },
+  { path: '/pricing', priority: '0.8' },
+  { path: '/blog', priority: '0.8' },
+  { path: '/videos', priority: '0.8' },
+  { path: '/experience', priority: '0.7' },
+  { path: '/about', priority: '0.7' },
+  { path: '/contact', priority: '0.7' },
+  { path: '/shop', priority: '0.6' },
+];
+
+const xmlEscape = (s) =>
+  String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+
+const isoDate = (d) => {
+  try {
+    return new Date(d).toISOString().slice(0, 10);
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+};
+
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const urls = [];
+    const today = new Date().toISOString().slice(0, 10);
+
+    for (const r of STATIC_ROUTES) {
+      urls.push(
+        `  <url>\n    <loc>${SITEMAP_SITE_URL}${r.path === '/' ? '/' : r.path}</loc>\n    <lastmod>${today}</lastmod>\n    <priority>${r.priority}</priority>\n  </url>`
+      );
+    }
+
+    const [posts, portfolios] = await Promise.all([
+      pool.query(
+        `SELECT slug, COALESCE(updated_at, published_at, created_at) AS lastmod
+         FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC`
+      ),
+      pool.query(`SELECT slug, created_at AS lastmod FROM portfolios ORDER BY "order" ASC`),
+    ]);
+
+    for (const p of portfolios.rows) {
+      urls.push(
+        `  <url>\n    <loc>${SITEMAP_SITE_URL}/portfolio/${xmlEscape(p.slug)}</loc>\n    <lastmod>${isoDate(p.lastmod)}</lastmod>\n    <priority>0.7</priority>\n  </url>`
+      );
+    }
+
+    for (const p of posts.rows) {
+      urls.push(
+        `  <url>\n    <loc>${SITEMAP_SITE_URL}/blog/${xmlEscape(p.slug)}</loc>\n    <lastmod>${isoDate(p.lastmod)}</lastmod>\n    <priority>0.6</priority>\n  </url>`
+      );
+    }
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
+    res.set('Content-Type', 'application/xml; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(xml);
+  } catch (err) {
+    console.error('sitemap error', err);
+    res.status(500).send('sitemap unavailable');
+  }
+});
+
+app.get('/image-sitemap.xml', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.slug, pi.url FROM portfolio_images pi
+       JOIN portfolios p ON p.id = pi.portfolio_id
+       ORDER BY p."order" ASC, pi."order" ASC`
+    );
+
+    const byPortfolio = new Map();
+    for (const row of result.rows) {
+      if (!row.url) continue;
+      if (!byPortfolio.has(row.slug)) byPortfolio.set(row.slug, []);
+      byPortfolio.get(row.slug).push(row.url);
+    }
+
+    const urls = [];
+    for (const [slug, images] of byPortfolio) {
+      const imageTags = images
+        .slice(0, 1000)
+        .map((u) => `    <image:image>\n      <image:loc>${xmlEscape(u)}</image:loc>\n    </image:image>`)
+        .join('\n');
+      urls.push(
+        `  <url>\n    <loc>${SITEMAP_SITE_URL}/portfolio/${xmlEscape(slug)}</loc>\n${imageTags}\n  </url>`
+      );
+    }
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls.join('\n')}\n</urlset>\n`;
+    res.set('Content-Type', 'application/xml; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(xml);
+  } catch (err) {
+    console.error('image sitemap error', err);
+    res.status(500).send('image sitemap unavailable');
+  }
+});
+
+app.get('/robots.txt', (req, res) => {
+  const body = [
+    'User-agent: *',
+    'Allow: /',
+    'Disallow: /admin',
+    'Disallow: /cart',
+    'Disallow: /checkout',
+    '',
+    `Sitemap: ${SITEMAP_SITE_URL}/sitemap.xml`,
+    `Sitemap: ${SITEMAP_SITE_URL}/image-sitemap.xml`,
+    '',
+  ].join('\n');
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.send(body);
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 

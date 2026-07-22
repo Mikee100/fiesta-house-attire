@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
 
-const SITE_URL = (process.env.PRERENDER_SITE_URL || process.env.VITE_SITE_URL || "https://fiestahouseattire.com").replace(/\/$/, "");
+const SITE_URL = (process.env.PRERENDER_SITE_URL || process.env.VITE_SITE_URL || "https://app.fiestahouseattire.com").replace(/\/$/, "");
 const API_URL = process.env.PRERENDER_API_URL || process.env.VITE_API_URL || "http://localhost:5000/api";
 
 const MATERNITY_GOWNS_FOLDER_ID = "b8b100e9-81ce-4778-bf57-0adee0b46fc0";

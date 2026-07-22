@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://fiestahouseattire.com/sitemap.xml
-Sitemap: https://fiestahouseattire.com/image-sitemap.xml
