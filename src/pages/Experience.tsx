@@ -117,7 +117,7 @@ const Experience = () => {
                    ▶
                  </div>
                </div>
-               <img src={p4} alt="Videography Preview" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.8 }} />
+               <img src={p4} alt="Videography Preview" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.8 }} />
             </div>
             <div className="mobile-center">
               <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Motion Portraiture</span>

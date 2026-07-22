@@ -63,10 +63,12 @@ const Footer = () => {
               className="display"
               style={{ marginBottom: "1rem" }}
             >
-              <img 
-                src={logoDark} 
-                alt="Fiesta House Maternity" 
-                style={{ 
+              <img
+                src={logoDark}
+                alt="Fiesta House Maternity"
+                loading="lazy"
+                decoding="async"
+                style={{
                   height: "55px", 
                   width: "auto",
                   objectFit: "contain",
