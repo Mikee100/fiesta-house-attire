@@ -1,4 +1,43 @@
 {
+  "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/_/backend/sitemap.xml" },
+    { "source": "/image-sitemap.xml", "destination": "/_/backend/image-sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/_/backend/robots.txt" }
+  ],
+  "redirects": [
+    { "source": "/exclusive-maternity-photography-in-kenya-with-fiesta-house-attire", "destination": "/portfolio", "permanent": true },
+    { "source": "/pregnancy-photos-pricing-plans-fiestah-house-attire", "destination": "/pricing", "permanent": true },
+    { "source": "/pricing-plan", "destination": "/pricing", "permanent": true },
+    { "source": "/gowns-for-hire", "destination": "/maternity-gowns", "permanent": true },
+    { "source": "/gift-voucher", "destination": "/shop", "permanent": true },
+    { "source": "/blog-2", "destination": "/blog", "permanent": true },
+    { "source": "/contact-us", "destination": "/contact", "permanent": true },
+    { "source": "/portfolio/maternity-photoshoot-studio", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/maternity-photoshoot-packages-expecting-mamas", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/professional-makeup-for-maternity", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/maternity-photographer-fiesta-house-attire", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/stunning-maternity-portraits", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/maternity-photoshoot-tips-and-ideas", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/family-maternity-photoshoot-ideas-for-lasting-memories", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/baby-bump-photoshoot-in-nairobi-capture-timeless-photographs", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/photo-studio-baby-bump-shoot", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/best-rated-photo-studio-for-stunning-maternity-shoots", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/affordable-photoshoot-plans-and-prices", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/couple-maternity-photoshoot-ideas-for-a-radiant-glow", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/creative-maternity-studio", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/family-maternity-photos-studio-go-beyond-traditional-portraits", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/studio-pregnancy-photo-shoot-at-fiesta-house-attire-nairobi", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/nairobi-pregnancy-photo-shoot", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/pregnancy-photo-shoot-in-nairobi-explore-endless-possibilities", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/pregnancy-photo-shoot-in-kenya-that-captures-the-spirit-of-your-unique", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/family-pregnancy-photo-shoot-in-kenya", "destination": "/portfolio", "permanent": true },
+    { "source": "/portfolio/maternity-gowns-for-hire-in-nairobi", "destination": "/maternity-gowns", "permanent": true },
+    { "source": "/wp-content/:path*", "destination": "/portfolio", "permanent": true },
+    { "source": "/category/:path*", "destination": "/blog", "permanent": true },
+    { "source": "/tag/:path*", "destination": "/blog", "permanent": true },
+    { "source": "/author/:path*", "destination": "/blog", "permanent": true },
+    { "source": "/feed", "destination": "/blog", "permanent": true }
+  ],
   "experimentalServices": {
     "frontend": {
       "routePrefix": "/",

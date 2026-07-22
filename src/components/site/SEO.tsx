@@ -17,8 +17,8 @@ const SEO: React.FC<SEOProps> = ({
   title, 
   description, 
   keywords, 
-  ogImage = 'https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL4334-scaled.jpg', 
-  ogUrl = 'https://fiestahouseattire.com',
+  ogImage = 'https://app.fiestahouseattire.com/og-image.jpg',
+  ogUrl = 'https://app.fiestahouseattire.com',
   ogType = 'website',
   canonical,
   noindex = false,
@@ -43,7 +43,7 @@ const SEO: React.FC<SEOProps> = ({
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />
-      <meta property="og:url" content={ogUrl} />
+      <meta property="og:url" content={canonical || ogUrl} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={metaDescription} />
       <meta property="og:image" content={ogImage} />

@@ -224,7 +224,8 @@ export interface BlogPost {
 
 export const fetchBlogCategories = async (): Promise<BlogCategory[]> => {
   const res = await fetch(`${API_URL}/blog-categories`);
-  return await res.json();
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
 };
 
 export const createBlogCategory = async (name: string) => {
@@ -265,7 +266,8 @@ export const fetchBlogPost = async (slug: string): Promise<BlogPost | null> => {
 
 export const fetchRecentBlogPosts = async () => {
   const res = await fetch(`${API_URL}/blog-posts-recent`);
-  return await res.json();
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
 };
 
 export const createBlogPost = async (data: Partial<BlogPost> & { category_ids?: string[] }) => {
@@ -350,9 +352,28 @@ export interface VideoItem {
   updated_at: string;
 }
 
-export const fetchVideos = async (): Promise<VideoItem[]> => {
+const VIDEOS_CACHE_TTL_MS = 5 * 60 * 1000;
+let videosCache: { data: VideoItem[]; fetchedAt: number } | null = null;
+
+export const fetchVideos = async (options?: { force?: boolean }): Promise<VideoItem[]> => {
+  const force = Boolean(options?.force);
+  if (!force && videosCache && Date.now() - videosCache.fetchedAt < VIDEOS_CACHE_TTL_MS) {
+    return videosCache.data;
+  }
+
   const res = await fetch(`${API_URL}/videos`);
-  return await res.json();
+  const data = await res.json();
+  const safeData = Array.isArray(data) ? data : [];
+  videosCache = { data: safeData, fetchedAt: Date.now() };
+  return safeData;
+};
+
+export const prefetchVideos = async (): Promise<void> => {
+  try {
+    await fetchVideos();
+  } catch {
+    // Keep prefetch failures silent; page fetch still handles runtime errors.
+  }
 };
 
 export const fetchAdminVideos = async (): Promise<VideoItem[]> => {

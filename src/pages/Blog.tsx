@@ -20,6 +20,8 @@ const Blog = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
+  const asArray = <T,>(value: unknown): T[] => Array.isArray(value) ? value : [];
+
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchData();
@@ -33,12 +35,24 @@ const Blog = () => {
         api.fetchBlogCategories(),
         api.fetchRecentBlogPosts()
       ]);
-      setPosts(postsData.posts || []);
-      setTotalPages(postsData.totalPages || 1);
-      setCategories(catsData || []);
-      setRecentPosts(recentData || []);
+
+      const safePostsData = postsData && typeof postsData === "object" ? postsData : {};
+      setPosts(asArray<BlogPost>((safePostsData as { posts?: unknown }).posts));
+
+      const maybeTotalPages = (safePostsData as { totalPages?: unknown }).totalPages;
+      const safeTotalPages = typeof maybeTotalPages === "number" && Number.isFinite(maybeTotalPages)
+        ? Math.max(1, maybeTotalPages)
+        : 1;
+      setTotalPages(safeTotalPages);
+
+      setCategories(asArray<BlogCategory>(catsData));
+      setRecentPosts(asArray<BlogPost>(recentData));
     } catch (error) {
       console.error("Error fetching blog data", error);
+      setPosts([]);
+      setCategories([]);
+      setRecentPosts([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }

@@ -117,9 +117,9 @@ const Index = () => {
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
             "name": "Fiesta House Attire",
-            "image": "https://fiestahouseattire.com/og-image.jpg",
-            "@id": "https://fiestahouseattire.com",
-            "url": "https://fiestahouseattire.com",
+            "image": "https://app.fiestahouseattire.com/og-image.jpg",
+            "@id": "https://app.fiestahouseattire.com",
+            "url": "https://app.fiestahouseattire.com",
             "telephone": "+254720111928",
             "address": {
               "@type": "PostalAddress",

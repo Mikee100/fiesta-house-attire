@@ -17,6 +17,17 @@ const navLinks = [
 const NAV_PRIMARY = "var(--magenta)";
 const NAV_SECONDARY = "var(--sky-blue)";
 const NAV_LIGHT = "#FFFFFF";
+let didPrefetchVideos = false;
+
+const prefetchVideosAssets = () => {
+  if (didPrefetchVideos) return;
+  didPrefetchVideos = true;
+
+  void import("@/pages/Videos.tsx");
+  void import("@/lib/api").then((mod) => {
+    void mod.prefetchVideos();
+  });
+};
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -34,6 +45,33 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
+
+  useEffect(() => {
+    if (didPrefetchVideos || location.pathname === "/videos") return;
+
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+
+    const start = () => prefetchVideosAssets();
+
+    if (typeof win.requestIdleCallback === "function") {
+      idleId = win.requestIdleCallback(start, { timeout: 1800 });
+    } else {
+      timeoutId = window.setTimeout(start, 900);
+    }
+
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (idleId !== null && typeof win.cancelIdleCallback === "function") {
+        win.cancelIdleCallback(idleId);
+      }
+    };
+  }, [location.pathname]);
 
   const handleLinkMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
     e.currentTarget.style.color = NAV_SECONDARY;
@@ -105,7 +143,16 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 className="nav-link"
-                onMouseEnter={handleLinkMouseEnter}
+                onMouseEnter={(e) => {
+                  handleLinkMouseEnter(e);
+                  if (link.to === "/videos") prefetchVideosAssets();
+                }}
+                onFocus={() => {
+                  if (link.to === "/videos") prefetchVideosAssets();
+                }}
+                onTouchStart={() => {
+                  if (link.to === "/videos") prefetchVideosAssets();
+                }}
                 onMouseLeave={handleLinkMouseLeave}
                 style={{
                   color: currentNavColor,
