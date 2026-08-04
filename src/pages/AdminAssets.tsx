@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { Folder, Image as ImageIcon, Plus, Trash2, ChevronRight, Upload, Loader2, Search, CheckCircle2, Copy } from "lucide-react";
+import { Folder, Image as ImageIcon, Plus, Trash2, ChevronRight, Upload, Loader2, Search, CheckCircle2, Copy, Eye } from "lucide-react";
 import AdminPage from "@/components/admin/AdminPage";
 import AdminSection from "@/components/admin/AdminSection";
 import SEO from "@/components/site/SEO";
@@ -14,6 +15,8 @@ import SEO from "@/components/site/SEO";
 const AdminAssets = () => {
   const [folders, setFolders] = useState<api.FolderRecord[]>([]);
   const [assets, setAssets] = useState<api.AssetRecord[]>([]);
+  const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [bulkUrls, setBulkUrls] = useState("");
@@ -23,10 +26,11 @@ const AdminAssets = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const itemsPerPage = 20;
+  const itemsPerPage = 100;
 
   useEffect(() => {
     setCurrentPage(1); // Reset page when folder or search changes
+    setSelectedAssetIds([]);
   }, [currentFolderId, searchQuery]);
 
   useEffect(() => {
@@ -107,6 +111,37 @@ const AdminAssets = () => {
     } else {
       toast.success("Asset deleted");
       loadData();
+    }
+  };
+
+  const toggleAssetSelection = (id: string) => {
+    setSelectedAssetIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+  };
+
+  const handleSelectAllOnPage = () => {
+    setSelectedAssetIds(assets.map((asset) => asset.id));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedAssetIds([]);
+  };
+
+  const handleDeleteSelectedAssets = async () => {
+    if (selectedAssetIds.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (const id of selectedAssetIds) {
+        // Keep delete operations sequential to reduce API burst failures.
+        await api.deleteAsset(id);
+      }
+      toast.success(`Deleted ${selectedAssetIds.length} images`);
+      setSelectedAssetIds([]);
+      await loadData();
+    } catch {
+      toast.error("Failed to delete selected images");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -241,16 +276,50 @@ const AdminAssets = () => {
              </div>
 
               {/* Assets Grid */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-3">
+                      <div className="text-xs text-muted-foreground">
+                        Showing up to {itemsPerPage} images per page
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={handleSelectAllOnPage} disabled={assets.length === 0}>
+                          Select Page
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleClearSelection} disabled={selectedAssetIds.length === 0}>
+                          Clear
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleDeleteSelectedAssets}
+                          disabled={selectedAssetIds.length === 0 || uploading}
+                        >
+                          Delete Selected ({selectedAssetIds.length})
+                        </Button>
+                      </div>
+                    </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                  {assets.map((asset) => (
-                   <div key={asset.id} className="group relative aspect-square bg-slate-200 rounded-lg overflow-hidden border">
+                         <div
+                           key={asset.id}
+                           className={`group relative aspect-square bg-slate-200 rounded-lg overflow-hidden border-2 cursor-pointer ${
+                             selectedAssetIds.includes(asset.id) ? "border-sky-500" : "border-transparent"
+                           }`}
+                           onClick={() => toggleAssetSelection(asset.id)}
+                         >
                       <img src={asset.url} alt="" className="object-cover w-full h-full" />
+                            <div className="absolute left-2 top-2 z-10 rounded bg-black/45 px-2 py-1 text-[10px] font-semibold text-white">
+                              {selectedAssetIds.includes(asset.id) ? "Selected" : "Select"}
+                            </div>
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
                          <div className="flex gap-2">
                            <Button 
                              variant="destructive" 
                              size="icon"
-                             onClick={() => handleDeleteAsset(asset.id)}
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleDeleteAsset(asset.id);
+                                   }}
                              className="h-9 w-9"
                            >
                              <Trash2 className="h-4 w-4" />
@@ -258,17 +327,35 @@ const AdminAssets = () => {
                            <Button 
                              variant="secondary" 
                              size="icon"
-                             onClick={() => handleCopyUrl(asset.url)}
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleCopyUrl(asset.url);
+                                   }}
                              className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
                              title="Copy URL"
                            >
                              <Copy className="h-4 w-4" />
                            </Button>
+                           <Button
+                             variant="secondary"
+                             size="icon"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               setPreviewImageUrl(asset.url);
+                             }}
+                             className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
+                             title="Preview"
+                           >
+                             <Eye className="h-4 w-4" />
+                           </Button>
                            {currentFolderId && (
                              <Button 
                                variant="secondary" 
                                size="icon"
-                               onClick={() => handleSetFolderCover(asset.url)}
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleSetFolderCover(asset.url);
+                                     }}
                                className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
                                title="Set as folder cover"
                              >
@@ -316,6 +403,19 @@ const AdminAssets = () => {
               )}
           </div>
         </div>
+
+        <Dialog open={Boolean(previewImageUrl)} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+          <DialogContent className="max-w-5xl p-2 bg-black/95 border-none">
+            <DialogTitle className="sr-only">Image preview</DialogTitle>
+            {previewImageUrl && (
+              <img
+                src={previewImageUrl}
+                alt="Asset preview"
+                className="w-full max-h-[82vh] object-contain rounded"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </AdminPage>
     </>
   );
