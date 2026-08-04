@@ -1,6 +1,16 @@
 import React from "react";
 
 const InstagramFeed = () => {
+  React.useEffect(() => {
+    const existing = document.querySelector('script[src="https://cdn.lightwidget.com/widgets/lightwidget.js"]');
+    if (existing) return;
+
+    const script = document.createElement("script");
+    script.src = "https://cdn.lightwidget.com/widgets/lightwidget.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   return (
     <section className="overflow-hidden" style={{ backgroundColor: "var(--bg)", paddingTop: "8rem", paddingBottom: "8rem" }}>
       <div className="container">
@@ -33,7 +43,7 @@ const InstagramFeed = () => {
       <div className="container" style={{ display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 900 }}>
           <iframe
-            src="https://lightwidget.com/widgets/0b97304586765d7cbebbf9922f81af47.html"
+            src="//lightwidget.com/widgets/6dd6d900fdcc50efb7a09d9e4b4cfd20.html"
             title="Instagram Feed"
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"

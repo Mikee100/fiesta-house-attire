@@ -26,7 +26,7 @@ const Footer = () => {
   const miniGalleryImages = [
     "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg",
     "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg",
-    "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMG_6419-scaled.jpg",
+    "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887596251_IMG_0053-1365x2048.jpg",
   ];
 
   return (

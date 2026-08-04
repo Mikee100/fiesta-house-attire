@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { ChevronLeft, Plus, Trash2, Image as ImageIcon, Library, Folder, Search, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, Image as ImageIcon, Library, Folder, Search, CheckCircle2, Eye } from "lucide-react";
 import AdminPage from "@/components/admin/AdminPage";
 import AdminSection from "@/components/admin/AdminSection";
 import SEO from "@/components/site/SEO";
@@ -38,6 +38,7 @@ type AssetsResponse = {
 };
 
 const AdminPortfolio = () => {
+  const ADMIN_IMAGE_PAGE_SIZE = 100;
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [portfolio, setPortfolio] = useState<PortfolioItem | null>(null);
@@ -48,9 +49,11 @@ const AdminPortfolio = () => {
   const [currentLibraryFolderId, setCurrentLibraryFolderId] = useState<string | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [selectedPortfolioImageIds, setSelectedPortfolioImageIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [localSearch, setLocalSearch] = useState("");
@@ -98,7 +101,7 @@ const AdminPortfolio = () => {
 
   const loadAssets = async () => {
     if (!isLibraryOpen) return;
-    const assetsData: unknown = await api.fetchAssets(currentLibraryFolderId || undefined, currentPage, 12, debouncedSearch);
+    const assetsData: unknown = await api.fetchAssets(currentLibraryFolderId || undefined, currentPage, ADMIN_IMAGE_PAGE_SIZE, debouncedSearch);
     const parsed = (assetsData && typeof assetsData === "object") ? (assetsData as Partial<AssetsResponse>) : {};
     setAssets(Array.isArray(parsed.assets) ? parsed.assets : []);
     setTotalPages(typeof parsed.totalPages === "number" ? parsed.totalPages : 1);
@@ -191,6 +194,41 @@ const AdminPortfolio = () => {
     }
   };
 
+  const togglePortfolioImageSelection = (imageId: string) => {
+    setSelectedPortfolioImageIds((prev) =>
+      prev.includes(imageId) ? prev.filter((id) => id !== imageId) : [...prev, imageId]
+    );
+  };
+
+  const handleSelectAllPortfolioImages = () => {
+    const visibleIds =
+      portfolio?.images
+        ?.filter((img) => !localSearch || img.url.toLowerCase().includes(localSearch.toLowerCase()))
+        .map((img) => img.id) || [];
+    setSelectedPortfolioImageIds(visibleIds);
+  };
+
+  const handleClearPortfolioSelection = () => {
+    setSelectedPortfolioImageIds([]);
+  };
+
+  const handleDeleteSelectedPortfolioImages = async () => {
+    if (selectedPortfolioImageIds.length === 0) return;
+
+    setIsProcessing(true);
+    try {
+      for (const imageId of selectedPortfolioImageIds) {
+        // Keep operations sequential to reduce transient API failures.
+        await api.deleteImage(imageId);
+      }
+      toast.success(`Removed ${selectedPortfolioImageIds.length} images`);
+      setSelectedPortfolioImageIds([]);
+      await fetchPortfolioDetails();
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -280,6 +318,7 @@ const AdminPortfolio = () => {
                       </div>
                     </div>
                     <div className="flex gap-3">
+                      <span className="inline-flex items-center text-xs text-muted-foreground">Up to {ADMIN_IMAGE_PAGE_SIZE} per page</span>
                       {currentLibraryFolderId && (
                         <Button
                           variant="outline"
@@ -355,12 +394,38 @@ const AdminPortfolio = () => {
                               }`}
                             >
                               {selectedAssets.includes(asset.url) ? (
-                                <div className="bg-sky-500 text-white p-2 rounded-full shadow-lg transform scale-110">
-                                  <Plus className="h-5 w-5 rotate-45" />
+                                <div className="flex gap-2">
+                                  <div className="bg-sky-500 text-white p-2 rounded-full shadow-lg transform scale-110">
+                                    <Plus className="h-5 w-5 rotate-45" />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="bg-white/90 text-slate-700 p-2 rounded-full shadow-lg"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPreviewImageUrl(asset.url);
+                                    }}
+                                    title="Preview"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
                                 </div>
                               ) : (
-                                <div className="bg-white/90 backdrop-blur-sm text-sky-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                                  SELECT IMAGE
+                                <div className="flex gap-2">
+                                  <div className="bg-white/90 backdrop-blur-sm text-sky-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                                    SELECT IMAGE
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="bg-white/90 text-slate-700 p-1.5 rounded-full shadow-lg"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPreviewImageUrl(asset.url);
+                                    }}
+                                    title="Preview"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
                                 </div>
                               )}
                             </div>
@@ -440,14 +505,30 @@ const AdminPortfolio = () => {
             <AdminSection
               title={`Portfolio Images (${portfolio?.images?.length || 0})`}
               actions={
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Filter images..."
-                    className="pl-9 h-9"
-                    value={localSearch}
-                    onChange={(e) => setLocalSearch(e.target.value)}
-                  />
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Filter images..."
+                      className="pl-9 h-9"
+                      value={localSearch}
+                      onChange={(e) => setLocalSearch(e.target.value)}
+                    />
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleSelectAllPortfolioImages}>
+                    Select Visible
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleClearPortfolioSelection} disabled={selectedPortfolioImageIds.length === 0}>
+                    Clear
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelectedPortfolioImages}
+                    disabled={selectedPortfolioImageIds.length === 0 || isProcessing}
+                  >
+                    Delete Selected ({selectedPortfolioImageIds.length})
+                  </Button>
                 </div>
               }
             >
@@ -455,17 +536,47 @@ const AdminPortfolio = () => {
                 {portfolio?.images
                   ?.filter((img) => !localSearch || img.url.toLowerCase().includes(localSearch.toLowerCase()))
                   .map((img) => (
-                    <div key={img.id} className="group relative aspect-[4/5] bg-slate-200 rounded-lg overflow-hidden border">
+                    <div
+                      key={img.id}
+                      className={`group relative aspect-[4/5] bg-slate-200 rounded-lg overflow-hidden border-2 cursor-pointer ${
+                        selectedPortfolioImageIds.includes(img.id) ? "border-sky-500" : "border-transparent"
+                      }`}
+                      onClick={() => togglePortfolioImageSelection(img.id)}
+                    >
                       <img src={img.url} alt="" className="object-cover w-full h-full" />
+                      <div className="absolute left-2 top-2 z-10 rounded bg-black/45 px-2 py-1 text-[10px] font-semibold text-white">
+                        {selectedPortfolioImageIds.includes(img.id) ? "Selected" : "Select"}
+                      </div>
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
                         <div className="flex gap-2">
-                          <Button variant="destructive" size="icon" onClick={() => handleDeleteImage(img.id)} className="h-9 w-9">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteImage(img.id);
+                            }}
+                            className="h-9 w-9"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="secondary"
                             size="icon"
-                            onClick={async () => {
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewImageUrl(img.url);
+                            }}
+                            className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
+                            title="Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            onClick={async (e) => {
+                              e.stopPropagation();
                               if (!id) return;
                               const res = await api.updatePortfolio(id, { cover_image_url: img.url });
                               if (res.error) {
@@ -500,6 +611,19 @@ const AdminPortfolio = () => {
             </AdminSection>
           </div>
         </div>
+
+        <Dialog open={Boolean(previewImageUrl)} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+          <DialogContent className="max-w-5xl p-2 bg-black/95 border-none">
+            <DialogTitle className="sr-only">Image preview</DialogTitle>
+            {previewImageUrl && (
+              <img
+                src={previewImageUrl}
+                alt="Portfolio image preview"
+                className="w-full max-h-[82vh] object-contain rounded"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </AdminPage>
     </>
   );

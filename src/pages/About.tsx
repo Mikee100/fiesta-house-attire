@@ -2,9 +2,9 @@
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 
-const heroImg = "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL4334-scaled.jpg";
+const heroImg = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg";
 const storyImg = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg";
-const expImg1 = "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMG_6419-scaled.jpg";
+const expImg1 = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg";
 const expImg2 = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg";
 
 const stats = [

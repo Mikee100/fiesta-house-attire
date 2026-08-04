@@ -53,9 +53,9 @@ const HOME_CAROUSEL_FOLDER_ID = "185cc818-f082-4e21-9122-c629de3c34dc";
 const MAX_HERO_SLIDES = 5;
 const MAX_HERO_RENDERED = 5;
 const FALLBACK_HERO_IMAGES = [
-  "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL4334-scaled.jpg",
-  "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL5839-scaled.jpg",
-  "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMGL3632-copy-scaled.jpg"
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg"
 ];
 const HERO_DESKTOP_FOCAL_POINTS = ["center 18%", "center 22%", "center 16%", "center 20%"];
 
@@ -446,12 +446,12 @@ const Index = () => {
 
             <div className="grid grid-3" style={{ gap: "5rem 3rem" }}>
               {[
-                { name: "The Master Staircase", detail: "Regal architecture for sweeping silhouettes.", img: "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMG_6419-scaled.jpg" },
+                { name: "The Master Staircase", detail: "Regal architecture for sweeping silhouettes.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg" },
                 { name: "Flower Gardens", detail: "Immersive floral arrangements in full bloom.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg" },
                 { name: "The Minimalist Loft", detail: "Shadow and light editorial storytelling.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg" },
                 { name: "Elegant Swings", detail: "Capture the lightness of being.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887596251_IMG_0053-1365x2048.jpg" },
                 { name: "Cinematic Boat", detail: "Serene aquatic poetic reflection.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg" },
-                { name: "The Grand Chandelier", detail: "High-glamour lighting and reflections.", img: "https://fiestahouseattire.com/new/wp-content/uploads/2026/02/IMG_1293-1-scaled.jpg" }
+                { name: "The Grand Chandelier", detail: "High-glamour lighting and reflections.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887596251_IMG_0053-1365x2048.jpg" }
               ].map((set, i) => (
                 <div key={i} className="group cursor-default">
                   <div className="overflow-hidden aspect-[4/5] mb-8 relative rounded-[2px] shadow-sm">
