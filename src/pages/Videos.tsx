@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type CSSProperties } from "react";
+﻿import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
@@ -123,29 +123,75 @@ const fetchVimeoThumbnail = (vimeoId: string): Promise<string | null> => {
 };
 
 // ---------------------------------------------------------------------------
-// YouTube thumbnail placeholder (no ytimg requests, avoids 404 console noise)
+// YouTube thumbnail — real image from YouTube's public CDN (no API key,
+// no ytimg 404 noise as long as the video id is valid). Falls back to a
+// styled placeholder only if the image genuinely fails to load.
 // ---------------------------------------------------------------------------
-function YouTubeThumbnail({ title }: { title: string }) {
-  return (
-    <div
-      role="img"
-      aria-label={`${title} preview`}
-      style={{
-        width: "100%",
-        height: "100%",
-        background: "radial-gradient(circle at 30% 30%, rgba(196,92,130,.22) 0%, rgba(44,44,42,.7) 45%, #191918 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: ".55rem", color: "rgba(255,255,255,.7)" }}>
-        <svg width="18" height="18" viewBox="0 0 14 16" fill="currentColor" aria-hidden="true">
-          <path d="M0 0l14 8L0 16z" />
-        </svg>
-        <span style={{ fontSize: ".62rem", letterSpacing: ".2em", textTransform: "uppercase" }}>YouTube</span>
+function YouTubeThumbnail({
+  videoId,
+  title,
+  eager,
+  onBrokenChange,
+}: {
+  videoId: string;
+  title: string;
+  eager?: boolean;
+  onBrokenChange?: (broken: boolean) => void;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  const markBroken = () => {
+    setFailed(true);
+    onBrokenChange?.(true);
+  };
+
+  const handleLoad = (e: SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    // YouTube doesn't 404 for invalid/removed video IDs — it returns HTTP 200
+    // with a generic 120x90 gray placeholder. A real hqdefault.jpg is 480x360,
+    // so checking the loaded dimensions is the reliable way to detect this.
+    if (img.naturalWidth === 120 && img.naturalHeight === 90) {
+      markBroken();
+    } else {
+      onBrokenChange?.(false);
+    }
+  };
+
+  if (failed) {
+    return (
+      <div
+        role="img"
+        aria-label={`${title} preview`}
+        style={{
+          width: "100%",
+          height: "100%",
+          background: "radial-gradient(circle at 30% 30%, rgba(196,92,130,.22) 0%, rgba(44,44,42,.7) 45%, #191918 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: ".55rem", color: "rgba(255,255,255,.7)" }}>
+          <svg width="18" height="18" viewBox="0 0 14 16" fill="currentColor" aria-hidden="true">
+            <path d="M0 0l14 8L0 16z" />
+          </svg>
+          <span style={{ fontSize: ".62rem", letterSpacing: ".2em", textTransform: "uppercase" }}>YouTube</span>
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <img
+      // hqdefault is guaranteed to exist for every public video (maxresdefault isn't).
+      src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+      alt={`${title} preview`}
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
+      onLoad={handleLoad}
+      onError={markBroken}
+      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+    />
   );
 }
 
@@ -203,9 +249,19 @@ function VimeoThumbnail({ vimeoId, title, eager }: { vimeoId: string; title: str
 // ---------------------------------------------------------------------------
 // Thumbnail builder
 // ---------------------------------------------------------------------------
-function ThumbnailLayer({ videoUrl, title, eager }: { videoUrl: string; title: string; eager?: boolean }) {
+function ThumbnailLayer({
+  videoUrl,
+  title,
+  eager,
+  onBrokenChange,
+}: {
+  videoUrl: string;
+  title: string;
+  eager?: boolean;
+  onBrokenChange?: (broken: boolean) => void;
+}) {
   const ytId = getYouTubeId(videoUrl);
-  if (ytId) return <YouTubeThumbnail title={title} />;
+  if (ytId) return <YouTubeThumbnail videoId={ytId} title={title} eager={eager} onBrokenChange={onBrokenChange} />;
 
   const vimeoId = getVimeoId(videoUrl);
   if (vimeoId) return <VimeoThumbnail vimeoId={vimeoId} title={title} eager={eager} />;
@@ -229,8 +285,9 @@ function ThumbnailLayer({ videoUrl, title, eager }: { videoUrl: string; title: s
 const getHoverPreviewSrc = (videoUrl: string): string | null => {
   const ytId = getYouTubeId(videoUrl);
   if (ytId) {
-    // enablejsapi=0 keeps it lightweight; mute=1 is required for autoplay
-    return `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&modestbranding=1&playsinline=1&rel=0&enablejsapi=0`;
+    // youtube-nocookie.com skips the cookie/consent handshake, so the
+    // preview iframe boots noticeably faster than the standard domain.
+    return `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&modestbranding=1&playsinline=1&rel=0&enablejsapi=0`;
   }
   const vimeoId = getVimeoId(videoUrl);
   if (vimeoId) {
@@ -258,6 +315,7 @@ type VideoCardProps = {
 
 function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, onPreviewDeactivate, overlayStyle, playBtnStyle, playIconSize = 14, showBadge = false }: VideoCardProps) {
   const [previewVisible, setPreviewVisible] = useState(false); // iframe faded in
+  const [thumbBroken, setThumbBroken] = useState(false); // detected invalid/removed YouTube id
   const hoverTimer   = useRef<number | null>(null);
   const previewTimer = useRef<number | null>(null);
   const cardRef      = useRef<HTMLDivElement>(null);
@@ -380,11 +438,13 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
           transition: "opacity 0.6s ease",
           zIndex: 1,
         }}>
-          <ThumbnailLayer videoUrl={video.video_url} title={video.title} eager={eager} />
+          <ThumbnailLayer videoUrl={video.video_url} title={video.title} eager={eager} onBrokenChange={setThumbBroken} />
         </div>
 
-        {/* Preview iframe — mounts on hover (desktop) or scroll-into-view (mobile) */}
-        {isPreviewActive && previewSrc && (
+        {/* Preview iframe — mounts on hover (desktop) or scroll-into-view (mobile).
+            Skipped for videos already known to be broken, so visitors never see
+            YouTube's raw "video unavailable" message inside the hover preview. */}
+        {isPreviewActive && previewSrc && !thumbBroken && (
           <iframe
             src={previewSrc}
             allow="autoplay; fullscreen; picture-in-picture"
@@ -437,19 +497,102 @@ function SkeletonCard({ aspectRatio = "9/16" }: { aspectRatio?: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// YouTube IFrame JS API loader (singleton — loaded once, reused everywhere)
+// ---------------------------------------------------------------------------
+type YTNamespace = { Player: new (elementId: string, opts: Record<string, unknown>) => { destroy?: () => void } };
+declare global {
+  interface Window {
+    YT?: YTNamespace;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+let ytApiPromise: Promise<YTNamespace> | null = null;
+const loadYouTubeIframeApi = (): Promise<YTNamespace> => {
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve) => {
+    if (window.YT?.Player) {
+      resolve(window.YT);
+      return;
+    }
+    const previous = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      previous?.();
+      resolve(window.YT!);
+    };
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(script);
+    }
+  });
+  return ytApiPromise;
+};
+
+// ---------------------------------------------------------------------------
+// YouTubeModalPlayer — real embed wired to the IFrame API so a broken/removed/
+// embed-restricted video shows a branded fallback instead of YouTube's own
+// "This video is unavailable" screen.
+// ---------------------------------------------------------------------------
+function YouTubeModalPlayer({ videoId, title }: { videoId: string; title: string }) {
+  const playerRef = useRef<{ destroy?: () => void } | null>(null);
+  const iframeId = useRef(`yt-modal-${videoId}-${Math.random().toString(36).slice(2)}`).current;
+  const [errored, setErrored] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadYouTubeIframeApi().then((YT) => {
+      if (cancelled) return;
+      playerRef.current = new YT.Player(iframeId, {
+        events: {
+          // Error codes: 2 = bad video id, 5 = HTML5 error,
+          // 100 = removed/private, 101 & 150 = embedding disabled by owner.
+          onError: () => { if (!cancelled) setErrored(true); },
+        },
+      });
+    });
+    return () => {
+      cancelled = true;
+      try { playerRef.current?.destroy?.(); } catch { /* already gone */ }
+    };
+  }, [iframeId]);
+
+  if (errored) {
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.25rem", background: "#1f1f1e", padding: "2rem", textAlign: "center" }}>
+        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.15rem", fontWeight: 300, fontStyle: "italic", color: "#fff", lineHeight: 1.5 }}>
+          This film isn't available to preview right now.
+        </p>
+        <a
+          href={`https://www.youtube.com/watch?v=${videoId}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{ fontSize: ".62rem", letterSpacing: ".2em", textTransform: "uppercase", color: "#C9A96E", textDecoration: "none", border: "1px solid rgba(255,255,255,.25)", padding: ".65rem 1.4rem" }}
+        >
+          Watch on YouTube ↗
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <iframe
+      id={iframeId}
+      src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=0&loop=1&playlist=${videoId}&controls=1&playsinline=1&rel=0&enablejsapi=1`}
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowFullScreen
+      title={title}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Modal media builder
 // ---------------------------------------------------------------------------
 const buildModalMedia = (videoUrl: string, title: string) => {
   const ytId = getYouTubeId(videoUrl);
   if (ytId) {
-    return (
-      <iframe
-        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&loop=1&playlist=${ytId}&controls=1&playsinline=1&rel=0`}
-        allow="autoplay; fullscreen; picture-in-picture"
-        allowFullScreen
-        title={title}
-      />
-    );
+    return <YouTubeModalPlayer videoId={ytId} title={title} />;
   }
 
   const vimeoId = getVimeoId(videoUrl);
@@ -482,7 +625,7 @@ const buildHeroMedia = (videoUrl: string, title: string) => {
     return (
       <iframe
         className="vp-hero-video"
-        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1`}
+        src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1`}
         title={`${title} hero background`}
         allow="autoplay; fullscreen; picture-in-picture"
         loading="eager"
@@ -556,7 +699,8 @@ export default function Videos() {
       "https://vimeo.com",
       "https://i.vimeocdn.com",
       "https://player.vimeo.com",
-      "https://www.youtube.com",
+      "https://www.youtube-nocookie.com",
+      "https://www.youtube.com", // needed for the IFrame JS API script
     ];
     const added: HTMLLinkElement[] = [];
     origins.forEach((href) => {
@@ -744,7 +888,10 @@ export default function Videos() {
 
       {/* ── Hero ── */}
       <section style={{ height: "100vh", minHeight: "560px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", position: "relative", overflow: "hidden", background: "#2C2C2A" }}>
-        {heroReady
+        {/* Unmount the hero player while the modal is open so the two YouTube
+            iframes aren't competing for bandwidth right when the user wants
+            their clicked video to start fast. */}
+        {heroReady && !modal
           ? buildHeroMedia(HERO_BACKGROUND_VIDEO_URL, HERO_BACKGROUND_VIDEO_TITLE)
           : buildHeroPoster(HERO_BACKGROUND_VIDEO_URL, HERO_BACKGROUND_VIDEO_TITLE)}
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 60% at 50% 35%, rgba(196,92,130,.14) 0%, rgba(44,44,42,.40) 62%, rgba(29,29,28,.28) 100%)" }} aria-hidden="true" />

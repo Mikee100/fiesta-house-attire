@@ -276,7 +276,7 @@ const Index = () => {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                       <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{portfolio.title}</h3>
-                      <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "0.8rem" }}>View Collection â†’</span>
+                      <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "0.8rem" }}>View Collection</span>
                     </div>
                   </Link>
                 ))
@@ -446,12 +446,12 @@ const Index = () => {
 
             <div className="grid grid-3" style={{ gap: "5rem 3rem" }}>
               {[
-                { name: "The Master Staircase", detail: "Regal architecture for sweeping silhouettes.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg" },
-                { name: "Flower Gardens", detail: "Immersive floral arrangements in full bloom.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg" },
+                { name: "The Master Staircase", detail: "Regal architecture for sweeping silhouettes.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1785868048311_IMG_5587-scaled.jpg" },
+                { name: "Flower Gardens", detail: "Immersive floral arrangements in full bloom.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778154974695_IMG_4156-683x1024.jpg" },
                 { name: "The Minimalist Loft", detail: "Shadow and light editorial storytelling.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg" },
-                { name: "Elegant Swings", detail: "Capture the lightness of being.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887596251_IMG_0053-1365x2048.jpg" },
+                { name: "Elegant Swings", detail: "Capture the lightness of being.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778154967097_34%20-%20Copy.jpg" },
                 { name: "Cinematic Boat", detail: "Serene aquatic poetic reflection.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg" },
-                { name: "The Grand Chandelier", detail: "High-glamour lighting and reflections.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887596251_IMG_0053-1365x2048.jpg" }
+                { name: "The Grand Chandelier", detail: "High-glamour lighting and reflections.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778151876880_IMG_6287-scaled.jpg" }
               ].map((set, i) => (
                 <div key={i} className="group cursor-default">
                   <div className="overflow-hidden aspect-[4/5] mb-8 relative rounded-[2px] shadow-sm">

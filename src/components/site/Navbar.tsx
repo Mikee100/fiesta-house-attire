@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import logoLight from "@/assets/logo-light.jpg";
+import logoLight from "@/assets/logo-dark.jpg";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -115,7 +115,7 @@ const Navbar = () => {
               width: "auto",
               objectFit: "contain",
               display: "block",
-              borderRadius: "10px",
+              borderRadius: "16px",
             }}
           />
           <span
