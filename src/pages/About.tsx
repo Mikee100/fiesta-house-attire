@@ -413,7 +413,6 @@ export default function About() {
                 loading="lazy"
                 decoding="async"
                 style={{ width: "100%", aspectRatio: "4/5", objectFit: "cover" }}
-                loading="lazy"
               />
             </div>
           </div>
