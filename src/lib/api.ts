@@ -2,7 +2,7 @@ import { authenticatedFetch } from "@/lib/adminAuth";
 
 const isBrowser = typeof window !== 'undefined';
 const isLocalHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
-const API_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/_/backend/api');
+const API_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/api');
 
 const logApiError = (...args: unknown[]) => {
   if (import.meta.env.DEV) {

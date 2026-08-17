@@ -28,9 +28,7 @@ const defaultAllowedOrigins = [
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
   'https://fiestahouseattire.vercel.app',
-  'https://app.fiestahouseattire.com',
-  'https://fiestahousematernity.com',
-  'https://www.fiestahousematernity.com'
+  'https://app.fiestahouseattire.com'
 ];
 
 const configuredOrigins = (process.env.CORS_ORIGINS || defaultAllowedOrigins.join(','))
@@ -45,10 +43,6 @@ const isAllowedOrigin = (origin) => {
 
   // Allow production subdomains on the same parent domain.
   if (/^https:\/\/[a-z0-9-]+\.fiestahouseattire\.com$/i.test(origin)) {
-    return true;
-  }
-
-  if (/^https:\/\/[a-z0-9-]+\.fiestahousematernity\.com$/i.test(origin)) {
     return true;
   }
 
@@ -106,23 +100,6 @@ app.use('/api', (req, res, next) => {
 
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=120');
   next();
-});
-
-app.get('/api', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'fiesta-house-backend',
-    message: 'API is running',
-  });
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'fiesta-house-backend',
-    uptimeSeconds: Math.round(process.uptime()),
-    timestamp: new Date().toISOString(),
-  });
 });
 
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');

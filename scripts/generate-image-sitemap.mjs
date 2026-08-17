@@ -10,7 +10,7 @@ const distDir = path.join(projectRoot, "dist");
 const SITE_URL = (
   process.env.PRERENDER_SITE_URL ||
   process.env.VITE_SITE_URL ||
-  "https://fiestahousematernity.com"
+  "https://www.fiestahousematernity.com"
 ).replace(/\/$/, "");
 
 const API_URL =
@@ -82,16 +82,28 @@ async function addPortfolioImages(map) {
 
 async function addBlogImages(map) {
   try {
-    const posts = await fetchJson(`${API_URL}/blog-posts/all`);
-    if (!Array.isArray(posts)) return;
+    const firstPage = await fetchJson(`${API_URL}/blog-posts?page=1&limit=100`);
+    const firstPosts = Array.isArray(firstPage?.posts) ? firstPage.posts : [];
+    const totalPages = Number(firstPage?.totalPages || 1);
 
-    for (const post of posts) {
-      if (post?.status !== "published") continue;
+    for (const post of firstPosts) {
       const slug = typeof post?.slug === "string" ? post.slug.trim() : "";
       if (!slug) continue;
 
       const pagePath = `/blog/${encodeURIComponent(slug)}`;
       addImage(map, pagePath, post?.cover_image_url);
+    }
+
+    for (let page = 2; page <= totalPages; page += 1) {
+      const data = await fetchJson(`${API_URL}/blog-posts?page=${page}&limit=100`);
+      const posts = Array.isArray(data?.posts) ? data.posts : [];
+      for (const post of posts) {
+        const slug = typeof post?.slug === "string" ? post.slug.trim() : "";
+        if (!slug) continue;
+
+        const pagePath = `/blog/${encodeURIComponent(slug)}`;
+        addImage(map, pagePath, post?.cover_image_url);
+      }
     }
   } catch (error) {
     console.warn(`[image-sitemap] blog image discovery skipped: ${error.message}`);
