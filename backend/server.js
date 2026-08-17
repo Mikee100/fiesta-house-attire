@@ -108,6 +108,23 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+app.get('/api', (req, res) => {
+  res.json({
+    ok: true,
+    service: 'fiesta-house-backend',
+    message: 'API is running',
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    service: 'fiesta-house-backend',
+    uptimeSeconds: Math.round(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 const getRefreshCookieOptions = () => ({
