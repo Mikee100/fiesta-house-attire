@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
-const siteUrl = (process.env.VITE_SITE_URL || "https://app.fiestahouseattire.com").replace(/\/$/, "");
+const siteUrl = (process.env.VITE_SITE_URL || "https://www.fiestahousematernity.com").replace(/\/$/, "");
 
 const prerenderRoutes = [
   "/",

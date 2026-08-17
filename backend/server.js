@@ -28,7 +28,9 @@ const defaultAllowedOrigins = [
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
   'https://fiestahouseattire.vercel.app',
-  'https://app.fiestahouseattire.com'
+  'https://app.fiestahouseattire.com',
+  'https://fiestahousematernity.com',
+  'https://www.fiestahousematernity.com'
 ];
 
 const configuredOrigins = (process.env.CORS_ORIGINS || defaultAllowedOrigins.join(','))
@@ -43,6 +45,10 @@ const isAllowedOrigin = (origin) => {
 
   // Allow production subdomains on the same parent domain.
   if (/^https:\/\/[a-z0-9-]+\.fiestahouseattire\.com$/i.test(origin)) {
+    return true;
+  }
+
+  if (/^https:\/\/[a-z0-9-]+\.fiestahousematernity\.com$/i.test(origin)) {
     return true;
   }
 
@@ -1658,7 +1664,7 @@ async function sendOrderEmails(order, items) {
 // The public site URL comes from one env var so a future domain change is a
 // single setting: set SITE_URL in Vercel and everything follows.
 
-const SITEMAP_SITE_URL = (process.env.SITE_URL || 'https://app.fiestahouseattire.com').replace(/\/$/, '');
+const SITEMAP_SITE_URL = (process.env.SITE_URL || 'https://www.fiestahousematernity.com').replace(/\/$/, '');
 
 const STATIC_ROUTES = [
   { path: '/', priority: '1.0' },

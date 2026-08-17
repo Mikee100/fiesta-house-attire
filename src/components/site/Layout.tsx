@@ -14,7 +14,7 @@ interface LayoutProps {
   nofollow?: boolean;
 }
 
-const SITE_URL = "https://app.fiestahouseattire.com";
+const SITE_URL = "https://www.fiestahousematernity.com";
 
 const Layout: React.FC<LayoutProps> = ({
   children,
