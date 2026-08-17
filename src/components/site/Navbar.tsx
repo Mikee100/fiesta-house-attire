@@ -115,7 +115,8 @@ const Navbar = () => {
               width: "auto",
               objectFit: "contain",
               display: "block",
-              borderRadius: "16px",
+              border: "none",
+              borderRadius: 0,
             }}
           />
           <span
