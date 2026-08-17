@@ -88,7 +88,7 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-app.use('/api', (req, res, next) => {
+app.use((req, res, next) => {
   const isAuthRoute = req.path.startsWith('/auth');
   const isAdminRoute = req.path.startsWith('/admin');
   const isWriteMethod = req.method !== 'GET';
@@ -108,7 +108,7 @@ const getRefreshCookieOptions = () => ({
   httpOnly: true,
   secure: isProduction,
   sameSite: isProduction ? 'none' : 'lax',
-  path: '/api/auth',
+  path: isProduction ? '/backend/auth' : '/auth',
   maxAge: 30 * 24 * 60 * 60 * 1000
 });
 
@@ -421,7 +421,7 @@ initAuthDb();
 
 // --- Authentication API ---
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
 
   if (!email || !password) {
@@ -463,7 +463,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/auth/refresh', async (req, res) => {
+app.post('/auth/refresh', async (req, res) => {
   const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
 
   if (!refreshToken) {
@@ -552,7 +552,7 @@ app.post('/api/auth/refresh', async (req, res) => {
   }
 });
 
-app.post('/api/auth/logout', async (req, res) => {
+app.post('/auth/logout', async (req, res) => {
   const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
 
   if (refreshToken) {
@@ -567,7 +567,7 @@ app.post('/api/auth/logout', async (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
-app.get('/api/auth/me', requireAdminAuth, async (req, res) => {
+app.get('/auth/me', requireAdminAuth, async (req, res) => {
   try {
     const userResult = await pool.query(
       'SELECT id, email, full_name, role, is_active FROM users WHERE id = $1 LIMIT 1',
@@ -593,7 +593,7 @@ app.get('/api/auth/me', requireAdminAuth, async (req, res) => {
 });
 
 // Get all portfolios with their images
-app.get('/api/portfolios', async (req, res) => {
+app.get('/portfolios', async (req, res) => {
   try {
     const portfoliosResult = await pool.query('SELECT * FROM portfolios ORDER BY "order" ASC');
     const imagesResult = await pool.query('SELECT * FROM portfolio_images ORDER BY "order" ASC');
@@ -611,7 +611,7 @@ app.get('/api/portfolios', async (req, res) => {
 });
 
 // Get a single portfolio by id or slug with its images
-app.get('/api/portfolios/:idOrSlug', async (req, res) => {
+app.get('/portfolios/:idOrSlug', async (req, res) => {
   const { idOrSlug } = req.params;
 
   try {
@@ -641,7 +641,7 @@ app.get('/api/portfolios/:idOrSlug', async (req, res) => {
 });
 
 // Create a new portfolio
-app.post('/api/portfolios', requireAdminAuth, async (req, res) => {
+app.post('/portfolios', requireAdminAuth, async (req, res) => {
   const { title } = req.body;
   if (!title) return res.status(400).json({ error: 'Title is required' });
 
@@ -663,7 +663,7 @@ app.post('/api/portfolios', requireAdminAuth, async (req, res) => {
 });
 
 // Add image to portfolio
-app.post('/api/portfolios/:id/images', requireAdminAuth, async (req, res) => {
+app.post('/portfolios/:id/images', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { url } = req.body;
 
@@ -682,7 +682,7 @@ app.post('/api/portfolios/:id/images', requireAdminAuth, async (req, res) => {
 });
 
 // Bulk add images to portfolio
-app.post('/api/portfolios/:id/images/bulk', requireAdminAuth, async (req, res) => {
+app.post('/portfolios/:id/images/bulk', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { urls } = req.body;
   if (!urls || !Array.isArray(urls)) return res.status(400).json({ error: 'URLs array is required' });
@@ -706,7 +706,7 @@ app.post('/api/portfolios/:id/images/bulk', requireAdminAuth, async (req, res) =
 });
 
 // Deduplicate portfolio images
-app.post('/api/portfolios/:id/deduplicate', requireAdminAuth, async (req, res) => {
+app.post('/portfolios/:id/deduplicate', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(`
@@ -730,7 +730,7 @@ app.post('/api/portfolios/:id/deduplicate', requireAdminAuth, async (req, res) =
 });
 
 // Delete portfolio
-app.delete('/api/portfolios/:id', requireAdminAuth, async (req, res) => {
+app.delete('/portfolios/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM portfolios WHERE id = $1', [id]);
@@ -742,7 +742,7 @@ app.delete('/api/portfolios/:id', requireAdminAuth, async (req, res) => {
 });
 
 // Reorder portfolios by explicit id sequence
-app.patch('/api/portfolios/reorder', requireAdminAuth, async (req, res) => {
+app.patch('/portfolios/reorder', requireAdminAuth, async (req, res) => {
   const { portfolioIds } = req.body;
 
   if (!Array.isArray(portfolioIds) || portfolioIds.length === 0) {
@@ -772,7 +772,7 @@ app.patch('/api/portfolios/reorder', requireAdminAuth, async (req, res) => {
 });
 
 // Update portfolio (e.g., set cover image)
-app.patch('/api/portfolios/:id', requireAdminAuth, async (req, res) => {
+app.patch('/portfolios/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { cover_image_url, title, order } = req.body;
   
@@ -813,7 +813,7 @@ app.patch('/api/portfolios/:id', requireAdminAuth, async (req, res) => {
 });
 
 // Delete image
-app.delete('/api/portfolio-images/:id', requireAdminAuth, async (req, res) => {
+app.delete('/portfolio-images/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM portfolio_images WHERE id = $1', [id]);
@@ -827,7 +827,7 @@ app.delete('/api/portfolio-images/:id', requireAdminAuth, async (req, res) => {
 // --- Media Library (Folders & Assets) ---
 
 // Get all folders
-app.get('/api/folders', async (req, res) => {
+app.get('/folders', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM folders ORDER BY name ASC');
     res.json(result.rows);
@@ -837,7 +837,7 @@ app.get('/api/folders', async (req, res) => {
 });
 
 // Create folder
-app.post('/api/folders', requireAdminAuth, async (req, res) => {
+app.post('/folders', requireAdminAuth, async (req, res) => {
   const { name, parent_id } = req.body;
   try {
     const result = await pool.query(
@@ -851,7 +851,7 @@ app.post('/api/folders', requireAdminAuth, async (req, res) => {
 });
 
 // Update folder (e.g., set cover image)
-app.patch('/api/folders/:id', requireAdminAuth, async (req, res) => {
+app.patch('/folders/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { cover_image_url, name } = req.body;
   
@@ -885,7 +885,7 @@ app.patch('/api/folders/:id', requireAdminAuth, async (req, res) => {
 });
 
 // Get assets (optionally filtered by folder) with pagination
-app.get('/api/assets', async (req, res) => {
+app.get('/assets', async (req, res) => {
   const { folder_id, page = 1, limit = 20, search } = req.query;
   const offset = (page - 1) * limit;
 
@@ -932,7 +932,7 @@ app.get('/api/assets', async (req, res) => {
 });
 
 // Bulk add assets by URL (existing)
-app.post('/api/assets/bulk', requireAdminAuth, async (req, res) => {
+app.post('/assets/bulk', requireAdminAuth, async (req, res) => {
   const { urls, folder_id } = req.body;
   if (!urls || !Array.isArray(urls)) return res.status(400).json({ error: 'URLs array is required' });
 
@@ -952,7 +952,7 @@ app.post('/api/assets/bulk', requireAdminAuth, async (req, res) => {
 });
 
 // Single file upload to storage
-app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res) => {
+app.post('/upload', requireAdminAuth, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   try {
@@ -979,7 +979,7 @@ app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res
 });
 
 // Create asset after upload (Convenience endpoint)
-app.post('/api/assets', requireAdminAuth, async (req, res) => {
+app.post('/assets', requireAdminAuth, async (req, res) => {
   const { url, folder_id } = req.body;
   try {
     const result = await pool.query(
@@ -993,7 +993,7 @@ app.post('/api/assets', requireAdminAuth, async (req, res) => {
 });
 
 // Delete asset
-app.delete('/api/assets/:id', requireAdminAuth, async (req, res) => {
+app.delete('/assets/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM assets WHERE id = $1', [id]);
@@ -1052,7 +1052,7 @@ const invalidatePublicVideosCache = () => {
 };
 
 // Public videos list
-app.get('/api/videos', async (req, res) => {
+app.get('/videos', async (req, res) => {
   try {
     const cached = getCachedPublicVideos();
     if (cached) {
@@ -1074,7 +1074,7 @@ app.get('/api/videos', async (req, res) => {
 });
 
 // Admin videos list (includes inactive)
-app.get('/api/admin/videos', requireAdminAuth, async (req, res) => {
+app.get('/admin/videos', requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM videos
@@ -1088,7 +1088,7 @@ app.get('/api/admin/videos', requireAdminAuth, async (req, res) => {
 });
 
 // Create video
-app.post('/api/videos', requireAdminAuth, async (req, res) => {
+app.post('/videos', requireAdminAuth, async (req, res) => {
   const {
     title,
     description,
@@ -1128,7 +1128,7 @@ app.post('/api/videos', requireAdminAuth, async (req, res) => {
 });
 
 // Update video
-app.patch('/api/videos/:id', requireAdminAuth, async (req, res) => {
+app.patch('/videos/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { title, description, video_url, source_type, is_featured, sort_order, is_active } = req.body;
 
@@ -1195,7 +1195,7 @@ app.patch('/api/videos/:id', requireAdminAuth, async (req, res) => {
 });
 
 // Delete video
-app.delete('/api/videos/:id', requireAdminAuth, async (req, res) => {
+app.delete('/videos/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM videos WHERE id = $1', [id]);
@@ -1208,7 +1208,7 @@ app.delete('/api/videos/:id', requireAdminAuth, async (req, res) => {
 });
 
 // Reorder videos by explicit id sequence
-app.patch('/api/videos/reorder', requireAdminAuth, async (req, res) => {
+app.patch('/videos/reorder', requireAdminAuth, async (req, res) => {
   const { videoIds } = req.body;
 
   if (!Array.isArray(videoIds) || videoIds.length === 0) {
@@ -1240,8 +1240,8 @@ app.patch('/api/videos/reorder', requireAdminAuth, async (req, res) => {
 
 // ─── Blog API ────────────────────────────────────────────────────────────────
 
-// GET /api/blog-categories — all categories
-app.get('/api/blog-categories', async (req, res) => {
+// GET /blog-categories — all categories
+app.get('/blog-categories', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM blog_categories ORDER BY name ASC');
     res.json(result.rows);
@@ -1250,8 +1250,8 @@ app.get('/api/blog-categories', async (req, res) => {
   }
 });
 
-// POST /api/blog-categories — create category
-app.post('/api/blog-categories', requireAdminAuth, async (req, res) => {
+// POST /blog-categories — create category
+app.post('/blog-categories', requireAdminAuth, async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Name is required' });
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -1266,8 +1266,8 @@ app.post('/api/blog-categories', requireAdminAuth, async (req, res) => {
   }
 });
 
-// GET /api/blog-posts — published posts (paginated, optional ?category=slug)
-app.get('/api/blog-posts', async (req, res) => {
+// GET /blog-posts — published posts (paginated, optional ?category=slug)
+app.get('/blog-posts', async (req, res) => {
   const { page = 1, limit = 9, category } = req.query;
   const offset = (page - 1) * limit;
   try {
@@ -1322,8 +1322,8 @@ app.get('/api/blog-posts', async (req, res) => {
   }
 });
 
-// GET /api/blog-posts/all — ALL posts including drafts (admin)
-app.get('/api/blog-posts/all', requireAdminAuth, async (req, res) => {
+// GET /blog-posts/all — ALL posts including drafts (admin)
+app.get('/blog-posts/all', requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT p.*,
@@ -1343,8 +1343,8 @@ app.get('/api/blog-posts/all', requireAdminAuth, async (req, res) => {
   }
 });
 
-// GET /api/blog-posts/:slug — single post by slug
-app.get('/api/blog-posts/:slug', async (req, res) => {
+// GET /blog-posts/:slug — single post by slug
+app.get('/blog-posts/:slug', async (req, res) => {
   const { slug } = req.params;
   try {
     const result = await pool.query(`
@@ -1367,8 +1367,8 @@ app.get('/api/blog-posts/:slug', async (req, res) => {
   }
 });
 
-// POST /api/blog-posts — create post
-app.post('/api/blog-posts', requireAdminAuth, async (req, res) => {
+// POST /blog-posts — create post
+app.post('/blog-posts', requireAdminAuth, async (req, res) => {
   const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids } = req.body;
   if (!title || !slug) return res.status(400).json({ error: 'Title and slug are required' });
   try {
@@ -1395,8 +1395,8 @@ app.post('/api/blog-posts', requireAdminAuth, async (req, res) => {
   }
 });
 
-// PUT /api/blog-posts/:id — update post
-app.put('/api/blog-posts/:id', requireAdminAuth, async (req, res) => {
+// PUT /blog-posts/:id — update post
+app.put('/blog-posts/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids } = req.body;
   try {
@@ -1428,8 +1428,8 @@ app.put('/api/blog-posts/:id', requireAdminAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/blog-posts/:id
-app.delete('/api/blog-posts/:id', requireAdminAuth, async (req, res) => {
+// DELETE /blog-posts/:id
+app.delete('/blog-posts/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query('DELETE FROM blog_posts WHERE id = $1', [id]);
@@ -1439,8 +1439,8 @@ app.delete('/api/blog-posts/:id', requireAdminAuth, async (req, res) => {
   }
 });
 
-// GET /api/blog-posts-recent — last 3 published (for sidebar)
-app.get('/api/blog-posts-recent', async (req, res) => {
+// GET /blog-posts-recent — last 3 published (for sidebar)
+app.get('/blog-posts-recent', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, title, slug, cover_image_url, published_at FROM blog_posts
@@ -1454,8 +1454,8 @@ app.get('/api/blog-posts-recent', async (req, res) => {
 
 // ─── Shop API ────────────────────────────────────────────────────────────────
 
-// GET /api/shop/packages — all active packages
-app.get('/api/shop/packages', async (req, res) => {
+// GET /shop/packages — all active packages
+app.get('/shop/packages', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM shop_packages WHERE is_active = true ORDER BY price ASC');
     res.json(result.rows);
@@ -1465,8 +1465,8 @@ app.get('/api/shop/packages', async (req, res) => {
   }
 });
 
-// POST /api/shop/orders — create new order and send emails
-app.post('/api/shop/orders', async (req, res) => {
+// POST /shop/orders — create new order and send emails
+app.post('/shop/orders', async (req, res) => {
   const { customer_name, customer_email, customer_phone, items, total_amount } = req.body;
   
   if (!customer_name || !customer_email || !customer_phone || !items || items.length === 0) {
@@ -1838,3 +1838,4 @@ app.get('/robots.txt', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+

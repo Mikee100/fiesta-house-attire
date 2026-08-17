@@ -1,6 +1,6 @@
 const isBrowser = typeof window !== "undefined";
 const isLocalHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
-const API_URL = import.meta.env.VITE_API_URL || (isLocalHost ? "http://localhost:5000/api" : "/api");
+const API_URL = import.meta.env.VITE_API_URL || (isLocalHost ? "http://localhost:5000" : "/backend");
 
 const ADMIN_ACCESS_TOKEN_KEY = "fiesta_admin_access_token";
 
