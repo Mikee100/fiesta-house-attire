@@ -28,9 +28,7 @@ const defaultAllowedOrigins = [
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
   'https://fiestahouseattire.vercel.app',
-  'https://app.fiestahouseattire.com',
-  'https://fiestahousematernity.com',
-  'https://www.fiestahousematernity.com'
+  'https://app.fiestahouseattire.com'
 ];
 
 const configuredOrigins = (process.env.CORS_ORIGINS || defaultAllowedOrigins.join(','))
@@ -45,10 +43,6 @@ const isAllowedOrigin = (origin) => {
 
   // Allow production subdomains on the same parent domain.
   if (/^https:\/\/[a-z0-9-]+\.fiestahouseattire\.com$/i.test(origin)) {
-    return true;
-  }
-
-  if (/^https:\/\/[a-z0-9-]+\.fiestahousematernity\.com$/i.test(origin)) {
     return true;
   }
 
@@ -106,23 +100,6 @@ app.use('/api', (req, res, next) => {
 
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=120');
   next();
-});
-
-app.get('/api', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'fiesta-house-backend',
-    message: 'API is running',
-  });
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'fiesta-house-backend',
-    uptimeSeconds: Math.round(process.uptime()),
-    timestamp: new Date().toISOString(),
-  });
 });
 
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
@@ -1681,9 +1658,7 @@ async function sendOrderEmails(order, items) {
 // The public site URL comes from one env var so a future domain change is a
 // single setting: set SITE_URL in Vercel and everything follows.
 
-const SITEMAP_SITE_URL = (process.env.SITE_URL || 'https://www.fiestahousematernity.com').replace(/\/$/, '');
-const MATERNITY_GOWNS_FOLDER_ID = 'b8b100e9-81ce-4778-bf57-0adee0b46fc0';
-const IMAGE_SITEMAP_FALLBACK_IMAGE = `${SITEMAP_SITE_URL}/og-image.jpg`;
+const SITEMAP_SITE_URL = (process.env.SITE_URL || 'https://app.fiestahouseattire.com').replace(/\/$/, '');
 
 const STATIC_ROUTES = [
   { path: '/', priority: '1.0' },
@@ -1753,79 +1728,27 @@ app.get('/sitemap.xml', async (req, res) => {
 
 app.get('/image-sitemap.xml', async (req, res) => {
   try {
-    const [portfolioImages, portfolioCovers, blogCovers, gownAssets] = await Promise.all([
-      pool.query(
-        `SELECT p.slug, pi.url
-         FROM portfolio_images pi
-         JOIN portfolios p ON p.id = pi.portfolio_id
-         ORDER BY p."order" ASC, pi."order" ASC`
-      ),
-      pool.query(
-        `SELECT slug, cover_image_url AS url
-         FROM portfolios
-         WHERE cover_image_url IS NOT NULL AND TRIM(cover_image_url) <> ''
-         ORDER BY "order" ASC`
-      ),
-      pool.query(
-        `SELECT slug, cover_image_url AS url
-         FROM blog_posts
-         WHERE status = 'published' AND cover_image_url IS NOT NULL AND TRIM(cover_image_url) <> ''
-         ORDER BY COALESCE(updated_at, published_at, created_at) DESC`
-      ),
-      pool.query(
-        `SELECT url
-         FROM assets
-         WHERE folder_id = $1 AND url IS NOT NULL AND TRIM(url) <> ''
-         ORDER BY created_at DESC`,
-        [MATERNITY_GOWNS_FOLDER_ID]
-      ),
-    ]);
+    const result = await pool.query(
+      `SELECT p.slug, pi.url FROM portfolio_images pi
+       JOIN portfolios p ON p.id = pi.portfolio_id
+       ORDER BY p."order" ASC, pi."order" ASC`
+    );
 
-    const byPage = new Map();
-    const addImage = (pagePath, imageUrl) => {
-      if (!pagePath || !imageUrl) return;
-      const trimmed = String(imageUrl).trim();
-      if (!/^https?:\/\//i.test(trimmed)) return;
-      if (!byPage.has(pagePath)) byPage.set(pagePath, new Set());
-      byPage.get(pagePath).add(trimmed);
-    };
-
-    for (const row of portfolioImages.rows) {
-      if (!row.slug) continue;
-      addImage(`/portfolio/${row.slug}`, row.url);
-    }
-
-    for (const row of portfolioCovers.rows) {
-      if (!row.slug) continue;
-      addImage(`/portfolio/${row.slug}`, row.url);
-    }
-
-    for (const row of blogCovers.rows) {
-      if (!row.slug) continue;
-      addImage(`/blog/${row.slug}`, row.url);
-    }
-
-    for (const row of gownAssets.rows) {
-      addImage('/maternity-gowns', row.url);
-    }
-
-    // Search Console rejects an image sitemap with zero <url> entries.
-    if (byPage.size === 0) {
-      addImage('/', IMAGE_SITEMAP_FALLBACK_IMAGE);
+    const byPortfolio = new Map();
+    for (const row of result.rows) {
+      if (!row.url) continue;
+      if (!byPortfolio.has(row.slug)) byPortfolio.set(row.slug, []);
+      byPortfolio.get(row.slug).push(row.url);
     }
 
     const urls = [];
-    const sortedPages = [...byPage.keys()].sort((a, b) => a.localeCompare(b));
-    for (const pagePath of sortedPages) {
-      const images = [...byPage.get(pagePath)].slice(0, 1000);
-      if (images.length === 0) continue;
-
+    for (const [slug, images] of byPortfolio) {
       const imageTags = images
+        .slice(0, 1000)
         .map((u) => `    <image:image>\n      <image:loc>${xmlEscape(u)}</image:loc>\n    </image:image>`)
         .join('\n');
-
       urls.push(
-        `  <url>\n    <loc>${SITEMAP_SITE_URL}${pagePath === '/' ? '/' : pagePath}</loc>\n${imageTags}\n  </url>`
+        `  <url>\n    <loc>${SITEMAP_SITE_URL}/portfolio/${xmlEscape(slug)}</loc>\n${imageTags}\n  </url>`
       );
     }
 
