@@ -973,6 +973,7 @@ export default function Videos() {
           50%      { opacity:.5; transform:scale(0.7); }
         }
         @media (max-width: 980px) {
+          .vp-fade { opacity: 1 !important; transform: translateY(0) !important; }
           .vp-featured-grid { grid-template-columns:1fr; }
           .vp-more-grid { grid-template-columns:1fr 1fr; }
         }
