@@ -415,6 +415,64 @@ const initVideosDb = async () => {
 };
 
 initVideosDb();
+
+// Initialize Blog Database bits used by runtime APIs.
+const initBlogDb = async () => {
+  try {
+    console.log('Checking blog database tables...');
+    await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blog_categories (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blog_posts (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        title TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        excerpt TEXT,
+        content TEXT,
+        cover_image_url TEXT,
+        author TEXT DEFAULT 'admin',
+        status TEXT DEFAULT 'draft',
+        sort_order INTEGER DEFAULT 0,
+        published_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blog_post_categories (
+        post_id UUID REFERENCES blog_posts(id) ON DELETE CASCADE,
+        category_id UUID REFERENCES blog_categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (post_id, category_id)
+      );
+    `);
+    await pool.query('ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0');
+    await pool.query(
+      `UPDATE blog_posts
+       SET sort_order = ranked.rn - 1
+       FROM (
+         SELECT id, ROW_NUMBER() OVER (ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC) AS rn
+         FROM blog_posts
+       ) ranked
+       WHERE blog_posts.id = ranked.id
+         AND blog_posts.sort_order IS NULL`
+    );
+    await pool.query(
+      'CREATE INDEX IF NOT EXISTS idx_blog_posts_public_order ON blog_posts (status, sort_order ASC, published_at DESC, created_at DESC)'
+    );
+    console.log('✓ Blog database initialized');
+  } catch (err) {
+    console.error('Blog DB Init Error:', err);
+  }
+};
+
+initBlogDb();
 initAuthDb();
 
 // Routes
@@ -1312,7 +1370,7 @@ app.get('/blog-posts', async (req, res) => {
         WHERE pc2.post_id = p.id AND c2.slug = $${params.length}
       )`;
     }
-    baseQuery += ' GROUP BY p.id ORDER BY p.published_at DESC';
+    baseQuery += ' GROUP BY p.id ORDER BY p.sort_order ASC, p.published_at DESC, p.created_at DESC';
 
     const countResult = await pool.query(
       `SELECT COUNT(p.id) FROM blog_posts p
@@ -1356,11 +1414,41 @@ app.get('/blog-posts/all', requireAdminAuth, async (req, res) => {
       LEFT JOIN blog_post_categories pc ON pc.post_id = p.id
       LEFT JOIN blog_categories c ON c.id = pc.category_id
       GROUP BY p.id
-      ORDER BY p.created_at DESC
+      ORDER BY p.sort_order ASC, p.created_at DESC
     `);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+});
+
+// PATCH /blog-posts/reorder — reorder posts by explicit id sequence
+app.patch('/blog-posts/reorder', requireAdminAuth, async (req, res) => {
+  const { postIds } = req.body;
+
+  if (!Array.isArray(postIds) || postIds.length === 0) {
+    return res.status(400).json({ error: 'postIds array is required' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    for (let i = 0; i < postIds.length; i++) {
+      await client.query(
+        'UPDATE blog_posts SET sort_order = $1, updated_at = NOW() WHERE id = $2',
+        [i, postIds[i]]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ message: 'Blog post order updated' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Failed to reorder blog posts' });
+  } finally {
+    client.release();
   }
 });
 
@@ -1390,14 +1478,21 @@ app.get('/blog-posts/:slug', async (req, res) => {
 
 // POST /blog-posts — create post
 app.post('/blog-posts', requireAdminAuth, async (req, res) => {
-  const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids } = req.body;
+  const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids, sort_order } = req.body;
   if (!title || !slug) return res.status(400).json({ error: 'Title and slug are required' });
   try {
+    let nextOrder = sort_order;
+    if (nextOrder === undefined || nextOrder === null || Number.isNaN(Number(nextOrder))) {
+      const orderResult = await pool.query('SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM blog_posts');
+      nextOrder = Number(orderResult.rows[0].next_order) || 0;
+    }
+
     const result = await pool.query(
-      `INSERT INTO blog_posts (title, slug, excerpt, content, cover_image_url, author, status, published_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      `INSERT INTO blog_posts (title, slug, excerpt, content, cover_image_url, author, status, published_at, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [title, slug, excerpt, content, cover_image_url, author || 'admin', status || 'draft',
-       status === 'published' ? (published_at || new Date().toISOString()) : published_at]
+       status === 'published' ? (published_at || new Date().toISOString()) : published_at,
+       nextOrder]
     );
     const post = result.rows[0];
 
@@ -1419,15 +1514,17 @@ app.post('/blog-posts', requireAdminAuth, async (req, res) => {
 // PUT /blog-posts/:id — update post
 app.put('/blog-posts/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
-  const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids } = req.body;
+  const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids, sort_order } = req.body;
   try {
     const result = await pool.query(
       `UPDATE blog_posts SET
          title=$1, slug=$2, excerpt=$3, content=$4, cover_image_url=$5,
-         author=$6, status=$7, published_at=$8, updated_at=NOW()
-       WHERE id=$9 RETURNING *`,
+         author=$6, status=$7, published_at=$8, sort_order=COALESCE($9, sort_order), updated_at=NOW()
+       WHERE id=$10 RETURNING *`,
       [title, slug, excerpt, content, cover_image_url, author, status,
-       status === 'published' ? (published_at || new Date().toISOString()) : published_at, id]
+       status === 'published' ? (published_at || new Date().toISOString()) : published_at,
+       sort_order,
+       id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Post not found' });
     const post = result.rows[0];
@@ -1465,7 +1562,7 @@ app.get('/blog-posts-recent', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, title, slug, cover_image_url, published_at FROM blog_posts
-       WHERE status='published' ORDER BY published_at DESC LIMIT 5`
+       WHERE status='published' ORDER BY sort_order ASC, published_at DESC, created_at DESC LIMIT 5`
     );
     res.json(result.rows);
   } catch (err) {
