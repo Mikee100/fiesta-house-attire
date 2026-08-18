@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import * as api from "@/lib/api";
 import { BlogPost } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Globe, FileText, Search, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Edit, Trash2, Globe, FileText, Search, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import AdminPage from "@/components/admin/AdminPage";
 import AdminSection from "@/components/admin/AdminSection";
 import AdminToolbar from "@/components/admin/AdminToolbar";
@@ -19,6 +19,8 @@ const AdminBlog = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [reordering, setReordering] = useState(false);
+  const [draggingPostId, setDraggingPostId] = useState<string | null>(null);
+  const [dragOverPostId, setDragOverPostId] = useState<string | null>(null);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -74,6 +76,26 @@ const AdminBlog = () => {
     }
   };
 
+  const persistOrder = async (nextPosts: BlogPost[], successMessage = "Blog post order updated") => {
+    const orderedPosts = nextPosts.map((p, idx) => ({ ...p, sort_order: idx }));
+    setPosts(orderedPosts);
+    setReordering(true);
+    try {
+      const result = await api.reorderBlogPosts(orderedPosts.map((p) => p.id));
+      if (result?.error) {
+        toast.error(result.error);
+        fetchPosts();
+        return;
+      }
+      toast.success(successMessage);
+    } catch (err) {
+      toast.error("Failed to save post order");
+      fetchPosts();
+    } finally {
+      setReordering(false);
+    }
+  };
+
   const handleMove = async (postId: string, direction: "up" | "down") => {
     const currentIndex = posts.findIndex((p) => p.id === postId);
     if (currentIndex < 0) return;
@@ -83,23 +105,48 @@ const AdminBlog = () => {
 
     const nextPosts = [...posts];
     [nextPosts[currentIndex], nextPosts[targetIndex]] = [nextPosts[targetIndex], nextPosts[currentIndex]];
+    await persistOrder(nextPosts);
+  };
 
-    setPosts(nextPosts.map((p, idx) => ({ ...p, sort_order: idx })));
-    setReordering(true);
-    try {
-      const result = await api.reorderBlogPosts(nextPosts.map((p) => p.id));
-      if (result?.error) {
-        toast.error(result.error);
-        fetchPosts();
-        return;
-      }
-      toast.success("Blog post order updated");
-    } catch (err) {
-      toast.error("Failed to save post order");
-      fetchPosts();
-    } finally {
-      setReordering(false);
+  const handleDragStart = (event: React.DragEvent<HTMLTableRowElement>, postId: string) => {
+    if (reordering) {
+      event.preventDefault();
+      return;
     }
+    setDraggingPostId(postId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", postId);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLTableRowElement>, postId: string) => {
+    if (!draggingPostId || draggingPostId === postId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDragOverPostId(postId);
+  };
+
+  const handleDrop = async (event: React.DragEvent<HTMLTableRowElement>, targetPostId: string) => {
+    event.preventDefault();
+
+    const sourcePostId = draggingPostId || event.dataTransfer.getData("text/plain");
+    setDraggingPostId(null);
+    setDragOverPostId(null);
+
+    if (!sourcePostId || sourcePostId === targetPostId) return;
+
+    const sourceIndex = posts.findIndex((p) => p.id === sourcePostId);
+    const targetIndex = posts.findIndex((p) => p.id === targetPostId);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    const nextPosts = [...posts];
+    const [moved] = nextPosts.splice(sourceIndex, 1);
+    nextPosts.splice(targetIndex, 0, moved);
+    await persistOrder(nextPosts, "Order updated");
+  };
+
+  const handleDragEnd = () => {
+    setDraggingPostId(null);
+    setDragOverPostId(null);
   };
 
   const filteredPosts = posts.filter(p => 
@@ -138,6 +185,7 @@ const AdminBlog = () => {
               }
               right={
                 <div className="flex items-center gap-2">
+                  <AdminStatusPill label="Drag to reorder" tone="neutral" />
                   <AdminStatusPill label={`${filteredPosts.length} posts`} tone="neutral" />
                   {reordering && <AdminStatusPill label="Saving order..." tone="warning" />}
                 </div>
@@ -170,9 +218,20 @@ const AdminBlog = () => {
                   filteredPosts.map((post) => {
                     const currentIndex = posts.findIndex((p) => p.id === post.id);
                     return (
-                    <TableRow key={post.id} className="group">
+                    <TableRow
+                      key={post.id}
+                      className={`group ${dragOverPostId === post.id ? "bg-sky-50" : ""} ${draggingPostId === post.id ? "opacity-60" : ""}`}
+                      draggable={!reordering}
+                      onDragStart={(event) => handleDragStart(event, post.id)}
+                      onDragOver={(event) => handleDragOver(event, post.id)}
+                      onDrop={(event) => handleDrop(event, post.id)}
+                      onDragEnd={handleDragEnd}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-2">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 cursor-grab active:cursor-grabbing" title="Drag to reorder">
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </span>
                           <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-1 text-xs font-semibold text-slate-600">
                             {currentIndex + 1}
                           </span>
