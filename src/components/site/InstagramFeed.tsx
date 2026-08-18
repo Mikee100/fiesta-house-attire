@@ -1,14 +1,48 @@
 import React from "react";
+import * as api from "@/lib/api";
+
+const FALLBACK_IG_TILES = [
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886699797_IMGL4262.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886729905_IMGL4258.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886776876_IMGL4215.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886824638_IMGL4204.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886904058_IMGL4168.jpg",
+];
 
 const InstagramFeed = () => {
-  React.useEffect(() => {
-    const existing = document.querySelector('script[src="https://cdn.lightwidget.com/widgets/lightwidget.js"]');
-    if (existing) return;
+  const [tiles, setTiles] = React.useState<string[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-    const script = document.createElement("script");
-    script.src = "https://cdn.lightwidget.com/widgets/lightwidget.js";
-    script.async = true;
-    document.body.appendChild(script);
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const loadTiles = async () => {
+      try {
+        const result = await api.fetchAssets(undefined, 1, 8);
+        const urls = Array.isArray(result?.assets)
+          ? result.assets
+              .map((item) => item?.url)
+              .filter((url): url is string => typeof url === "string" && url.length > 0)
+              .slice(0, 8)
+          : [];
+
+        if (!cancelled) {
+          setTiles(urls.length > 0 ? urls : FALLBACK_IG_TILES);
+        }
+      } catch {
+        if (!cancelled) {
+          setTiles(FALLBACK_IG_TILES);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadTiles();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -41,17 +75,40 @@ const InstagramFeed = () => {
         </div>
       </div>
       <div className="container" style={{ display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: 900 }}>
-          <iframe
-            src="//lightwidget.com/widgets/6dd6d900fdcc50efb7a09d9e4b4cfd20.html"
-            title="Instagram Feed"
-            loading="lazy"
-            referrerPolicy="strict-origin-when-cross-origin"
-            style={{ width: "100%", border: 0, overflow: "hidden" }}
-            scrolling="no"
-            allowTransparency={true}
-            className="lightwidget-widget"
-          ></iframe>
+        <div style={{ width: "100%", maxWidth: 980 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              gap: "0.9rem",
+            }}
+          >
+            {(loading ? FALLBACK_IG_TILES : tiles).map((url, i) => (
+              <a
+                key={`${url}-${i}`}
+                href="https://www.instagram.com/fiestahousematernity/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Open Fiesta House Instagram"
+                style={{
+                  display: "block",
+                  position: "relative",
+                  overflow: "hidden",
+                  borderRadius: "6px",
+                  aspectRatio: "1 / 1",
+                  background: "#f3f3f3",
+                }}
+              >
+                <img
+                  src={url}
+                  alt="Fiesta House Instagram preview"
+                  loading="lazy"
+                  decoding="async"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </section>
