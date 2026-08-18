@@ -33,9 +33,10 @@ interface PortfolioImage {
 interface Portfolio {
   id: string;
   title: string;
-  slug: string;
-  description: string;
-  images: PortfolioImage[];
+  slug?: string;
+  description?: string;
+  images: Array<PortfolioImage | string>;
+  cover_image_url?: string | null;
 }
 
 interface Asset {
@@ -58,6 +59,15 @@ const FALLBACK_HERO_IMAGES = [
   "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg"
 ];
 const HERO_DESKTOP_FOCAL_POINTS = ["center 18%", "center 22%", "center 16%", "center 20%"];
+
+const getPortfolioCoverImage = (portfolio: Portfolio): string | null => {
+  if (portfolio.cover_image_url) return portfolio.cover_image_url;
+
+  const firstImage = portfolio.images?.[0];
+  if (!firstImage) return null;
+
+  return typeof firstImage === "string" ? firstImage : firstImage.url;
+};
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -116,7 +126,7 @@ const Index = () => {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
-            "name": "Fiesta House Attire",
+            "name": "Fiesta House Maternity",
             "image": "https://www.fiestahousematernity.com/og-image.jpg",
             "@id": "https://www.fiestahousematernity.com",
             "url": "https://www.fiestahousematernity.com",
@@ -261,11 +271,14 @@ const Index = () => {
                   <Skeleton key={i} className="aspect-[3/4] w-full" />
                 ))
               ) : (
-                portfolios.slice(0, 6).map((portfolio) => (
-                  <Link key={portfolio.id} to={`/portfolio/${portfolio.slug}`} className="group relative overflow-hidden aspect-[3/4]">
-                    {portfolio.images[0] && (
+                portfolios.slice(0, 6).map((portfolio) => {
+                  const coverImage = getPortfolioCoverImage(portfolio);
+
+                  return (
+                  <Link key={portfolio.id} to={`/portfolio/${portfolio.slug || portfolio.id}`} className="group relative overflow-hidden aspect-[3/4]">
+                    {coverImage && (
                       <img
-                        src={portfolio.images[0].url}
+                        src={coverImage}
                         alt={portfolio.title}
                         width={1200}
                         height={1600}
@@ -279,7 +292,8 @@ const Index = () => {
                       <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "0.8rem" }}>View Collection</span>
                     </div>
                   </Link>
-                ))
+                );
+                })
               )}
             </div>
             {!loading && portfolios.length > 6 && (
