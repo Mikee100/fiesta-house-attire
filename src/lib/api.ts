@@ -239,6 +239,7 @@ export interface BlogPost {
   cover_image_url: string | null;
   author: string;
   status: 'draft' | 'published';
+  sort_order?: number;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -313,6 +314,15 @@ export const updateBlogPost = async (id: string, data: Partial<BlogPost> & { cat
 
 export const deleteBlogPost = async (id: string) => {
   const res = await authenticatedFetch(`${API_URL}/blog-posts/${id}`, { method: 'DELETE' });
+  return await res.json();
+};
+
+export const reorderBlogPosts = async (postIds: string[]) => {
+  const res = await authenticatedFetch(`${API_URL}/blog-posts/reorder`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ postIds })
+  });
   return await res.json();
 };
 

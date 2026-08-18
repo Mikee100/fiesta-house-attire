@@ -41,11 +41,26 @@ const initBlogDb = async () => {
         cover_image_url TEXT,
         author TEXT DEFAULT 'admin',
         status TEXT DEFAULT 'draft',
+        sort_order INTEGER DEFAULT 0,
         published_at TIMESTAMP WITH TIME ZONE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
+    await pool.query('ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0');
+    await pool.query(`
+      UPDATE blog_posts
+      SET sort_order = ranked.rn - 1
+      FROM (
+        SELECT id, ROW_NUMBER() OVER (ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC) AS rn
+        FROM blog_posts
+      ) ranked
+      WHERE blog_posts.id = ranked.id
+        AND blog_posts.sort_order IS NULL
+    `);
+    await pool.query(
+      'CREATE INDEX IF NOT EXISTS idx_blog_posts_public_order ON blog_posts (status, sort_order ASC, published_at DESC, created_at DESC)'
+    );
     console.log('✓ blog_posts table ready');
 
     // Junction table
