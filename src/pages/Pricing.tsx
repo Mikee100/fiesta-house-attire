@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "@/components/site/Layout";
 import SEO from "@/components/site/SEO";
 import { 
@@ -8,81 +8,8 @@ import {
   AccordionTrigger 
 } from "@/components/ui/accordion";
 import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck } from "lucide-react";
-
-const packages = [
-  { 
-    name: "Standard", 
-    price: "10,000", 
-    duration: "1 hr 30 min", 
-    color: "var(--sky-blue)", 
-    images: "6 edited soft copy images",
-    outfits: "2 gowns & styling",
-    features: ["Professional makeup", "Full gown access", "Studio session"],
-    description: "Ideal for a quick, elegant session focused on capturing the essence of your journey."
-  },
-  { 
-    name: "Economy", 
-    price: "15,000", 
-    duration: "2 hrs", 
-    color: "var(--magenta)", 
-    images: "12 edited soft copy images",
-    outfits: "3 gowns & styling",
-    features: ["Professional makeup", "Full gown access", "Studio session"],
-    description: "Our most balanced package, offering more time and a wider variety of looks."
-  },
-  { 
-    name: "Executive", 
-    price: "20,000", 
-    duration: "2 hrs 30 min", 
-    color: "var(--sky-blue)", 
-    images: "15 edited soft copy images",
-    outfits: "4 gowns & styling",
-    features: ["Professional makeup", "Full gown access", "1 A3 Mount included", "Studio session"],
-    description: "Level up with more outfits and a stunning A3 mount for your wall."
-  },
-  { 
-    name: "Gold", 
-    price: "30,000", 
-    duration: "2 hrs 30 min", 
-    color: "var(--magenta)", 
-    images: "20 edited soft copy images",
-    outfits: "4 gowns & styling",
-    popular: true,
-    features: ["Professional makeup", "8×8\" hardpage photobook", "Full gown access", "Studio session"],
-    description: "Capture your story in a high-quality photobook that will last generations."
-  },
-  { 
-    name: "Platinum", 
-    price: "35,000", 
-    duration: "2 hrs 30 min", 
-    color: "var(--sky-blue)", 
-    images: "25 edited soft copy images",
-    outfits: "4 gowns & styling",
-    popular: true,
-    features: ["Professional makeup", "Customized Balloon Backdrop", "1 A3 mount included", "Full gown access"],
-    description: "Luxury meets artistry with a customized backdrop tailored to your style."
-  },
-  { 
-    name: "VIP", 
-    price: "45,000", 
-    duration: "3 hrs 30 min", 
-    color: "var(--magenta)", 
-    images: "25 edited soft copy images",
-    outfits: "4 gowns & styling",
-    features: ["Professional makeup", "Customized Balloon Backdrop", "8×8\" hardpage photobook", "Extended session"],
-    description: "The ultimate luxury experience with every detail curated for perfection."
-  },
-  { 
-    name: "VVIP", 
-    price: "50,000", 
-    duration: "3 hrs 30 min", 
-    color: "var(--sky-blue)", 
-    images: "30 edited soft copy images",
-    outfits: "5 gowns & styling",
-    features: ["Professional makeup", "Styled Wig included", "Customized Balloon Backdrop", "8×8\" photobook + A3 mount"],
-    description: "Our most exclusive offering. Absolute luxury, more outfits, and premium styling."
-  },
-];
+import { toast } from "sonner";
+import * as api from "@/lib/api";
 
 const faqs = [
   {
@@ -108,6 +35,28 @@ const faqs = [
 ];
 
 const Pricing = () => {
+  const [packages, setPackages] = useState<api.ShopPackage[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
+  const [packagesSource, setPackagesSource] = useState<api.ShopPackagesSource>('live');
+
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        const result = await api.fetchShopPackagesWithFallback();
+        setPackages(Array.isArray(result.data) ? result.data : []);
+        setPackagesSource(result.source);
+      } catch (error) {
+        setPackages([]);
+        setPackagesSource('empty');
+        toast.error("Failed to load packages");
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    loadPackages();
+  }, []);
+
   return (
     <Layout
       title="Pricing & Packages | Luxury Maternity Photoshoot Nairobi"
@@ -133,106 +82,148 @@ const Pricing = () => {
             gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
             gap: "1.5rem" 
           }}>
-            {packages.map((pkg, i) => (
-              <div 
-                key={i} 
-                style={{ 
-                  padding: "2rem 1.2rem", 
-                  backgroundColor: pkg.popular ? "white" : "var(--bg)", 
-                  borderRadius: "16px",
-                  border: pkg.popular ? `2px solid ${pkg.color}` : "1px solid rgba(0,0,0,0.05)",
-                  boxShadow: pkg.popular ? "0 16px 32px rgba(0,0,0,0.08)" : "none",
-                  display: "flex",
-                  flexDirection: "column",
-                  transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
-                  position: "relative",
-                  overflow: "hidden"
-                }}
-                className="pricing-card"
-              >
-                {pkg.popular && (
-                  <div style={{ 
-                    position: "absolute", 
-                    top: "24px", 
-                    right: "24px", 
-                    backgroundColor: pkg.color, 
-                    color: "white", 
-                    padding: "0.4rem 1.2rem", 
-                    fontSize: "0.7rem", 
-                    textTransform: "uppercase", 
-                    letterSpacing: "0.1em",
-                    fontWeight: "700",
-                    borderRadius: "100px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem"
-                  }}>
-                    <Star size={12} fill="white" /> Popular
-                  </div>
-                )}
-                
-                <div style={{ marginBottom: "1.2rem" }}>
-                  <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.6rem", color: "var(--dark)" }}>{pkg.name}</h3>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "1rem" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: "600", color: pkg.color }}>Ksh</span>
-                    <span style={{ fontSize: "2.2rem", fontWeight: "300", color: "var(--dark)" }}>{pkg.price}</span>
-                  </div>
-                  <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", lineHeight: "1.5" }}>{pkg.description}</p>
+            {!loadingPackages && packagesSource !== 'live' && (
+              <div style={{ gridColumn: "1 / -1", marginBottom: "0.5rem" }}>
+                <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: "12px", padding: "0.85rem 1rem", fontSize: "0.9rem", color: "var(--muted-foreground)", backgroundColor: "#fff" }}>
+                  {packagesSource === 'cache'
+                    ? 'Showing saved package data while connection is unavailable.'
+                    : 'Showing fallback package data while live data is unavailable.'}
                 </div>
-
-                <div style={{ flexGrow: 1, marginBottom: "3rem" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${pkg.color}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: pkg.color }}>
-                        <Clock size={16} />
-                      </div>
-                      <span>{pkg.duration} session</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${pkg.color}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: pkg.color }}>
-                        <Image size={16} />
-                      </div>
-                      <span>{pkg.images}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${pkg.color}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: pkg.color }}>
-                        <Shirt size={16} />
-                      </div>
-                      <span>{pkg.outfits}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
-                    <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "700", marginBottom: "1rem", color: "var(--muted-foreground)" }}>Includes:</p>
-                    <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                      {pkg.features.map((feature, j) => (
-                        <li key={j} style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.8rem" }}>
-                          <Check size={14} style={{ color: pkg.color }} />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <a 
-                  href={`https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20book%20the%20${pkg.name}%20package.`} 
-                  className="btn" 
-                  style={{ 
-                    width: "100%", 
-                    backgroundColor: pkg.popular ? pkg.color : "var(--dark)", 
-                    color: "white",
-                    borderRadius: "12px",
-                    padding: "1.5rem",
-                    fontWeight: "600",
-                    display: "flex",
-                    gap: "0.8rem"
-                  }}
-                >
-                  Book via WhatsApp
-                </a>
               </div>
-            ))}
+            )}
+
+            {loadingPackages ? (
+              [1, 2, 3].map((skeleton) => (
+                <div
+                  key={skeleton}
+                  style={{
+                    minHeight: "360px",
+                    borderRadius: "16px",
+                    backgroundColor: "var(--bg)"
+                  }}
+                  className="animate-pulse"
+                />
+              ))
+            ) : packages.length === 0 ? (
+              <div style={{ gridColumn: "1 / -1", textAlign: "center", color: "var(--muted-foreground)", padding: "2.5rem 1rem" }}>
+                No packages available right now.
+              </div>
+            ) : (
+              packages.map((pkg) => {
+                const accentColor = pkg.color || "var(--sky-blue)";
+
+                return (
+                  <div
+                    key={pkg.id}
+                    style={{
+                      padding: "2rem 1.2rem",
+                      backgroundColor: pkg.popular ? "white" : "var(--bg)",
+                      borderRadius: "16px",
+                      border: pkg.popular ? `2px solid ${accentColor}` : "1px solid rgba(0,0,0,0.05)",
+                      boxShadow: pkg.popular ? "0 16px 32px rgba(0,0,0,0.08)" : "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
+                      position: "relative",
+                      overflow: "hidden"
+                    }}
+                    className="pricing-card"
+                  >
+                    {pkg.popular && (
+                      <div style={{
+                        position: "absolute",
+                        top: "24px",
+                        right: "24px",
+                        backgroundColor: accentColor,
+                        color: "white",
+                        padding: "0.4rem 1.2rem",
+                        fontSize: "0.7rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.1em",
+                        fontWeight: "700",
+                        borderRadius: "100px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem"
+                      }}>
+                        <Star size={12} fill="white" /> Popular
+                      </div>
+                    )}
+
+                    <div style={{ marginBottom: "1.2rem" }}>
+                      <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.6rem", color: "var(--dark)" }}>{pkg.name}</h3>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "1rem" }}>
+                        <span style={{ fontSize: "1rem", fontWeight: "600", color: accentColor }}>Ksh</span>
+                        <span style={{ fontSize: "2.2rem", fontWeight: "300", color: "var(--dark)" }}>{Number(pkg.price || 0).toLocaleString()}</span>
+                      </div>
+                      {pkg.description && (
+                        <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", lineHeight: "1.5" }}>{pkg.description}</p>
+                      )}
+                    </div>
+
+                    <div style={{ flexGrow: 1, marginBottom: "3rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+                        {pkg.duration && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: accentColor }}>
+                              <Clock size={16} />
+                            </div>
+                            <span>{pkg.duration} session</span>
+                          </div>
+                        )}
+                        {pkg.images_count && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: accentColor }}>
+                              <Image size={16} />
+                            </div>
+                            <span>{pkg.images_count}</span>
+                          </div>
+                        )}
+                        {pkg.outfits_count && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: accentColor }}>
+                              <Shirt size={16} />
+                            </div>
+                            <span>{pkg.outfits_count}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {Array.isArray(pkg.features) && pkg.features.length > 0 && (
+                        <div style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
+                          <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "700", marginBottom: "1rem", color: "var(--muted-foreground)" }}>Includes:</p>
+                          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                            {pkg.features.map((feature, j) => (
+                              <li key={`${pkg.id}-${j}`} style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.8rem" }}>
+                                <Check size={14} style={{ color: accentColor }} />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    <a
+                      href={`https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20book%20the%20${pkg.name}%20package.`}
+                      className="btn"
+                      style={{
+                        width: "100%",
+                        backgroundColor: pkg.popular ? accentColor : "var(--dark)",
+                        color: "white",
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                        fontWeight: "600",
+                        display: "flex",
+                        gap: "0.8rem"
+                      }}
+                    >
+                      Book via WhatsApp
+                    </a>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </section>

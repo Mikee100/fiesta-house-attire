@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Library, FolderTree, ExternalLink, Camera, FileText, Clapperboard, LogOut } from "lucide-react";
+import { LayoutDashboard, Library, FolderTree, ExternalLink, Camera, FileText, Clapperboard, LogOut, BadgeDollarSign } from "lucide-react";
 import { logoutAdmin } from "@/lib/adminAuth";
 
 const AdminNavbar = () => {
@@ -75,6 +75,16 @@ const AdminNavbar = () => {
                 >
                   <Clapperboard size={16} />
                   Videos
+                </Button>
+              </Link>
+              <Link to="/admin/pricing">
+                <Button 
+                  variant={isActive('/admin/pricing') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <BadgeDollarSign size={16} />
+                  Pricing
                 </Button>
               </Link>
             </div>

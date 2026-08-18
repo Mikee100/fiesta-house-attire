@@ -367,8 +367,138 @@ export interface CreateShopOrderPayload {
   total_amount: number;
 }
 
+export type ShopPackagesSource = 'live' | 'cache' | 'static' | 'empty';
+
+export interface ShopPackagesResult {
+  data: ShopPackage[];
+  source: ShopPackagesSource;
+}
+
+const SHOP_PACKAGES_CACHE_KEY = 'fiesta_shop_packages_cache_v1';
+
+const DEFAULT_SHOP_PACKAGES: ShopPackage[] = [
+  {
+    id: 'default-standard',
+    name: 'Standard Package',
+    price: 10000,
+    description: 'A streamlined premium session for timeless, elegant portraits of your maternity journey.',
+    duration: '1 hr 30 min',
+    images_count: '6 edited soft copy images',
+    outfits_count: '2 gowns & styling',
+    features: ['Professional makeup', 'Full gown access', 'Studio session'],
+    popular: false,
+    color: '#6EC1E4'
+  },
+  {
+    id: 'default-economy',
+    name: 'Economy Package',
+    price: 15000,
+    description: 'Our most balanced package, offering more time and a wider variety of looks.',
+    duration: '2 hrs',
+    images_count: '12 edited soft copy images',
+    outfits_count: '3 gowns & styling',
+    features: ['Professional makeup', 'Full gown access', 'Studio session'],
+    popular: false,
+    color: '#B84FA0'
+  },
+  {
+    id: 'default-executive',
+    name: 'Executive Package',
+    price: 20000,
+    description: 'Level up with more outfits and a stunning A3 mount for your wall.',
+    duration: '2 hrs 30 min',
+    images_count: '15 edited soft copy images',
+    outfits_count: '4 gowns & styling',
+    features: ['Professional makeup', 'Full gown access', '1 A3 mount included', 'Studio session'],
+    popular: false,
+    color: '#6EC1E4'
+  }
+];
+
+const isValidShopPackageArray = (value: unknown): value is ShopPackage[] => {
+  return Array.isArray(value) && value.every((item) => {
+    if (!item || typeof item !== 'object') return false;
+    const pkg = item as Partial<ShopPackage>;
+    return typeof pkg.id === 'string' && typeof pkg.name === 'string';
+  });
+};
+
+const readCachedShopPackages = (): ShopPackage[] => {
+  if (!isBrowser) return [];
+  try {
+    const raw = window.localStorage.getItem(SHOP_PACKAGES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return isValidShopPackageArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeCachedShopPackages = (packages: ShopPackage[]): void => {
+  if (!isBrowser || !Array.isArray(packages) || packages.length === 0) return;
+  try {
+    window.localStorage.setItem(SHOP_PACKAGES_CACHE_KEY, JSON.stringify(packages));
+  } catch {
+    // Ignore cache write errors (quota/private mode).
+  }
+};
+
+export const fetchShopPackagesWithFallback = async (): Promise<ShopPackagesResult> => {
+  try {
+    const res = await fetch(`${API_URL}/shop/packages`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch shop packages: ${res.status}`);
+    }
+
+    const data = await res.json();
+    const safeData = isValidShopPackageArray(data) ? data : [];
+    writeCachedShopPackages(safeData);
+    return { data: safeData, source: 'live' };
+  } catch (err) {
+    logApiError('fetchShopPackagesWithFallback failed, attempting fallback', err);
+
+    const cached = readCachedShopPackages();
+    if (cached.length > 0) {
+      return { data: cached, source: 'cache' };
+    }
+
+    if (DEFAULT_SHOP_PACKAGES.length > 0) {
+      return { data: DEFAULT_SHOP_PACKAGES, source: 'static' };
+    }
+
+    return { data: [], source: 'empty' };
+  }
+};
+
 export const fetchShopPackages = async (): Promise<ShopPackage[]> => {
-  const res = await fetch(`${API_URL}/shop/packages`);
+  const result = await fetchShopPackagesWithFallback();
+  return result.data;
+};
+
+export const fetchAdminShopPackages = async (): Promise<ShopPackage[]> => {
+  const res = await authenticatedFetch(`${API_URL}/admin/shop/packages`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const updateAdminShopPackage = async (
+  id: string,
+  payload: {
+    name?: string;
+    description?: string | null;
+    price?: number;
+    duration?: string | null;
+    images_count?: string | null;
+    outfits_count?: string | null;
+    features?: string[];
+  }
+) => {
+  const res = await authenticatedFetch(`${API_URL}/admin/shop/packages/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
   return await res.json();
 };
 

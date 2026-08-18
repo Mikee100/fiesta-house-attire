@@ -262,7 +262,7 @@ const initShopDb = async () => {
         color: "#6EC1E4",
         features: ["Professional makeup", "Full gown access", "Studio session"],
         popular: false,
-        description: "Ideal for a quick, elegant session focused on capturing the essence of your journey."
+          description: "A streamlined premium session for timeless, elegant portraits of your maternity journey."
       },
       {
         name: "Economy Package",
@@ -1628,6 +1628,118 @@ app.get('/shop/packages', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch shop packages' });
+  }
+});
+
+// GET /admin/shop/packages — all packages for admin editing
+app.get('/admin/shop/packages', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM shop_packages ORDER BY price ASC, name ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch admin shop packages' });
+  }
+});
+
+// PATCH /admin/shop/packages/:id — update package fields
+app.patch('/admin/shop/packages/:id', requireAdminAuth, async (req, res) => {
+  const { id } = req.params;
+  const {
+    name,
+    description,
+    price,
+    duration,
+    images_count,
+    outfits_count,
+    features
+  } = req.body || {};
+
+  const fields = [];
+  const params = [];
+
+  if (name !== undefined) {
+    if (typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'name must be a non-empty string' });
+    }
+    fields.push(`name = $${fields.length + 1}`);
+    params.push(name.trim());
+  }
+
+  if (description !== undefined) {
+    if (description !== null && typeof description !== 'string') {
+      return res.status(400).json({ error: 'description must be a string or null' });
+    }
+    fields.push(`description = $${fields.length + 1}`);
+    params.push(description === null ? null : description.trim());
+  }
+
+  if (price !== undefined) {
+    const normalizedPrice = Number(price);
+    if (!Number.isFinite(normalizedPrice) || normalizedPrice < 0) {
+      return res.status(400).json({ error: 'price must be a valid non-negative number' });
+    }
+    fields.push(`price = $${fields.length + 1}`);
+    params.push(Math.round(normalizedPrice));
+  }
+
+  if (duration !== undefined) {
+    if (duration !== null && typeof duration !== 'string') {
+      return res.status(400).json({ error: 'duration must be a string or null' });
+    }
+    fields.push(`duration = $${fields.length + 1}`);
+    params.push(duration === null ? null : duration.trim());
+  }
+
+  if (images_count !== undefined) {
+    if (images_count !== null && typeof images_count !== 'string') {
+      return res.status(400).json({ error: 'images_count must be a string or null' });
+    }
+    fields.push(`images_count = $${fields.length + 1}`);
+    params.push(images_count === null ? null : images_count.trim());
+  }
+
+  if (outfits_count !== undefined) {
+    if (outfits_count !== null && typeof outfits_count !== 'string') {
+      return res.status(400).json({ error: 'outfits_count must be a string or null' });
+    }
+    fields.push(`outfits_count = $${fields.length + 1}`);
+    params.push(outfits_count === null ? null : outfits_count.trim());
+  }
+
+  if (features !== undefined) {
+    if (!Array.isArray(features)) {
+      return res.status(400).json({ error: 'features must be an array of strings' });
+    }
+
+    const normalizedFeatures = features
+      .map((feature) => (typeof feature === 'string' ? feature.trim() : ''))
+      .filter(Boolean);
+
+    fields.push(`features = $${fields.length + 1}::jsonb`);
+    params.push(JSON.stringify(normalizedFeatures));
+  }
+
+  if (fields.length === 0) {
+    return res.status(400).json({ error: 'No editable fields provided' });
+  }
+
+  params.push(id);
+
+  try {
+    const result = await pool.query(
+      `UPDATE shop_packages SET ${fields.join(', ')} WHERE id = $${params.length} RETURNING *`,
+      params
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update package' });
   }
 });
 
