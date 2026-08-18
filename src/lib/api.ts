@@ -213,6 +213,15 @@ export const createAsset = async (url: string, folderId?: string) => {
   return await res.json();
 };
 
+export const moveAssetsToFolder = async (assetIds: string[], folderId: string | null) => {
+  const res = await authenticatedFetch(`${API_URL}/assets/move`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ assetIds, folder_id: folderId })
+  });
+  return await res.json();
+};
+
 // --- Blog ---
 
 export interface BlogCategory {

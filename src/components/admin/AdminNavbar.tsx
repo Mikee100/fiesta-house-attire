@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Library, ExternalLink, Camera, FileText, Clapperboard, LogOut } from "lucide-react";
+import { LayoutDashboard, Library, FolderTree, ExternalLink, Camera, FileText, Clapperboard, LogOut } from "lucide-react";
 import { logoutAdmin } from "@/lib/adminAuth";
 
 const AdminNavbar = () => {
@@ -45,6 +45,16 @@ const AdminNavbar = () => {
                 >
                   <FileText size={16} />
                   Blog
+                </Button>
+              </Link>
+              <Link to="/admin/folders">
+                <Button
+                  variant={isActive('/admin/folders') ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <FolderTree size={16} />
+                  Folders
                 </Button>
               </Link>
               <Link to="/admin/assets">

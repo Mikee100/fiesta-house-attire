@@ -992,6 +992,27 @@ app.post('/assets', requireAdminAuth, async (req, res) => {
   }
 });
 
+// Move multiple assets to a folder (or root when folder_id is null)
+app.patch('/assets/move', requireAdminAuth, async (req, res) => {
+  const { assetIds, folder_id = null } = req.body;
+
+  if (!Array.isArray(assetIds) || assetIds.length === 0) {
+    return res.status(400).json({ error: 'assetIds array is required' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE assets SET folder_id = $1 WHERE id = ANY($2::uuid[]) RETURNING *',
+      [folder_id, assetIds]
+    );
+
+    res.json({ updated: result.rows.length, assets: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to move assets' });
+  }
+});
+
 // Delete asset
 app.delete('/assets/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;

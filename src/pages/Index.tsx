@@ -50,8 +50,8 @@ interface Folder {
 }
 
 const HOME_CAROUSEL_FOLDER_ID = "185cc818-f082-4e21-9122-c629de3c34dc";
-const MAX_HERO_SLIDES = 5;
-const MAX_HERO_RENDERED = 5;
+const MAX_HERO_SLIDES = 10;
+const MAX_HERO_RENDERED = 10;
 const FALLBACK_HERO_IMAGES = [
   "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg",
   "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg",

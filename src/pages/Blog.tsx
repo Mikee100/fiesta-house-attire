@@ -96,23 +96,55 @@ const Blog = () => {
             {/* Main Content Area */}
             <div className="w-full">
               
-              {/* Category Filter (Mobile/Tablet friendly) */}
-              <div className="mb-10 flex flex-wrap justify-center gap-3 fade-in">
-                <button 
-                  onClick={() => handleCategoryFilter()}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${!categorySlug ? 'bg-[var(--sky-blue)] text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'}`}
-                >
-                  All Stories
-                </button>
-                {categories.map(cat => (
-                  <button 
-                    key={cat.id}
-                    onClick={() => handleCategoryFilter(cat.slug)}
-                    className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${categorySlug === cat.slug ? 'bg-[var(--magenta)] text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'}`}
+              {/* Category Filter */}
+              <div className="mb-10 fade-in">
+                <div className="md:hidden">
+                  <div className="mb-2 flex items-center gap-1 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    <span>Swipe categories</span>
+                    <ChevronRight className="h-3 w-3 animate-pulse" />
+                  </div>
+                  <div className="relative -mx-4">
+                    <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-8 bg-gradient-to-r from-white to-transparent" />
+                    <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-8 bg-gradient-to-l from-white to-transparent" />
+                    <div className="overflow-x-auto px-4 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                      <div className="flex w-max items-center gap-2 pr-4">
+                        <button
+                          onClick={() => handleCategoryFilter()}
+                          className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 ${!categorySlug ? 'bg-[var(--sky-blue)] text-white shadow-md' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                        >
+                          All Stories
+                        </button>
+                        {categories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => handleCategoryFilter(cat.slug)}
+                            className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 ${categorySlug === cat.slug ? 'bg-[var(--magenta)] text-white shadow-md' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="hidden md:flex flex-wrap justify-center gap-3">
+                  <button
+                    onClick={() => handleCategoryFilter()}
+                    className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${!categorySlug ? 'bg-[var(--sky-blue)] text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'}`}
                   >
-                    {cat.name}
+                    All Stories
                   </button>
-                ))}
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategoryFilter(cat.slug)}
+                      className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${categorySlug === cat.slug ? 'bg-[var(--magenta)] text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {loading ? (
