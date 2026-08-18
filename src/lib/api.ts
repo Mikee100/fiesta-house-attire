@@ -294,6 +294,17 @@ export const fetchRecentBlogPosts = async () => {
   return Array.isArray(data) ? data : [];
 };
 
+export const fetchRelatedBlogPosts = async (slug: string, limit = 4): Promise<BlogPost[]> => {
+  try {
+    const res = await fetch(`${API_URL}/blog-posts/${encodeURIComponent(slug)}/related?limit=${limit}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+};
+
 export const createBlogPost = async (data: Partial<BlogPost> & { category_ids?: string[] }) => {
   const res = await authenticatedFetch(`${API_URL}/blog-posts`, {
     method: 'POST',

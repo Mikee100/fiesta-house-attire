@@ -1370,17 +1370,22 @@ app.get('/blog-posts', async (req, res) => {
         WHERE pc2.post_id = p.id AND c2.slug = $${params.length}
       )`;
     }
+
     baseQuery += ' GROUP BY p.id ORDER BY p.sort_order ASC, p.published_at DESC, p.created_at DESC';
 
-    const countResult = await pool.query(
-      `SELECT COUNT(p.id) FROM blog_posts p
-       WHERE p.status = 'published'${category ? ` AND EXISTS (
-         SELECT 1 FROM blog_post_categories pc2
-         JOIN blog_categories c2 ON c2.id = pc2.category_id
-         WHERE pc2.post_id = p.id AND c2.slug = $1
-       )` : ''}`,
-      category ? [category] : []
-    );
+    let countQuery = `SELECT COUNT(p.id) FROM blog_posts p WHERE p.status = 'published'`;
+    const countParams = [];
+
+    if (category) {
+      countParams.push(category);
+      countQuery += ` AND EXISTS (
+        SELECT 1 FROM blog_post_categories pc2
+        JOIN blog_categories c2 ON c2.id = pc2.category_id
+        WHERE pc2.post_id = p.id AND c2.slug = $${countParams.length}
+      )`;
+    }
+
+    const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].count);
 
     params.push(limit, offset);
@@ -1398,6 +1403,49 @@ app.get('/blog-posts', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+});
+
+// GET /blog-posts/:slug/related — published posts with overlapping categories
+app.get('/blog-posts/:slug/related', async (req, res) => {
+  const { slug } = req.params;
+  const limit = Math.max(1, Math.min(12, Number(req.query.limit) || 4));
+
+  try {
+    const sourcePost = await pool.query('SELECT id FROM blog_posts WHERE slug = $1 LIMIT 1', [slug]);
+    if (sourcePost.rows.length === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const sourceId = sourcePost.rows[0].id;
+
+    const related = await pool.query(
+      `SELECT p.*, 
+          COALESCE(
+            json_agg(json_build_object('id', c.id, 'name', c.name, 'slug', c.slug))
+            FILTER (WHERE c.id IS NOT NULL), '[]'
+          ) AS categories,
+          COUNT(DISTINCT shared.category_id) AS shared_count
+       FROM blog_posts p
+       LEFT JOIN blog_post_categories pc ON pc.post_id = p.id
+       LEFT JOIN blog_categories c ON c.id = pc.category_id
+       LEFT JOIN blog_post_categories shared ON shared.post_id = p.id
+         AND shared.category_id IN (
+           SELECT category_id FROM blog_post_categories WHERE post_id = $1
+         )
+       WHERE p.status = 'published'
+         AND p.id <> $1
+       GROUP BY p.id
+       HAVING COUNT(DISTINCT shared.category_id) > 0
+       ORDER BY shared_count DESC, p.sort_order ASC, p.published_at DESC, p.created_at DESC
+       LIMIT $2`,
+      [sourceId, limit]
+    );
+
+    res.json(related.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch related posts' });
   }
 });
 
