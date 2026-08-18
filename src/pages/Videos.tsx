@@ -55,19 +55,41 @@ type ModalState = { video_url: string; title: string; desc: string } | null;
 const HERO_BACKGROUND_VIDEO_URL = "https://www.youtube.com/watch?v=V7CwmmVwn94";
 const HERO_BACKGROUND_VIDEO_TITLE = "17 March 2022";
 
+const normalizeVideoInput = (value: string) => {
+  if (typeof value !== "string") return "";
+
+  let normalized = value.trim().replace(/\s+/g, "");
+  if (!normalized) return "";
+
+  if (/^(www\.)?youtube\.com\//i.test(normalized)) {
+    normalized = `https://${normalized.replace(/^https?:\/\//i, "")}`;
+  }
+  if (/^youtu\.be\//i.test(normalized)) {
+    normalized = `https://${normalized}`;
+  }
+  if (/^(player\.)?vimeo\.com\//i.test(normalized)) {
+    normalized = `https://${normalized.replace(/^https?:\/\//i, "")}`;
+  }
+
+  normalized = normalized
+    .replace(/youtube\.comshorts\//i, "youtube.com/shorts/")
+    .replace(/youtube\.com\/short\//i, "youtube.com/shorts/")
+    .replace(/youtube\.comshort\//i, "youtube.com/shorts/");
+
+  return normalized;
+};
+
 // ---------------------------------------------------------------------------
 // URL Helpers
 // ---------------------------------------------------------------------------
 
 const getYouTubeId = (value: string) => {
-  const raw = value.trim();
+  const raw = normalizeVideoInput(value);
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) return null;
   if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
 
-  const normalized = raw
-    .replace(/\s+/g, "")
-    .replace(/youtube\.comshorts\//i, "youtube.com/shorts/")
-    .replace(/youtube\.com\/short\//i, "youtube.com/shorts/")
-    .replace(/youtube\.comshort\//i, "youtube.com/shorts/");
+  const normalized = raw;
 
   const match = normalized.match(
     /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts?\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i,
@@ -79,7 +101,8 @@ const getYouTubeId = (value: string) => {
 };
 
 const getVimeoId = (value: string) => {
-  const url = value.trim();
+  const url = normalizeVideoInput(value);
+  if (!url) return null;
   if (/^\d+$/.test(url)) return url;
   const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   return match ? match[1] : null;
@@ -122,6 +145,14 @@ const fetchVimeoThumbnail = (vimeoId: string): Promise<string | null> => {
   return promise;
 };
 
+const getYouTubeThumbnailCandidates = (videoId: string) => [
+  `https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp`,
+  `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+  `https://i.ytimg.com/vi_webp/${videoId}/sddefault.webp`,
+  `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`,
+  `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+];
+
 // ---------------------------------------------------------------------------
 // YouTube thumbnail — real image from YouTube's public CDN (no API key,
 // no ytimg 404 noise as long as the video id is valid). Falls back to a
@@ -139,10 +170,27 @@ function YouTubeThumbnail({
   onBrokenChange?: (broken: boolean) => void;
 }) {
   const [failed, setFailed] = useState(false);
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const candidates = getYouTubeThumbnailCandidates(videoId);
+
+  useEffect(() => {
+    setFailed(false);
+    setSourceIndex(0);
+  }, [videoId]);
+
+  const advanceSource = () => {
+    setSourceIndex((current) => {
+      if (current < candidates.length - 1) {
+        return current + 1;
+      }
+      setFailed(true);
+      onBrokenChange?.(true);
+      return current;
+    });
+  };
 
   const markBroken = () => {
-    setFailed(true);
-    onBrokenChange?.(true);
+    advanceSource();
   };
 
   const handleLoad = (e: SyntheticEvent<HTMLImageElement>) => {
@@ -151,7 +199,21 @@ function YouTubeThumbnail({
     // with a generic 120x90 gray placeholder. A real hqdefault.jpg is 480x360,
     // so checking the loaded dimensions is the reliable way to detect this.
     if (img.naturalWidth === 120 && img.naturalHeight === 90) {
-      markBroken();
+      advanceSource();
+      return;
+    }
+
+    // Some missing maxres variants return a tiny placeholder image; if that
+    // happens, keep stepping down to the next candidate until a real image loads.
+    const isTestingHiRes = sourceIndex <= 1;
+    if (isTestingHiRes && (img.naturalWidth < 900 || img.naturalHeight < 500)) {
+      advanceSource();
+      return;
+    }
+
+    const isTestingSd = sourceIndex <= 3;
+    if (isTestingSd && (img.naturalWidth < 600 || img.naturalHeight < 320)) {
+      advanceSource();
     } else {
       onBrokenChange?.(false);
     }
@@ -183,14 +245,13 @@ function YouTubeThumbnail({
 
   return (
     <img
-      // hqdefault is guaranteed to exist for every public video (maxresdefault isn't).
-      src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+      src={candidates[sourceIndex]}
       alt={`${title} preview`}
       loading={eager ? "eager" : "lazy"}
       decoding="async"
       onLoad={handleLoad}
       onError={markBroken}
-      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+      style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 28%", display: "block" }}
     />
   );
 }
@@ -283,13 +344,14 @@ function ThumbnailLayer({
 // Video hover preview src builder
 // ---------------------------------------------------------------------------
 const getHoverPreviewSrc = (videoUrl: string): string | null => {
-  const ytId = getYouTubeId(videoUrl);
+  const normalizedUrl = normalizeVideoInput(videoUrl);
+  const ytId = getYouTubeId(normalizedUrl);
   if (ytId) {
     // youtube-nocookie.com skips the cookie/consent handshake, so the
     // preview iframe boots noticeably faster than the standard domain.
     return `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&modestbranding=1&playsinline=1&rel=0&enablejsapi=0`;
   }
-  const vimeoId = getVimeoId(videoUrl);
+  const vimeoId = getVimeoId(normalizedUrl);
   if (vimeoId) {
     // background=1 = silent, no controls, auto-crops to fill container
     return `https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&background=1&loop=1&quality=540p`;
@@ -345,20 +407,21 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
     };
   }, [isPreviewActive, previewSrc]);
 
-  // ── Desktop: mouse hover ────────────────────────────────────────────────────
+  // Desktop hover activation.
   const handleMouseEnter = () => {
     if (!previewSrc) return;
-    hoverTimer.current = window.setTimeout(() => onPreviewActivate(video.id), 200); // 200 ms debounce
+    hoverTimer.current = window.setTimeout(() => onPreviewActivate(video.id), 200);
   };
 
   const handleMouseLeave = () => {
-    if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; }
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
     onPreviewDeactivate(video.id);
   };
 
-  // ── Mobile / touch: auto-play when card scrolls ≥50% into view ─────────────
-  // Uses IntersectionObserver — no hover needed, works exactly like TikTok/Reels.
-  // Only activates on genuine touch devices (phones & tablets).
+  // Touch devices: activate preview once card is half visible.
   useEffect(() => {
     const isTouchOnly = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
     if (!isTouchOnly || !cardRef.current || !previewSrc) return;
@@ -381,10 +444,9 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewSrc, onPreviewActivate, onPreviewDeactivate, video.id]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (hoverTimer.current)   clearTimeout(hoverTimer.current);
+      if (hoverTimer.current) clearTimeout(hoverTimer.current);
       if (previewTimer.current) {
         clearTimeout(previewTimer.current);
         previewTimer.current = null;
@@ -392,8 +454,6 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
     };
   }, []);
 
-  // YouTube is 16:9 landscape — scale to fill portrait (9:16) card.
-  // Vimeo background=1 already crops/fills the container natively.
   const iframeStyle: CSSProperties = isYouTube
     ? {
         position: "absolute",
@@ -430,20 +490,18 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
       style={{ position: "relative", cursor: "pointer", overflow: "hidden", background: "#000" }}
     >
       <div style={{ position: "relative", overflow: "hidden", aspectRatio: "9/16" }}>
-
-        {/* Static thumbnail — fades out once preview video is buffered */}
-        <div style={{
-          position: "absolute", inset: 0,
-          opacity: previewVisible ? 0 : 1,
-          transition: "opacity 0.6s ease",
-          zIndex: 1,
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: previewVisible ? 0 : 1,
+            transition: "opacity 0.6s ease",
+            zIndex: 1,
+          }}
+        >
           <ThumbnailLayer videoUrl={video.video_url} title={video.title} eager={eager} onBrokenChange={setThumbBroken} />
         </div>
 
-        {/* Preview iframe — mounts on hover (desktop) or scroll-into-view (mobile).
-            Skipped for videos already known to be broken, so visitors never see
-            YouTube's raw "video unavailable" message inside the hover preview. */}
         {isPreviewActive && previewSrc && !thumbBroken && (
           <iframe
             src={previewSrc}
@@ -452,7 +510,6 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
           />
         )}
 
-        {/* Overlay — always on top of everything */}
         <div className="vp-overlay" style={{ ...overlayStyle, zIndex: 3 }}>
           <div className="vp-play" style={playBtnStyle}>
             <svg width={playIconSize} height={playIconSize * 1.14} viewBox="0 0 14 16" fill="white">
@@ -469,7 +526,6 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
           </div>
         </div>
 
-        {/* Live badge — visible on both desktop (hover) and mobile (scroll) */}
         {previewVisible && (
           <div style={{ position: "absolute", top: "1rem", right: "1rem", zIndex: 4, display: "flex", alignItems: "center", gap: ".4rem", background: "rgba(0,0,0,.55)", backdropFilter: "blur(8px)", borderRadius: "999px", padding: ".25rem .7rem" }}>
             <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: "#C45C82", animation: "vp-pulse 1.2s ease infinite" }} />
@@ -497,119 +553,39 @@ function SkeletonCard({ aspectRatio = "9/16" }: { aspectRatio?: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// YouTube IFrame JS API loader (singleton — loaded once, reused everywhere)
-// ---------------------------------------------------------------------------
-type YTNamespace = { Player: new (elementId: string, opts: Record<string, unknown>) => { destroy?: () => void } };
-declare global {
-  interface Window {
-    YT?: YTNamespace;
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
-
-let ytApiPromise: Promise<YTNamespace> | null = null;
-const loadYouTubeIframeApi = (): Promise<YTNamespace> => {
-  if (ytApiPromise) return ytApiPromise;
-  ytApiPromise = new Promise((resolve) => {
-    if (window.YT?.Player) {
-      resolve(window.YT);
-      return;
-    }
-    const previous = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => {
-      previous?.();
-      resolve(window.YT!);
-    };
-    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
-      const script = document.createElement("script");
-      script.src = "https://www.youtube.com/iframe_api";
-      document.head.appendChild(script);
-    }
-  });
-  return ytApiPromise;
-};
-
-// ---------------------------------------------------------------------------
-// YouTubeModalPlayer — real embed wired to the IFrame API so a broken/removed/
-// embed-restricted video shows a branded fallback instead of YouTube's own
-// "This video is unavailable" screen.
-// ---------------------------------------------------------------------------
-function YouTubeModalPlayer({ videoId, title }: { videoId: string; title: string }) {
-  const playerRef = useRef<{ destroy?: () => void } | null>(null);
-  const iframeId = useRef(`yt-modal-${videoId}-${Math.random().toString(36).slice(2)}`).current;
-  const [errored, setErrored] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadYouTubeIframeApi().then((YT) => {
-      if (cancelled) return;
-      playerRef.current = new YT.Player(iframeId, {
-        events: {
-          // Error codes: 2 = bad video id, 5 = HTML5 error,
-          // 100 = removed/private, 101 & 150 = embedding disabled by owner.
-          onError: () => { if (!cancelled) setErrored(true); },
-        },
-      });
-    });
-    return () => {
-      cancelled = true;
-      try { playerRef.current?.destroy?.(); } catch { /* already gone */ }
-    };
-  }, [iframeId]);
-
-  if (errored) {
-    return (
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.25rem", background: "#1f1f1e", padding: "2rem", textAlign: "center" }}>
-        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.15rem", fontWeight: 300, fontStyle: "italic", color: "#fff", lineHeight: 1.5 }}>
-          This film isn't available to preview right now.
-        </p>
-        <a
-          href={`https://www.youtube.com/watch?v=${videoId}`}
-          target="_blank"
-          rel="noreferrer"
-          style={{ fontSize: ".62rem", letterSpacing: ".2em", textTransform: "uppercase", color: "#C9A96E", textDecoration: "none", border: "1px solid rgba(255,255,255,.25)", padding: ".65rem 1.4rem" }}
-        >
-          Watch on YouTube ↗
-        </a>
-      </div>
-    );
-  }
-
-  return (
-    <iframe
-      id={iframeId}
-      src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=0&loop=1&playlist=${videoId}&controls=1&playsinline=1&rel=0&enablejsapi=1`}
-      allow="autoplay; fullscreen; picture-in-picture"
-      allowFullScreen
-      title={title}
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Modal media builder
 // ---------------------------------------------------------------------------
 const buildModalMedia = (videoUrl: string, title: string) => {
-  const ytId = getYouTubeId(videoUrl);
+  const normalizedUrl = normalizeVideoInput(videoUrl);
+  const ytId = getYouTubeId(normalizedUrl);
   if (ytId) {
-    return <YouTubeModalPlayer videoId={ytId} title={title} />;
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&loop=1&playlist=${ytId}&controls=1&playsinline=1&rel=0`}
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+        title={title}
+      />
+    );
   }
 
-  const vimeoId = getVimeoId(videoUrl);
+  const vimeoId = getVimeoId(normalizedUrl);
   if (vimeoId) {
     return (
       <iframe
         src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&color=C45C82`}
         allow="autoplay; fullscreen; picture-in-picture"
         allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
         title={title}
       />
     );
   }
 
-  if (isDirectVideoFile(videoUrl)) {
+  if (isDirectVideoFile(normalizedUrl)) {
     return (
-      <video src={videoUrl} controls autoPlay playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      <video src={normalizedUrl} controls autoPlay playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
     );
   }
 
@@ -920,60 +896,8 @@ export default function Videos() {
       </section>
 
       {/* ── Featured Films ── */}
-      <section className="vp-fade" ref={addRef} style={{ padding: "6rem clamp(1.5rem,5vw,3rem)", maxWidth: "1200px", margin: "0 auto" }}>
-        <div style={{ fontSize: ".65rem", letterSpacing: ".35em", textTransform: "uppercase", color: "var(--magenta,#660032)", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-          <span style={{ display: "block", width: "2rem", height: ".5px", background: "var(--magenta,#660032)" }} />
-          Featured Films
-          <span style={{ fontSize: ".55rem", color: "rgba(0,0,0,.35)", letterSpacing: ".1em", marginLeft: ".5rem" }}>Hover to preview</span>
-        </div>
-
-        {videosLoading ? (
-          <div className="vp-featured-grid">
-            <SkeletonCard aspectRatio="9/16" />
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              <SkeletonCard aspectRatio="9/16" />
-              <SkeletonCard aspectRatio="9/16" />
-            </div>
-          </div>
-        ) : (
-          <div className="vp-featured-grid">
-            {/* First (large) featured card */}
-            <div style={{ gridRow: "span 2" }}>
-              <VideoCard
-                video={featured[0]}
-                eager
-                onOpen={open}
-                isPreviewActive={activePreviewVideoId === featured[0].id}
-                onPreviewActivate={activatePreview}
-                onPreviewDeactivate={deactivatePreview}
-                overlayStyle={overlayStyle}
-                playBtnStyle={playBtnStyle}
-                playIconSize={14}
-                showBadge
-              />
-            </div>
-
-            {/* Smaller featured cards */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              {featured.slice(1).map((v) => (
-                <VideoCard
-                  key={v.id}
-                  video={v}
-                  eager
-                  onOpen={open}
-                  isPreviewActive={activePreviewVideoId === v.id}
-                  onPreviewActivate={activatePreview}
-                  onPreviewDeactivate={deactivatePreview}
-                  overlayStyle={overlayStyle}
-                  playBtnStyle={{ ...playBtnStyle, width: "44px", height: "44px" }}
-                  playIconSize={12}
-                  showBadge
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
+      
+      
 
       {/* ── More Films ── */}
       <section style={{ background: "#F5F0E8", padding: "6rem clamp(1.5rem,5vw,3rem)" }}>
