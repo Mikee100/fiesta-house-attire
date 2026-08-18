@@ -23,7 +23,7 @@ const prerenderRoutes = [
   "/shop",
 ];
 
-const rawApiUrl = process.env.PRERENDER_API_URL || process.env.VITE_API_URL || "http://localhost:5000/api";
+const rawApiUrl = process.env.PRERENDER_API_URL || process.env.VITE_API_URL || "http://localhost:5000";
 const buildDate = new Date().toISOString().slice(0, 10);
 
 const contentTypes = {

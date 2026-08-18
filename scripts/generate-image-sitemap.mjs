@@ -16,7 +16,7 @@ const SITE_URL = (
 const API_URL =
   process.env.PRERENDER_API_URL ||
   process.env.VITE_API_URL ||
-  "http://localhost:5000/api";
+  "http://localhost:5000";
 const MATERNITY_GOWNS_FOLDER_ID = "b8b100e9-81ce-4778-bf57-0adee0b46fc0";
 
 function xmlEscape(value) {
