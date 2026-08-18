@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BadgeDollarSign, Check, Clock3, Image as ImageIcon, Shirt } from "lucide-react";
 import * as api from "@/lib/api";
@@ -27,13 +27,6 @@ const AdminPricing = () => {
   const [editImagesCount, setEditImagesCount] = useState("");
   const [editOutfitsCount, setEditOutfitsCount] = useState("");
   const [editFeatures, setEditFeatures] = useState("");
-
-  const totals = useMemo(() => {
-    const active = packages.length;
-    const popular = packages.filter((p) => Boolean(p.popular)).length;
-    const averagePrice = active > 0 ? Math.round(packages.reduce((acc, p) => acc + Number(p.price || 0), 0) / active) : 0;
-    return { active, popular, averagePrice };
-  }, [packages]);
 
   useEffect(() => {
     const loadPackages = async () => {
@@ -126,21 +119,6 @@ const AdminPricing = () => {
         description="View all active packages, rates, and included services."
         maxWidthClassName="max-w-7xl"
       >
-        <div className="grid grid-cols-1 gap-3 mb-6 sm:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Active Packages</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{totals.active}</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Popular Picks</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{totals.popular}</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Average Rate</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{totals.averagePrice > 0 ? formatKes(totals.averagePrice) : "-"}</p>
-          </div>
-        </div>
-
         <AdminSection
           title="Package Catalog"
           description="All package names, prices, and included features from the live pricing source."
