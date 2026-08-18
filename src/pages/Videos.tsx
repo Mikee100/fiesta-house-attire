@@ -100,6 +100,12 @@ const getYouTubeId = (value: string) => {
   return tailToken ? tailToken[1] : null;
 };
 
+const isYouTubeShortReference = (value: string) => {
+  const normalized = normalizeVideoInput(value);
+  if (!normalized) return false;
+  return /youtube\.com\/shorts?\//i.test(normalized);
+};
+
 const getVimeoId = (value: string) => {
   const url = normalizeVideoInput(value);
   if (!url) return null;
@@ -163,11 +169,13 @@ function YouTubeThumbnail({
   title,
   eager,
   onBrokenChange,
+  isShort,
 }: {
   videoId: string;
   title: string;
   eager?: boolean;
   onBrokenChange?: (broken: boolean) => void;
+  isShort?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const [sourceIndex, setSourceIndex] = useState(0);
@@ -251,7 +259,15 @@ function YouTubeThumbnail({
       decoding="async"
       onLoad={handleLoad}
       onError={markBroken}
-      style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 28%", display: "block" }}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        objectPosition: isShort ? "center 20%" : "center 28%",
+        transform: isShort ? "scale(1.12)" : "none",
+        transformOrigin: "center",
+        display: "block",
+      }}
     />
   );
 }
@@ -322,7 +338,17 @@ function ThumbnailLayer({
   onBrokenChange?: (broken: boolean) => void;
 }) {
   const ytId = getYouTubeId(videoUrl);
-  if (ytId) return <YouTubeThumbnail videoId={ytId} title={title} eager={eager} onBrokenChange={onBrokenChange} />;
+  if (ytId) {
+    return (
+      <YouTubeThumbnail
+        videoId={ytId}
+        title={title}
+        eager={eager}
+        onBrokenChange={onBrokenChange}
+        isShort={isYouTubeShortReference(videoUrl)}
+      />
+    );
+  }
 
   const vimeoId = getVimeoId(videoUrl);
   if (vimeoId) return <VimeoThumbnail vimeoId={vimeoId} title={title} eager={eager} />;
@@ -819,6 +845,8 @@ export default function Videos() {
         .vp-card:hover .vp-overlay { background:linear-gradient(to top,rgba(0,0,0,.9) 0%,rgba(0,0,0,.3) 50%,rgba(0,0,0,.1) 100%)!important; }
         .vp-featured-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start; }
         .vp-more-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+        .vp-more-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:3rem; border-bottom:.5px solid rgba(44,44,42,.1); padding-bottom:1.5rem; gap:1rem; }
+        .vp-more-count { font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; color:#7A7873; }
         .vp-modal-player { position:relative; width:min(92vw,430px); aspect-ratio:9/16; margin:0 auto; }
         .vp-modal-player iframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
         .vp-hero-video {
@@ -859,6 +887,8 @@ export default function Videos() {
         }
         @media (max-width: 640px) {
           .vp-more-grid { grid-template-columns:1fr; }
+          .vp-more-head { flex-direction:column; align-items:flex-start; margin-bottom:2rem; }
+          .vp-more-count { font-size:.58rem; letter-spacing:.16em; }
         }
       `}</style>
 
@@ -902,9 +932,9 @@ export default function Videos() {
       {/* ── More Films ── */}
       <section style={{ background: "#F5F0E8", padding: "6rem clamp(1.5rem,5vw,3rem)" }}>
         <div className="vp-fade" ref={addRef} style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "3rem", borderBottom: ".5px solid rgba(44,44,42,.1)", paddingBottom: "1.5rem" }}>
+          <div className="vp-more-head">
             <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(1.8rem,3vw,2.8rem)", fontWeight: 300 }}>More Films</h2>
-            <span style={{ fontSize: ".65rem", letterSpacing: ".2em", textTransform: "uppercase", color: "#7A7873" }}>
+            <span className="vp-more-count">
               {String(galleryVideos.length).padStart(2, "0")} Sessions
             </span>
           </div>
