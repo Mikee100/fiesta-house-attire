@@ -9,6 +9,8 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
+const sanitizeHtml = require('sanitize-html');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -20,6 +22,7 @@ const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || 'change-me-refres
 const ACCESS_TOKEN_TTL = process.env.JWT_ACCESS_TTL || '15m';
 const REFRESH_TOKEN_TTL = process.env.JWT_REFRESH_TTL || '30d';
 const REFRESH_TOKEN_COOKIE = 'fh_refresh_token';
+const CSRF_TOKEN_COOKIE = 'fh_csrf_token';
 const defaultAllowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -69,8 +72,30 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Multer setup
-const upload = multer({ storage: multer.memoryStorage() });
+const MAX_UPLOAD_SIZE_BYTES = Number(process.env.MAX_UPLOAD_SIZE_BYTES || 10 * 1024 * 1024);
+const ALLOWED_UPLOAD_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/gif'
+]);
+
+// Multer setup (memory + file type/size guard)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_SIZE_BYTES },
+  fileFilter: (req, file, callback) => {
+    if (!ALLOWED_UPLOAD_MIME_TYPES.has(file.mimetype)) {
+      const error = new Error('Unsupported file type');
+      error.code = 'UNSUPPORTED_FILE_TYPE';
+      callback(error);
+      return;
+    }
+
+    callback(null, true);
+  }
+});
 
 app.set('trust proxy', 1);
 app.use(cors({
@@ -102,6 +127,109 @@ app.use((req, res, next) => {
   next();
 });
 
+const authLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProduction ? 8 : 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please try again later.' }
+});
+
+const authRefreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProduction ? 60 : 180,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many refresh attempts. Please try again later.' }
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProduction ? 40 : 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many upload attempts. Please try again later.' }
+});
+
+const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProduction ? 20 : 80,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many order attempts. Please try again later.' }
+});
+
+const sanitizePlainText = (value, maxLength = 500) => {
+  if (typeof value !== 'string') return null;
+  const stripped = sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
+  if (!stripped) return null;
+  return stripped.slice(0, maxLength);
+};
+
+const sanitizeRichText = (value) => {
+  if (typeof value !== 'string') return null;
+
+  return sanitizeHtml(value, {
+    allowedTags: [
+      'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'blockquote',
+      'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'a', 'img', 'pre', 'code', 'span', 'div'
+    ],
+    allowedAttributes: {
+      a: ['href', 'target', 'rel'],
+      img: ['src', 'alt', 'title'],
+      span: ['class'],
+      div: ['class'],
+      p: ['class']
+    },
+    allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+    allowedSchemesByTag: {
+      img: ['http', 'https']
+    },
+    transformTags: {
+      a: (tagName, attribs) => {
+        const href = typeof attribs.href === 'string' ? attribs.href : '';
+        const isExternal = /^https?:\/\//i.test(href);
+        return {
+          tagName,
+          attribs: {
+            ...attribs,
+            rel: isExternal ? 'noopener noreferrer nofollow' : 'noopener noreferrer'
+          }
+        };
+      }
+    }
+  }).trim();
+};
+
+const sanitizeSlug = (value) => {
+  const safe = sanitizePlainText(value, 180);
+  if (!safe) return null;
+  return safe
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
+const sanitizeOptionalUrl = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value !== 'string') return null;
+
+  try {
+    const parsed = new URL(value.trim());
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+};
+
+const sanitizeBlogPostForPublic = (post) => ({
+  ...post,
+  excerpt: sanitizePlainText(post.excerpt, 1200),
+  content: sanitizeRichText(post.content)
+});
+
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 const getRefreshCookieOptions = () => ({
@@ -111,6 +239,31 @@ const getRefreshCookieOptions = () => ({
   path: isProduction ? '/backend/auth' : '/auth',
   maxAge: 30 * 24 * 60 * 60 * 1000
 });
+
+const getCsrfCookieOptions = () => ({
+  httpOnly: false,
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
+  path: '/',
+  maxAge: 30 * 24 * 60 * 60 * 1000
+});
+
+const issueCsrfToken = (res) => {
+  const csrfToken = crypto.randomBytes(32).toString('hex');
+  res.cookie(CSRF_TOKEN_COOKIE, csrfToken, getCsrfCookieOptions());
+  return csrfToken;
+};
+
+const requireCsrfToken = (req, res, next) => {
+  const csrfCookie = req.cookies[CSRF_TOKEN_COOKIE];
+  const csrfHeader = req.get('x-csrf-token');
+
+  if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+    return res.status(403).json({ error: 'CSRF token validation failed' });
+  }
+
+  next();
+};
 
 const generateAccessToken = (user) => jwt.sign(
   { sub: user.id, email: user.email, role: user.role, type: 'access' },
@@ -148,6 +301,7 @@ const issueAuthTokens = async (user, req, res) => {
   });
 
   res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, getRefreshCookieOptions());
+  issueCsrfToken(res);
 
   return {
     accessToken,
@@ -479,7 +633,7 @@ initAuthDb();
 
 // --- Authentication API ---
 
-app.post('/auth/login', async (req, res) => {
+app.post('/auth/login', authLoginLimiter, async (req, res) => {
   const { email, password } = req.body || {};
 
   if (!email || !password) {
@@ -521,7 +675,7 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-app.post('/auth/refresh', async (req, res) => {
+app.post('/auth/refresh', authRefreshLimiter, requireCsrfToken, async (req, res) => {
   const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
 
   if (!refreshToken) {
@@ -595,6 +749,7 @@ app.post('/auth/refresh', async (req, res) => {
     }
 
     res.cookie(REFRESH_TOKEN_COOKIE, newRefreshToken, getRefreshCookieOptions());
+    issueCsrfToken(res);
     res.json({
       accessToken: newAccessToken,
       user: {
@@ -606,11 +761,12 @@ app.post('/auth/refresh', async (req, res) => {
     });
   } catch (err) {
     res.clearCookie(REFRESH_TOKEN_COOKIE, getRefreshCookieOptions());
+    res.clearCookie(CSRF_TOKEN_COOKIE, getCsrfCookieOptions());
     return res.status(401).json({ error: 'Failed to refresh session' });
   }
 });
 
-app.post('/auth/logout', async (req, res) => {
+app.post('/auth/logout', authRefreshLimiter, requireCsrfToken, async (req, res) => {
   const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
 
   if (refreshToken) {
@@ -622,6 +778,7 @@ app.post('/auth/logout', async (req, res) => {
   }
 
   res.clearCookie(REFRESH_TOKEN_COOKIE, getRefreshCookieOptions());
+  res.clearCookie(CSRF_TOKEN_COOKIE, getCsrfCookieOptions());
   res.json({ message: 'Logged out successfully' });
 });
 
@@ -1010,11 +1167,32 @@ app.post('/assets/bulk', requireAdminAuth, async (req, res) => {
 });
 
 // Single file upload to storage
-app.post('/upload', requireAdminAuth, upload.single('file'), async (req, res) => {
+app.post('/upload', requireAdminAuth, uploadLimiter, (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (!err) {
+      next();
+      return;
+    }
+
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      const maxMb = Math.round(MAX_UPLOAD_SIZE_BYTES / (1024 * 1024));
+      res.status(400).json({ error: `File too large. Maximum size is ${maxMb}MB.` });
+      return;
+    }
+
+    if (err && err.code === 'UNSUPPORTED_FILE_TYPE') {
+      res.status(400).json({ error: 'Unsupported file type. Please upload jpg, png, webp, avif, or gif.' });
+      return;
+    }
+
+    res.status(400).json({ error: 'Invalid upload request' });
+  });
+}, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   try {
-    const fileName = `${Date.now()}_${req.file.originalname}`;
+    const safeOriginalName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = `${Date.now()}_${safeOriginalName}`;
     const { data, error } = await supabase.storage
       .from('assets') // Bucket name must be 'assets'
       .upload(fileName, req.file.buffer, {
@@ -1395,7 +1573,7 @@ app.get('/blog-posts', async (req, res) => {
     );
 
     res.json({
-      posts: result.rows,
+      posts: result.rows.map(sanitizeBlogPostForPublic),
       totalCount: total,
       totalPages: Math.ceil(total / limit),
       currentPage: parseInt(page)
@@ -1518,7 +1696,7 @@ app.get('/blog-posts/:slug', async (req, res) => {
     `, [slug]);
 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Post not found' });
-    res.json(result.rows[0]);
+    res.json(sanitizeBlogPostForPublic(result.rows[0]));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch post' });
   }
@@ -1527,7 +1705,15 @@ app.get('/blog-posts/:slug', async (req, res) => {
 // POST /blog-posts — create post
 app.post('/blog-posts', requireAdminAuth, async (req, res) => {
   const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids, sort_order } = req.body;
-  if (!title || !slug) return res.status(400).json({ error: 'Title and slug are required' });
+
+  const safeTitle = sanitizePlainText(title, 180);
+  const safeSlug = sanitizeSlug(slug);
+  const safeExcerpt = sanitizePlainText(excerpt, 1200);
+  const safeContent = sanitizeRichText(content);
+  const safeCoverImageUrl = sanitizeOptionalUrl(cover_image_url);
+  const safeAuthor = sanitizePlainText(author || 'admin', 80) || 'admin';
+
+  if (!safeTitle || !safeSlug) return res.status(400).json({ error: 'Title and slug are required' });
   try {
     let nextOrder = sort_order;
     if (nextOrder === undefined || nextOrder === null || Number.isNaN(Number(nextOrder))) {
@@ -1538,7 +1724,7 @@ app.post('/blog-posts', requireAdminAuth, async (req, res) => {
     const result = await pool.query(
       `INSERT INTO blog_posts (title, slug, excerpt, content, cover_image_url, author, status, published_at, sort_order)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [title, slug, excerpt, content, cover_image_url, author || 'admin', status || 'draft',
+      [safeTitle, safeSlug, safeExcerpt, safeContent, safeCoverImageUrl, safeAuthor, status || 'draft',
        status === 'published' ? (published_at || new Date().toISOString()) : published_at,
        nextOrder]
     );
@@ -1563,13 +1749,25 @@ app.post('/blog-posts', requireAdminAuth, async (req, res) => {
 app.put('/blog-posts/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { title, slug, excerpt, content, cover_image_url, author, status, published_at, category_ids, sort_order } = req.body;
+
+  const safeTitle = sanitizePlainText(title, 180);
+  const safeSlug = sanitizeSlug(slug);
+  const safeExcerpt = sanitizePlainText(excerpt, 1200);
+  const safeContent = sanitizeRichText(content);
+  const safeCoverImageUrl = sanitizeOptionalUrl(cover_image_url);
+  const safeAuthor = sanitizePlainText(author || 'admin', 80) || 'admin';
+
+  if (!safeTitle || !safeSlug) {
+    return res.status(400).json({ error: 'Title and slug are required' });
+  }
+
   try {
     const result = await pool.query(
       `UPDATE blog_posts SET
          title=$1, slug=$2, excerpt=$3, content=$4, cover_image_url=$5,
          author=$6, status=$7, published_at=$8, sort_order=COALESCE($9, sort_order), updated_at=NOW()
        WHERE id=$10 RETURNING *`,
-      [title, slug, excerpt, content, cover_image_url, author, status,
+      [safeTitle, safeSlug, safeExcerpt, safeContent, safeCoverImageUrl, safeAuthor, status,
        status === 'published' ? (published_at || new Date().toISOString()) : published_at,
        sort_order,
        id]
@@ -1744,11 +1942,71 @@ app.patch('/admin/shop/packages/:id', requireAdminAuth, async (req, res) => {
 });
 
 // POST /shop/orders — create new order and send emails
-app.post('/shop/orders', async (req, res) => {
+app.post('/shop/orders', orderLimiter, async (req, res) => {
   const { customer_name, customer_email, customer_phone, items, total_amount } = req.body;
   
   if (!customer_name || !customer_email || !customer_phone || !items || items.length === 0) {
     return res.status(400).json({ error: 'Missing required order details' });
+  }
+
+  if (!Array.isArray(items)) {
+    return res.status(400).json({ error: 'items must be an array' });
+  }
+
+  const normalizedItems = items
+    .map((item) => {
+      const packageId = typeof item?.id === 'string' ? item.id : null;
+      const quantity = Number(item?.quantity);
+      if (!packageId || !Number.isInteger(quantity) || quantity <= 0 || quantity > 20) {
+        return null;
+      }
+      return { packageId, quantity };
+    })
+    .filter(Boolean);
+
+  if (normalizedItems.length !== items.length) {
+    return res.status(400).json({ error: 'Each order item must include a valid package id and quantity' });
+  }
+
+  const packageIds = [...new Set(normalizedItems.map((item) => item.packageId))];
+
+  let packageResult;
+  try {
+    packageResult = await pool.query(
+      `SELECT id, name, price, is_active
+       FROM shop_packages
+       WHERE id = ANY($1::uuid[])`,
+      [packageIds]
+    );
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ error: 'Invalid package ids provided' });
+  }
+
+  const packageMap = new Map(packageResult.rows.map((pkg) => [pkg.id, pkg]));
+  if (packageMap.size !== packageIds.length) {
+    return res.status(400).json({ error: 'One or more packages were not found' });
+  }
+
+  const inactivePackage = packageResult.rows.find((pkg) => !pkg.is_active);
+  if (inactivePackage) {
+    return res.status(400).json({ error: `Package is not available: ${inactivePackage.name}` });
+  }
+
+  const orderItems = normalizedItems.map((item) => {
+    const pkg = packageMap.get(item.packageId);
+    return {
+      id: pkg.id,
+      name: pkg.name,
+      price: Number(pkg.price),
+      quantity: item.quantity
+    };
+  });
+
+  const computedTotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const submittedTotal = Number(total_amount);
+  if (Number.isFinite(submittedTotal) && submittedTotal !== computedTotal) {
+    return res.status(400).json({ error: 'Order total mismatch. Please refresh and try again.' });
   }
 
   const client = await pool.connect();
@@ -1759,12 +2017,12 @@ app.post('/shop/orders', async (req, res) => {
     const orderResult = await client.query(
       `INSERT INTO shop_orders (customer_name, customer_email, customer_phone, total_amount) 
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [customer_name, customer_email, customer_phone, total_amount]
+      [customer_name, customer_email, customer_phone, computedTotal]
     );
     const order = orderResult.rows[0];
 
     // Create order items
-    for (const item of items) {
+    for (const item of orderItems) {
       await client.query(
         `INSERT INTO shop_order_items (order_id, package_id, package_name, price, quantity) 
          VALUES ($1, $2, $3, $4, $5)`,
@@ -1775,7 +2033,7 @@ app.post('/shop/orders', async (req, res) => {
     await client.query('COMMIT');
 
     // Send Email Notifications (Fire and forget, don't block response)
-    sendOrderEmails(order, items).catch(err => console.error('Email error:', err));
+    sendOrderEmails(order, orderItems).catch(err => console.error('Email error:', err));
 
     res.json({ success: true, orderId: order.id });
   } catch (err) {
