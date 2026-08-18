@@ -13,6 +13,7 @@ const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
 
   useEffect(() => {
     let mounted = true;
+    const AUTH_CHECK_TIMEOUT_MS = 5000;
 
     const checkAuth = async () => {
       if (isAdminAuthenticated()) {
@@ -23,7 +24,13 @@ const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
         return;
       }
 
-      const restored = await refreshAdminSession();
+      const restored = await Promise.race<boolean>([
+        refreshAdminSession(),
+        new Promise<boolean>((resolve) => {
+          setTimeout(() => resolve(false), AUTH_CHECK_TIMEOUT_MS);
+        }),
+      ]);
+
       if (mounted) {
         setIsAuthenticated(restored);
         setIsChecking(false);

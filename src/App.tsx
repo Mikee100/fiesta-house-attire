@@ -20,6 +20,7 @@ const Blog = lazy(() => import("./pages/Blog.tsx"));
 const BlogPostPage = lazy(() => import("./pages/BlogPost.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const AdminPortfolio = lazy(() => import("./pages/AdminPortfolio.tsx"));
+const AdminFolders = lazy(() => import("./pages/AdminFolders.tsx"));
 const AdminAssets = lazy(() => import("./pages/AdminAssets.tsx"));
 const AdminBlog = lazy(() => import("./pages/AdminBlog.tsx"));
 const AdminBlogEditor = lazy(() => import("./pages/AdminBlogEditor.tsx"));
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<ProtectedAdminRoute><Admin /></ProtectedAdminRoute>} />
               <Route path="/admin/portfolio/:id" element={<ProtectedAdminRoute><AdminPortfolio /></ProtectedAdminRoute>} />
+              <Route path="/admin/folders" element={<ProtectedAdminRoute><AdminFolders /></ProtectedAdminRoute>} />
               <Route path="/admin/assets" element={<ProtectedAdminRoute><AdminAssets /></ProtectedAdminRoute>} />
               <Route path="/admin/videos" element={<ProtectedAdminRoute><AdminVideos /></ProtectedAdminRoute>} />
               <Route path="/admin/blog" element={<ProtectedAdminRoute><AdminBlog /></ProtectedAdminRoute>} />

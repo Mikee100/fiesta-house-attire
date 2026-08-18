@@ -18,6 +18,24 @@ const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL, isLocalHost);
 
 const ADMIN_ACCESS_TOKEN_KEY = "fiesta_admin_access_token";
 
+const decodeJwtPayload = (token: string): { exp?: number } | null => {
+  try {
+    const [, payload] = token.split('.');
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(atob(normalized));
+    return decoded;
+  } catch {
+    return null;
+  }
+};
+
+const isTokenExpiredOrNearExpiry = (token: string, skewMs = 30_000): boolean => {
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return true;
+  return payload.exp * 1000 <= Date.now() + skewMs;
+};
+
 const getAccessToken = (): string | null => {
   if (!isBrowser) return null;
   return localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
@@ -34,7 +52,9 @@ const clearAccessToken = (): void => {
 };
 
 export const isAdminAuthenticated = (): boolean => {
-  return Boolean(getAccessToken());
+  const token = getAccessToken();
+  if (!token) return false;
+  return !isTokenExpiredOrNearExpiry(token);
 };
 
 export const loginAdmin = async (email: string, password: string): Promise<boolean> => {
@@ -91,6 +111,14 @@ export const logoutAdmin = async (): Promise<void> => {
 };
 
 export const authenticatedFetch = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+  const initialToken = getAccessToken();
+  if (initialToken && isTokenExpiredOrNearExpiry(initialToken)) {
+    const refreshed = await refreshAdminSession();
+    if (!refreshed) {
+      clearAccessToken();
+    }
+  }
+
   const execute = async (): Promise<Response> => {
     const headers = new Headers(init.headers || {});
     const token = getAccessToken();
