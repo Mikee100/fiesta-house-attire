@@ -828,7 +828,7 @@ const Index = () => {
         <InstagramFeed />
 
         {/* Final CTA */}
-        <section style={{
+        <section className="home-final-cta" style={{
           backgroundColor: "white",
           color: "var(--dark)",
           padding: "5.5rem 0",
@@ -858,18 +858,18 @@ const Index = () => {
           }} />
 
           <div className="container" style={{ position: "relative", zIndex: 1 }}>
-            <div className="grid grid-2 mobile-gap-8" style={{ alignItems: "center", gap: "2.5rem" }}>
-              <div className="mobile-center" style={{ textAlign: "left" }}>
-                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.8rem", fontWeight: "600", display: "block", marginBottom: "1rem" }}>Your Journey Starts Here</span>
-                <h2 className="display h2-mobile" style={{ fontSize: "clamp(2rem, 5vw, 2.5rem)", marginBottom: "1rem" }}>Ready to own the frame?</h2>
-                <p style={{ fontSize: "1rem", opacity: 0.6, maxWidth: "500px", margin: 0 }}>
+            <div className="grid grid-2 mobile-gap-8 home-final-cta-grid" style={{ alignItems: "center", gap: "2.5rem" }}>
+              <div className="mobile-center home-final-cta-copy" style={{ textAlign: "left" }}>
+                <span className="home-final-cta-kicker" style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.3em", fontSize: "0.8rem", fontWeight: "600", display: "block", marginBottom: "1rem" }}>Your Journey Starts Here</span>
+                <h2 className="display h2-mobile home-final-cta-title" style={{ fontSize: "clamp(2rem, 5vw, 2.5rem)", marginBottom: "1rem" }}>Ready to own the frame?</h2>
+                <p className="home-final-cta-text" style={{ fontSize: "1rem", opacity: 0.6, maxWidth: "500px", margin: 0 }}>
                   Experience the best maternity photoshoot in Kenya. Secure your session at our Diamond Plaza sanctuary today.
                 </p>
               </div>
 
-              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }} className="mobile-center justify-center">
-                <Link to="/contact" className="btn btn-magenta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
-                <a href="https://wa.me/254720111928" className="btn btn-whatsapp" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }} className="mobile-center justify-center home-final-cta-actions">
+                <Link to="/contact" className="btn btn-magenta home-final-cta-btn" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
+                <a href="https://wa.me/254720111928" className="btn btn-whatsapp home-final-cta-btn" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
               </div>
             </div>
           </div>
