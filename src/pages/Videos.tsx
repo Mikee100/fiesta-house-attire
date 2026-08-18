@@ -404,6 +404,7 @@ type VideoCardProps = {
 function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, onPreviewDeactivate, overlayStyle, playBtnStyle, playIconSize = 14, showBadge = false }: VideoCardProps) {
   const [previewVisible, setPreviewVisible] = useState(false); // iframe faded in
   const [thumbBroken, setThumbBroken] = useState(false); // detected invalid/removed YouTube id
+  const [isTouchOnly, setIsTouchOnly] = useState(false);
   const hoverTimer   = useRef<number | null>(null);
   const previewTimer = useRef<number | null>(null);
   const cardRef      = useRef<HTMLDivElement>(null);
@@ -422,8 +423,9 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
       return;
     }
 
+    const previewDelayMs = isTouchOnly ? 220 : 900;
     if (previewTimer.current) clearTimeout(previewTimer.current);
-    previewTimer.current = window.setTimeout(() => setPreviewVisible(true), 900);
+    previewTimer.current = window.setTimeout(() => setPreviewVisible(true), previewDelayMs);
 
     return () => {
       if (previewTimer.current) {
@@ -431,7 +433,22 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
         previewTimer.current = null;
       }
     };
-  }, [isPreviewActive, previewSrc]);
+  }, [isPreviewActive, previewSrc, isTouchOnly]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: none) and (pointer: coarse)");
+    const sync = () => setIsTouchOnly(media.matches);
+    sync();
+
+    const onChange = () => sync();
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    }
+
+    media.addListener(onChange);
+    return () => media.removeListener(onChange);
+  }, []);
 
   // Desktop hover activation.
   const handleMouseEnter = () => {
@@ -447,9 +464,17 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
     onPreviewDeactivate(video.id);
   };
 
+  const handleCardClick = () => {
+    // Touch flow: first tap starts preview, second tap opens modal.
+    if (isTouchOnly && previewSrc && !isPreviewActive) {
+      onPreviewActivate(video.id);
+      return;
+    }
+    onOpen(video.video_url, video.title, video.desc);
+  };
+
   // Touch devices: activate preview once card is half visible.
   useEffect(() => {
-    const isTouchOnly = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
     if (!isTouchOnly || !cardRef.current || !previewSrc) return;
 
     const observer = new IntersectionObserver(
@@ -510,7 +535,7 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
     <div
       ref={cardRef}
       className="vp-card"
-      onClick={() => onOpen(video.video_url, video.title, video.desc)}
+      onClick={handleCardClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{ position: "relative", cursor: "pointer", overflow: "hidden", background: "#000" }}
@@ -558,6 +583,12 @@ function VideoCard({ video, eager, onOpen, isPreviewActive, onPreviewActivate, o
             <span style={{ fontSize: ".55rem", letterSpacing: ".15em", textTransform: "uppercase", color: "rgba(255,255,255,.85)" }}>Live Preview</span>
           </div>
         )}
+
+        {isTouchOnly && previewSrc && !previewVisible && (
+          <div style={{ position: "absolute", bottom: ".75rem", left: ".75rem", zIndex: 4, background: "rgba(0,0,0,.58)", backdropFilter: "blur(8px)", color: "rgba(255,255,255,.88)", fontSize: ".52rem", letterSpacing: ".13em", textTransform: "uppercase", padding: ".35rem .55rem", borderRadius: "999px" }}>
+            Tap to preview
+          </div>
+        )}
       </div>
     </div>
   );
@@ -587,7 +618,7 @@ const buildModalMedia = (videoUrl: string, title: string) => {
   if (ytId) {
     return (
       <iframe
-        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&loop=1&playlist=${ytId}&controls=1&playsinline=1&rel=0`}
+        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=1&playsinline=1&rel=0`}
         allow="autoplay; fullscreen; picture-in-picture"
         allowFullScreen
         referrerPolicy="strict-origin-when-cross-origin"
@@ -600,7 +631,7 @@ const buildModalMedia = (videoUrl: string, title: string) => {
   if (vimeoId) {
     return (
       <iframe
-        src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&color=C45C82`}
+        src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&color=C45C82`}
         allow="autoplay; fullscreen; picture-in-picture"
         allowFullScreen
         referrerPolicy="strict-origin-when-cross-origin"
@@ -611,7 +642,7 @@ const buildModalMedia = (videoUrl: string, title: string) => {
 
   if (isDirectVideoFile(normalizedUrl)) {
     return (
-      <video src={normalizedUrl} controls autoPlay playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      <video src={normalizedUrl} controls autoPlay muted playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#000" }} />
     );
   }
 
@@ -847,8 +878,68 @@ export default function Videos() {
         .vp-more-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
         .vp-more-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:3rem; border-bottom:.5px solid rgba(44,44,42,.1); padding-bottom:1.5rem; gap:1rem; }
         .vp-more-count { font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; color:#7A7873; }
-        .vp-modal-player { position:relative; width:min(92vw,430px); aspect-ratio:9/16; margin:0 auto; }
+        .vp-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 5000;
+          background:
+            radial-gradient(circle at 20% 10%, rgba(196,92,130,.2) 0%, rgba(0,0,0,.1) 28%, rgba(0,0,0,.85) 62%),
+            rgba(5,5,5,.9);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+        }
+        .vp-modal-shell {
+          position: relative;
+          width: min(96vw, 1040px);
+          max-height: calc(100dvh - 1rem);
+          overflow: auto;
+          border-radius: 1.1rem;
+          border: 1px solid rgba(255,255,255,.14);
+          background: linear-gradient(170deg, rgba(30,30,29,.95) 0%, rgba(18,18,17,.98) 100%);
+          box-shadow: 0 28px 100px rgba(0,0,0,.55);
+        }
+        .vp-modal-topbar {
+          position: fixed;
+          top: max(.75rem, env(safe-area-inset-top));
+          right: max(.75rem, env(safe-area-inset-right));
+          left: auto;
+          z-index: 5100;
+          display: flex;
+          justify-content: flex-end;
+          padding: 0;
+        }
+        .vp-modal-close {
+          width: 46px;
+          height: 46px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,.62);
+          background: rgba(10,10,10,.92);
+          color: rgba(255,255,255,.98);
+          box-shadow: 0 10px 30px rgba(0,0,0,.55);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all .25s ease;
+        }
+        .vp-modal-close:hover {
+          background: rgba(102,0,50,.75);
+          border-color: rgba(201,169,110,.6);
+        }
+        .vp-modal-layout {
+          display: grid;
+          grid-template-columns: minmax(300px, 400px) minmax(260px, 1fr);
+          gap: 1.5rem;
+          padding: 1.25rem;
+          align-items: start;
+        }
+        .vp-modal-player { position:relative; width:100%; aspect-ratio:9/16; margin:0 auto; border-radius:.9rem; overflow:hidden; background:#000; }
         .vp-modal-player iframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
+        .vp-modal-meta { padding: .35rem 0 .25rem; }
+        .vp-modal-meta p { margin: 0; }
         .vp-hero-video {
           position: absolute; top: 50%; left: 50%;
           width: 100vw; height: 56.25vw;
@@ -889,6 +980,15 @@ export default function Videos() {
           .vp-more-grid { grid-template-columns:1fr; }
           .vp-more-head { flex-direction:column; align-items:flex-start; margin-bottom:2rem; }
           .vp-more-count { font-size:.58rem; letter-spacing:.16em; }
+          .vp-modal-shell { width: 100%; max-height: 100dvh; overflow: auto; border-radius: 0; }
+          .vp-modal-topbar {
+            top: max(.65rem, env(safe-area-inset-top));
+            right: max(.65rem, env(safe-area-inset-right));
+          }
+          .vp-modal-close { width: 42px; height: 42px; }
+          .vp-modal-layout { grid-template-columns: 1fr; gap: 1rem; padding: 1rem .9rem 1rem; }
+          .vp-modal-player { width: min(100%, 430px); }
+          .vp-modal-meta { padding-top: .15rem; }
         }
       `}</style>
 
@@ -991,20 +1091,24 @@ export default function Videos() {
 
       {/* ── Modal ── */}
       {modal && (
-        <div onClick={() => setModal(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,.95)", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: "520px" }}>
-            <button
-              onClick={() => setModal(null)}
-              style={{ position: "absolute", top: "-3rem", right: 0, background: "none", border: "none", cursor: "pointer", fontSize: ".65rem", letterSpacing: ".25em", textTransform: "uppercase", color: "rgba(255,255,255,.5)", display: "flex", alignItems: "center", gap: ".75rem" }}
-            >
-              Close X
+        <div className="vp-modal-backdrop" onClick={() => setModal(null)}>
+          <div className="vp-modal-topbar">
+            <button className="vp-modal-close" onClick={() => setModal(null)} aria-label="Close video modal" title="Close">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              </svg>
             </button>
-            <div className="vp-modal-player">
-              {buildModalMedia(modal.video_url, modal.title)}
-            </div>
-            <div style={{ paddingTop: "1.25rem" }}>
-              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.4rem", fontWeight: 300, fontStyle: "italic", color: "#fff", marginBottom: ".4rem" }}>{modal.title}</p>
-              <p style={{ fontSize: ".78rem", lineHeight: 1.7, color: "rgba(255,255,255,.4)", fontWeight: 300 }}>{modal.desc}</p>
+          </div>
+          <div className="vp-modal-shell" onClick={(e) => e.stopPropagation()}>
+            <div className="vp-modal-layout">
+              <div className="vp-modal-player">
+                {buildModalMedia(modal.video_url, modal.title)}
+              </div>
+              <div className="vp-modal-meta">
+                <p style={{ fontSize: ".58rem", letterSpacing: ".26em", textTransform: "uppercase", color: "#C9A96E", marginBottom: ".8rem" }}>Now playing</p>
+                <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(1.35rem,2.4vw,2rem)", fontWeight: 300, fontStyle: "italic", color: "#fff", lineHeight: 1.25, marginBottom: ".7rem" }}>{modal.title}</p>
+                <p style={{ fontSize: ".82rem", lineHeight: 1.8, color: "rgba(255,255,255,.68)", fontWeight: 300, maxWidth: "52ch" }}>{modal.desc || "Cinematic maternity film by Fiesta House."}</p>
+              </div>
             </div>
           </div>
         </div>
