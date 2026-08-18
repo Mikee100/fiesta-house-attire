@@ -15,8 +15,8 @@ const normalizeApiBaseUrl = (rawValue: string | undefined, localHost: boolean): 
 };
 
 const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL, isLocalHost);
-
-const ADMIN_ACCESS_TOKEN_KEY = "fiesta_admin_access_token";
+const CSRF_COOKIE_NAME = "fh_csrf_token";
+let accessTokenMemory: string | null = null;
 
 const decodeJwtPayload = (token: string): { exp?: number } | null => {
   try {
@@ -37,18 +37,31 @@ const isTokenExpiredOrNearExpiry = (token: string, skewMs = 30_000): boolean => 
 };
 
 const getAccessToken = (): string | null => {
-  if (!isBrowser) return null;
-  return localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
+  return accessTokenMemory;
 };
 
 const setAccessToken = (token: string): void => {
-  if (!isBrowser) return;
-  localStorage.setItem(ADMIN_ACCESS_TOKEN_KEY, token);
+  accessTokenMemory = token;
 };
 
 const clearAccessToken = (): void => {
-  if (!isBrowser) return;
-  localStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
+  accessTokenMemory = null;
+};
+
+const getCookieValue = (name: string): string | null => {
+  if (!isBrowser) return null;
+  const parts = document.cookie.split(';').map((part) => part.trim());
+  const prefix = `${name}=`;
+  const match = parts.find((part) => part.startsWith(prefix));
+  if (!match) return null;
+  return decodeURIComponent(match.slice(prefix.length));
+};
+
+const applyCsrfHeader = (headers: Headers): void => {
+  const csrfToken = getCookieValue(CSRF_COOKIE_NAME);
+  if (csrfToken) {
+    headers.set('X-CSRF-Token', csrfToken);
+  }
 };
 
 export const isAdminAuthenticated = (): boolean => {
@@ -59,9 +72,12 @@ export const isAdminAuthenticated = (): boolean => {
 
 export const loginAdmin = async (email: string, password: string): Promise<boolean> => {
   try {
+    const headers = new Headers({ "Content-Type": "application/json" });
+    applyCsrfHeader(headers);
+
     const res = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       credentials: "include",
       body: JSON.stringify({ email, password })
     });
@@ -78,8 +94,12 @@ export const loginAdmin = async (email: string, password: string): Promise<boole
 
 export const refreshAdminSession = async (): Promise<boolean> => {
   try {
+    const headers = new Headers();
+    applyCsrfHeader(headers);
+
     const res = await fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
+      headers,
       credentials: "include"
     });
 
@@ -99,8 +119,12 @@ export const refreshAdminSession = async (): Promise<boolean> => {
 
 export const logoutAdmin = async (): Promise<void> => {
   try {
+    const headers = new Headers();
+    applyCsrfHeader(headers);
+
     await fetch(`${API_URL}/auth/logout`, {
       method: "POST",
+      headers,
       credentials: "include"
     });
   } catch {

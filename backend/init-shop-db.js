@@ -17,7 +17,7 @@ const packages = [
     images: "6 edited soft copy images",
     outfits: "2 gowns & styling",
     features: ["Professional makeup", "Full gown access", "Studio session"],
-    description: "Ideal for a quick, elegant session focused on capturing the essence of your journey."
+    description: "A streamlined premium session for timeless, elegant portraits of your maternity journey."
   },
   { 
     name: "Economy Package", 

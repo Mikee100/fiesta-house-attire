@@ -287,37 +287,6 @@ const BlogPostPage = () => {
 
             {/* Sidebar */}
             <aside className="space-y-12 fade-in" style={{ animationDelay: '400ms' }}>
-              <div className="flex flex-col items-center lg:items-start gap-2">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">Share This Article</h3>
-                <div className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 shadow-sm">
-                  {shareItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <a
-                        key={item.label}
-                        href={item.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={item.label}
-                        aria-label={item.label}
-                        className={`inline-flex h-10 w-10 items-center justify-center rounded-md transition-colors ${item.className}`}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </a>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    title="Copy link"
-                    aria-label="Copy link"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100 hover:text-[var(--sky-blue)]"
-                  >
-                    <Copy className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-
               {recentPosts.filter(rp => rp.id !== post.id).length > 0 && (
                 <div className="sticky top-32">
                   <h3 className="font-display text-2xl font-medium mb-6 flex items-center after:content-[''] after:h-px after:bg-slate-200 after:flex-grow after:ml-4">
@@ -343,6 +312,37 @@ const BlogPostPage = () => {
                 </div>
               )}
             </aside>
+          </div>
+
+          <div className="mt-14 flex flex-col items-center gap-2 fade-in" style={{ animationDelay: '460ms' }}>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">Share This Article</h3>
+            <div className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 shadow-sm">
+              {shareItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={item.label}
+                    aria-label={item.label}
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-md transition-colors ${item.className}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </a>
+                );
+              })}
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                title="Copy link"
+                aria-label="Copy link"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100 hover:text-[var(--sky-blue)]"
+              >
+                <Copy className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {relatedPosts.length > 0 && (
