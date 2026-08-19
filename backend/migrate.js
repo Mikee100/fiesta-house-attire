@@ -76,7 +76,55 @@ async function migrate() {
     `);
     console.log('✓ Ensured videos table exists');
 
-    // 5. Ensure users table exists
+    // 5. Ensure blog tables exist and include sort_order for stable public ordering
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blog_categories (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blog_posts (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        title TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        excerpt TEXT,
+        content TEXT,
+        cover_image_url TEXT,
+        author TEXT DEFAULT 'admin',
+        status TEXT DEFAULT 'draft',
+        sort_order INTEGER DEFAULT 0,
+        published_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blog_post_categories (
+        post_id UUID REFERENCES blog_posts(id) ON DELETE CASCADE,
+        category_id UUID REFERENCES blog_categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (post_id, category_id)
+      )
+    `);
+    await pool.query('ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0');
+    await pool.query(`
+      UPDATE blog_posts
+      SET sort_order = ranked.rn - 1
+      FROM (
+        SELECT id, ROW_NUMBER() OVER (ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC) AS rn
+        FROM blog_posts
+      ) ranked
+      WHERE blog_posts.id = ranked.id
+        AND blog_posts.sort_order IS NULL
+    `);
+    await pool.query(
+      'CREATE INDEX IF NOT EXISTS idx_blog_posts_public_order ON blog_posts (status, sort_order ASC, published_at DESC, created_at DESC)'
+    );
+    console.log('✓ Ensured blog tables and ordering columns exist');
+
+    // 6. Ensure users table exists
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -91,7 +139,7 @@ async function migrate() {
     `);
     console.log('✓ Ensured users table exists');
 
-    // 6. Seed admin user (idempotent)
+    // 7. Seed admin user (idempotent)
     await pool.query(
       `INSERT INTO users (email, password_hash, full_name, role, is_active)
        VALUES ($1, crypt($2, gen_salt('bf')), $3, 'admin', true)
@@ -106,7 +154,7 @@ async function migrate() {
     );
     console.log('✓ Admin user seeded');
 
-    // 7. Ensure refresh token table exists
+    // 8. Ensure refresh token table exists
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_refresh_tokens (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

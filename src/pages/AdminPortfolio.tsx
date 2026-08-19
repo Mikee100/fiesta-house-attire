@@ -217,12 +217,26 @@ const AdminPortfolio = () => {
 
     setIsProcessing(true);
     try {
+      const failedIds: string[] = [];
+
       for (const imageId of selectedPortfolioImageIds) {
         // Keep operations sequential to reduce transient API failures.
-        await api.deleteImage(imageId);
+        const result = await api.deleteImage(imageId);
+        if (result?.error) {
+          failedIds.push(imageId);
+        }
       }
-      toast.success(`Removed ${selectedPortfolioImageIds.length} images`);
-      setSelectedPortfolioImageIds([]);
+
+      const deletedCount = selectedPortfolioImageIds.length - failedIds.length;
+      if (deletedCount > 0) {
+        toast.success(`Removed ${deletedCount} image${deletedCount === 1 ? "" : "s"}`);
+      }
+
+      if (failedIds.length > 0) {
+        toast.error(`Failed to remove ${failedIds.length} image${failedIds.length === 1 ? "" : "s"}`);
+      }
+
+      setSelectedPortfolioImageIds((prev) => prev.filter((id) => failedIds.includes(id)));
       await fetchPortfolioDetails();
     } finally {
       setIsProcessing(false);

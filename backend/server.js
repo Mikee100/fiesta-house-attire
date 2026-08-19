@@ -117,8 +117,9 @@ app.use((req, res, next) => {
   const isAuthRoute = req.path.startsWith('/auth');
   const isAdminRoute = req.path.startsWith('/admin');
   const isWriteMethod = req.method !== 'GET';
+  const isMutableContentReadRoute = req.path.startsWith('/assets') || req.path.startsWith('/folders') || req.path.startsWith('/portfolios');
 
-  if (isAuthRoute || isAdminRoute || isWriteMethod) {
+  if (isAuthRoute || isAdminRoute || isWriteMethod || isMutableContentReadRoute) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     return next();
   }
@@ -1031,7 +1032,12 @@ app.patch('/portfolios/:id', requireAdminAuth, async (req, res) => {
 app.delete('/portfolio-images/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM portfolio_images WHERE id = $1', [id]);
+    const result = await pool.query('DELETE FROM portfolio_images WHERE id = $1', [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Portfolio image not found' });
+    }
+
     res.json({ message: 'Image deleted successfully' });
   } catch (err) {
     console.error(err);
@@ -1238,9 +1244,13 @@ app.patch('/assets/move', requireAdminAuth, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE assets SET folder_id = $1 WHERE id = ANY($2::uuid[]) RETURNING *',
+      'UPDATE assets SET folder_id = $1 WHERE id = ANY($2::uuid[]) AND folder_id IS DISTINCT FROM $1 RETURNING *',
       [folder_id, assetIds]
     );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'No images needed moving (already in destination or not found)' });
+    }
 
     res.json({ updated: result.rows.length, assets: result.rows });
   } catch (err) {
@@ -1253,7 +1263,12 @@ app.patch('/assets/move', requireAdminAuth, async (req, res) => {
 app.delete('/assets/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM assets WHERE id = $1', [id]);
+    const result = await pool.query('DELETE FROM assets WHERE id = $1', [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Asset not found' });
+    }
+
     res.json({ message: 'Asset deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Delete failed' });
@@ -1497,6 +1512,8 @@ app.patch('/videos/reorder', requireAdminAuth, async (req, res) => {
 
 // ─── Blog API ────────────────────────────────────────────────────────────────
 
+let blogSortOrderSupported = true;
+
 // GET /blog-categories — all categories
 app.get('/blog-categories', async (req, res) => {
   try {
@@ -1525,10 +1542,17 @@ app.post('/blog-categories', requireAdminAuth, async (req, res) => {
 
 // GET /blog-posts — published posts (paginated, optional ?category=slug)
 app.get('/blog-posts', async (req, res) => {
-  const { page = 1, limit = 9, category } = req.query;
-  const offset = (page - 1) * limit;
-  try {
-    let baseQuery = `
+  const { category } = req.query;
+  const pageNum = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, Number.parseInt(String(req.query.limit ?? '9'), 10) || 9));
+  const offset = (pageNum - 1) * limitNum;
+
+  const buildBaseQuery = (includeSortOrder) => {
+    const orderClause = includeSortOrder
+      ? 'ORDER BY p.sort_order ASC, p.published_at DESC, p.created_at DESC'
+      : 'ORDER BY p.published_at DESC, p.created_at DESC';
+
+    return `
       SELECT p.*, 
         COALESCE(
           json_agg(json_build_object('id', c.id, 'name', c.name, 'slug', c.slug))
@@ -1538,19 +1562,35 @@ app.get('/blog-posts', async (req, res) => {
       LEFT JOIN blog_post_categories pc ON pc.post_id = p.id
       LEFT JOIN blog_categories c ON c.id = pc.category_id
       WHERE p.status = 'published'
+      {{CATEGORY_FILTER}}
+      GROUP BY p.id
+      ${orderClause}
     `;
+  };
+
+  const runPostsQuery = async (includeSortOrder) => {
+    let baseQuery = buildBaseQuery(includeSortOrder);
     const params = [];
+
     if (category) {
       params.push(category);
-      baseQuery += ` AND EXISTS (
+      baseQuery = baseQuery.replace('{{CATEGORY_FILTER}}', ` AND EXISTS (
         SELECT 1 FROM blog_post_categories pc2
         JOIN blog_categories c2 ON c2.id = pc2.category_id
         WHERE pc2.post_id = p.id AND c2.slug = $${params.length}
-      )`;
+      )`);
+    } else {
+      baseQuery = baseQuery.replace('{{CATEGORY_FILTER}}', '');
     }
 
-    baseQuery += ' GROUP BY p.id ORDER BY p.sort_order ASC, p.published_at DESC, p.created_at DESC';
+    params.push(limitNum, offset);
+    return pool.query(
+      `${baseQuery} LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+  };
 
+  try {
     let countQuery = `SELECT COUNT(p.id) FROM blog_posts p WHERE p.status = 'published'`;
     const countParams = [];
 
@@ -1566,17 +1606,24 @@ app.get('/blog-posts', async (req, res) => {
     const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].count);
 
-    params.push(limit, offset);
-    const result = await pool.query(
-      `${baseQuery} LIMIT $${params.length - 1} OFFSET $${params.length}`,
-      params
-    );
+    let result;
+    try {
+      result = await runPostsQuery(blogSortOrderSupported);
+    } catch (err) {
+      if (blogSortOrderSupported && err && err.code === '42703' && /sort_order/i.test(String(err.message || ''))) {
+        blogSortOrderSupported = false;
+        console.warn('blog_posts.sort_order is unavailable; falling back to published_at ordering for /blog-posts');
+        result = await runPostsQuery(false);
+      } else {
+        throw err;
+      }
+    }
 
     res.json({
       posts: result.rows.map(sanitizeBlogPostForPublic),
       totalCount: total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: parseInt(page)
+      totalPages: Math.ceil(total / limitNum),
+      currentPage: pageNum
     });
   } catch (err) {
     console.error(err);
@@ -1597,8 +1644,7 @@ app.get('/blog-posts/:slug/related', async (req, res) => {
 
     const sourceId = sourcePost.rows[0].id;
 
-    const related = await pool.query(
-      `SELECT p.*, 
+    const buildRelatedQuery = (includeSortOrder) => `SELECT p.*, 
           COALESCE(
             json_agg(json_build_object('id', c.id, 'name', c.name, 'slug', c.slug))
             FILTER (WHERE c.id IS NOT NULL), '[]'
@@ -1615,10 +1661,21 @@ app.get('/blog-posts/:slug/related', async (req, res) => {
          AND p.id <> $1
        GROUP BY p.id
        HAVING COUNT(DISTINCT shared.category_id) > 0
-       ORDER BY shared_count DESC, p.sort_order ASC, p.published_at DESC, p.created_at DESC
-       LIMIT $2`,
-      [sourceId, limit]
-    );
+       ORDER BY shared_count DESC, ${includeSortOrder ? 'p.sort_order ASC, ' : ''}p.published_at DESC, p.created_at DESC
+       LIMIT $2`;
+
+    let related;
+    try {
+      related = await pool.query(buildRelatedQuery(blogSortOrderSupported), [sourceId, limit]);
+    } catch (err) {
+      if (blogSortOrderSupported && err && err.code === '42703' && /sort_order/i.test(String(err.message || ''))) {
+        blogSortOrderSupported = false;
+        console.warn('blog_posts.sort_order is unavailable; falling back to published_at ordering for /blog-posts/:slug/related');
+        related = await pool.query(buildRelatedQuery(false), [sourceId, limit]);
+      } else {
+        throw err;
+      }
+    }
 
     res.json(related.rows);
   } catch (err) {
@@ -1630,7 +1687,7 @@ app.get('/blog-posts/:slug/related', async (req, res) => {
 // GET /blog-posts/all — ALL posts including drafts (admin)
 app.get('/blog-posts/all', requireAdminAuth, async (req, res) => {
   try {
-    const result = await pool.query(`
+    const buildAllPostsQuery = (includeSortOrder) => `
       SELECT p.*,
         COALESCE(
           json_agg(json_build_object('id', c.id, 'name', c.name, 'slug', c.slug))
@@ -1640,8 +1697,22 @@ app.get('/blog-posts/all', requireAdminAuth, async (req, res) => {
       LEFT JOIN blog_post_categories pc ON pc.post_id = p.id
       LEFT JOIN blog_categories c ON c.id = pc.category_id
       GROUP BY p.id
-      ORDER BY p.sort_order ASC, p.created_at DESC
-    `);
+      ORDER BY ${includeSortOrder ? 'p.sort_order ASC, ' : ''}p.created_at DESC
+    `;
+
+    let result;
+    try {
+      result = await pool.query(buildAllPostsQuery(blogSortOrderSupported));
+    } catch (err) {
+      if (blogSortOrderSupported && err && err.code === '42703' && /sort_order/i.test(String(err.message || ''))) {
+        blogSortOrderSupported = false;
+        console.warn('blog_posts.sort_order is unavailable; falling back to created_at ordering for /blog-posts/all');
+        result = await pool.query(buildAllPostsQuery(false));
+      } else {
+        throw err;
+      }
+    }
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch posts' });
@@ -1806,10 +1877,23 @@ app.delete('/blog-posts/:id', requireAdminAuth, async (req, res) => {
 // GET /blog-posts-recent — last 3 published (for sidebar)
 app.get('/blog-posts-recent', async (req, res) => {
   try {
-    const result = await pool.query(
+    const buildRecentQuery = (includeSortOrder) =>
       `SELECT id, title, slug, cover_image_url, published_at FROM blog_posts
-       WHERE status='published' ORDER BY sort_order ASC, published_at DESC, created_at DESC LIMIT 5`
-    );
+       WHERE status='published' ORDER BY ${includeSortOrder ? 'sort_order ASC, ' : ''}published_at DESC, created_at DESC LIMIT 5`;
+
+    let result;
+    try {
+      result = await pool.query(buildRecentQuery(blogSortOrderSupported));
+    } catch (err) {
+      if (blogSortOrderSupported && err && err.code === '42703' && /sort_order/i.test(String(err.message || ''))) {
+        blogSortOrderSupported = false;
+        console.warn('blog_posts.sort_order is unavailable; falling back to published_at ordering for /blog-posts-recent');
+        result = await pool.query(buildRecentQuery(false));
+      } else {
+        throw err;
+      }
+    }
+
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch recent posts' });

@@ -148,12 +148,26 @@ const AdminAssets = () => {
 
     setUploading(true);
     try {
+      const failedIds: string[] = [];
+
       for (const id of selectedAssetIds) {
         // Keep delete operations sequential to reduce API burst failures.
-        await api.deleteAsset(id);
+        const result = await api.deleteAsset(id);
+        if (result?.error) {
+          failedIds.push(id);
+        }
       }
-      toast.success(`Deleted ${selectedAssetIds.length} images`);
-      setSelectedAssetIds([]);
+
+      const deletedCount = selectedAssetIds.length - failedIds.length;
+      if (deletedCount > 0) {
+        toast.success(`Deleted ${deletedCount} image${deletedCount === 1 ? "" : "s"}`);
+      }
+
+      if (failedIds.length > 0) {
+        toast.error(`Failed to delete ${failedIds.length} image${failedIds.length === 1 ? "" : "s"}`);
+      }
+
+      setSelectedAssetIds((prev) => prev.filter((id) => failedIds.includes(id)));
       await loadData();
     } catch {
       toast.error("Failed to delete selected images");
@@ -169,14 +183,21 @@ const AdminAssets = () => {
       return;
     }
 
+    const destinationFolderId = targetMoveFolderId === "__none__" ? null : targetMoveFolderId;
+    if (destinationFolderId === (currentFolderId || null)) {
+      toast.error("Selected images are already in that location");
+      return;
+    }
+
     setMovingSelected(true);
     try {
-      const destinationFolderId = targetMoveFolderId === "__none__" ? null : targetMoveFolderId;
       const result = await api.moveAssetsToFolder(selectedAssetIds, destinationFolderId);
       if (result.error) {
         toast.error(result.error);
+      } else if (!result.updated) {
+        toast.error("No images were moved. Refresh and try again.");
       } else {
-        toast.success(`Moved ${selectedAssetIds.length} image${selectedAssetIds.length === 1 ? "" : "s"}`);
+        toast.success(`Moved ${result.updated} image${result.updated === 1 ? "" : "s"}`);
         setSelectedAssetIds([]);
         setTargetMoveFolderId("");
         await loadData();
