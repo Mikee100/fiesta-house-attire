@@ -56,7 +56,7 @@ export interface PaginatedAssets {
 
 export const fetchPortfolios = async (): Promise<PortfolioRecord[] | null> => {
   try {
-    const res = await fetch(`${API_URL}/portfolios`);
+    const res = await fetch(`${API_URL}/portfolios`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch');
     return await res.json();
   } catch (err) {
@@ -67,7 +67,7 @@ export const fetchPortfolios = async (): Promise<PortfolioRecord[] | null> => {
 
 export const fetchPortfolio = async (idOrSlug: string): Promise<PortfolioRecord | null> => {
   try {
-    const res = await fetch(`${API_URL}/portfolios/${encodeURIComponent(idOrSlug)}`);
+    const res = await fetch(`${API_URL}/portfolios/${encodeURIComponent(idOrSlug)}`, { cache: 'no-store' });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error('Failed to fetch portfolio');
     return await res.json();
@@ -146,7 +146,7 @@ export const deleteImage = async (imageId: string) => {
 // --- Media Library ---
 
 export const fetchFolders = async (): Promise<FolderRecord[]> => {
-  const res = await fetch(`${API_URL}/folders`);
+  const res = await fetch(`${API_URL}/folders`, { cache: 'no-store' });
   return await res.json();
 };
 
@@ -173,7 +173,7 @@ export const fetchAssets = async (folderId?: string, page: number = 1, limit: nu
   if (folderId) url += `&folder_id=${folderId}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
   
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: 'no-store' });
   return await res.json();
 };
 
