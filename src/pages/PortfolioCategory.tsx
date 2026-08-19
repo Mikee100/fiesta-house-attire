@@ -94,7 +94,7 @@ const PortfolioCategory = () => {
   return (
     <Layout 
       title={portfolio.title}
-      description={`View the ${portfolio.title} collection at Fiesta House Attire. Luxury maternity photography in Nairobi featuring our signature aesthetics.`}
+      description={`View the ${portfolio.title} collection at Fiesta House Maternity. Luxury maternity photography in Nairobi featuring our signature aesthetics.`}
       ogImage={portfolio.images[0]}
     >
       <script type="application/ld+json">
@@ -112,7 +112,7 @@ const PortfolioCategory = () => {
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "ImageGallery",
-          "name": `${portfolio.title} - Fiesta House Attire`,
+          "name": `${portfolio.title} - Fiesta House Maternity`,
           "description": `Luxury maternity photography collection: ${portfolio.title}`,
           "url": `https://www.fiestahousematernity.com/portfolio/${portfolio.slug || id}`,
           "image": portfolio.images

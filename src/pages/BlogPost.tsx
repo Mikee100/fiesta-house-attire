@@ -187,7 +187,7 @@ const BlogPostPage = () => {
   return (
     <Layout
       title={post.title}
-      description={post.excerpt || `Read ${post.title} on Fiesta House Attire's blog.`}
+      description={post.excerpt || `Read ${post.title} on Fiesta House Maternity's blog.`}
       ogImage={post.cover_image_url || undefined}
     >
       <script type="application/ld+json">
@@ -195,18 +195,18 @@ const BlogPostPage = () => {
           "@context": "https://schema.org",
           "@type": "BlogPosting",
           "headline": post.title,
-          "description": post.excerpt || `Read ${post.title} on Fiesta House Attire's blog.`,
+          "description": post.excerpt || `Read ${post.title} on Fiesta House Maternity's blog.`,
           "image": post.cover_image_url ? [post.cover_image_url] : ["https://www.fiestahousematernity.com/og-image.jpg"],
           "datePublished": post.published_at || post.created_at,
           "dateModified": post.updated_at || post.published_at || post.created_at,
           "author": {
             "@type": "Organization",
-            "name": post.author || "Fiesta House Attire",
+            "name": post.author || "Fiesta House Maternity",
             "url": "https://www.fiestahousematernity.com"
           },
           "publisher": {
             "@type": "Organization",
-            "name": "Fiesta House Attire",
+            "name": "Fiesta House Maternity",
             "logo": {
               "@type": "ImageObject",
               "url": "https://www.fiestahousematernity.com/og-image.jpg"

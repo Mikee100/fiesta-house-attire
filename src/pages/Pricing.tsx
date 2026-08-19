@@ -60,8 +60,8 @@ const Pricing = () => {
   return (
     <Layout
       title="Pricing & Packages | Luxury Maternity Photoshoot Nairobi"
-      description="Explore luxury maternity photoshoot pricing in Nairobi. 7 exclusive packages including designer gowns, professional makeup, and stunning studio photography at Fiesta House Attire."
-      keywords="maternity photoshoot nairobi, pregnancy photography pricing, luxury maternity shoot, baby bump photoshoot nairobi, fiesta house attire pricing"
+      description="Explore luxury maternity photoshoot pricing in Nairobi. 7 exclusive packages including designer gowns, professional makeup, and stunning studio photography at Fiesta House Maternity."
+      keywords="maternity photoshoot nairobi, pregnancy photography pricing, luxury maternity shoot, baby bump photoshoot nairobi, fiesta house maternity pricing"
     >
       <script type="application/ld+json">
         {JSON.stringify({
@@ -245,7 +245,7 @@ const Pricing = () => {
             <div className="fade-in">
               <h2 className="display" style={{ fontSize: "3.5rem", marginBottom: "2rem" }}>The Luxury Experience</h2>
               <p style={{ fontSize: "1.1rem", lineHeight: "1.8", color: "var(--muted-foreground)" }}>
-                At Fiesta House Attire, we believe maternity photography is more than just taking pictures. It's about celebrating the strength, beauty, and grace of expectant mothers.
+                At Fiesta House Maternity, we believe maternity photography is more than just taking pictures. It's about celebrating the strength, beauty, and grace of expectant mothers.
               </p>
               <div style={{ marginTop: "3rem", display: "flex", flexDirection: "column", gap: "2rem" }}>
                 <div style={{ display: "flex", gap: "1.5rem" }}>
@@ -289,7 +289,7 @@ const Pricing = () => {
                   </li>
                   <li style={{ display: "flex", gap: "1rem", fontSize: "1rem" }}>
                     <ShieldCheck className="text-magenta" size={20} />
-                    <span>Fiesta House Attire owns the copyrights to all images produced.</span>
+                    <span>Fiesta House Maternity owns the copyrights to all images produced.</span>
                   </li>
                   <li style={{ display: "flex", gap: "1rem", fontSize: "1rem" }}>
                     <ShieldCheck className="text-magenta" size={20} />
@@ -348,7 +348,7 @@ const Pricing = () => {
                  Surprise an expectant mother with a gift that lasts a lifetime. Our luxury photoshoot vouchers are the most cherished gifts at baby showers across Nairobi.
                </p>
                <a 
-                 href="https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20enquire%20about%20a%20gift%20voucher." 
+                 href="https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Maternity,%20I'd%20like%20to%20enquire%20about%20a%20gift%20voucher." 
                  className="btn" 
                  style={{ backgroundColor: "white", color: "var(--dark)", padding: "1.5rem 4rem", fontWeight: "700", borderRadius: "100px" }}
                >
@@ -363,8 +363,8 @@ const Pricing = () => {
       <section style={{ padding: "4rem 0", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
         <div className="container">
           <div style={{ textAlign: "center", color: "var(--muted-foreground)", fontSize: "0.85rem" }}>
-            <p style={{ marginBottom: "0.5rem" }}>© 2026 Fiesta House Attire. All photography rights reserved.</p>
-            <p>Fiesta House Attire owns the copyrights to all images and has exclusive right to use, edit, print, and distribute images produced during sessions.</p>
+            <p style={{ marginBottom: "0.5rem" }}>© 2026 Fiesta House Maternity. All photography rights reserved.</p>
+            <p>Fiesta House Maternity owns the copyrights to all images and has exclusive right to use, edit, print, and distribute images produced during sessions.</p>
           </div>
         </div>
       </section>

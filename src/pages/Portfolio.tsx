@@ -58,7 +58,7 @@ const Portfolio = () => {
   return (
     <Layout
       title="Portfolio | Luxury Maternity & Couture Photography"
-      description="Explore our curated collection of luxury maternity photography in Nairobi. From signature studio sets to couture maternity portraits, see the art we create at Fiesta House Attire."
+      description="Explore our curated collection of luxury maternity photography in Nairobi. From signature studio sets to couture maternity portraits, see the art we create at Fiesta House Maternity."
       keywords="maternity photography portfolio, luxury pregnancy photos, couture maternity portraits nairobi, best maternity photography galleries"
     >
       <script type="application/ld+json">

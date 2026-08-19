@@ -45,7 +45,7 @@ const GalleryPage = () => {
   return (
     <Layout
       title={folderName ? `${folderName} Gallery` : "Gallery"}
-      description={folderName ? `Browse the ${folderName} gallery by Fiesta House Attire in Nairobi.` : "Browse luxury maternity and studio imagery by Fiesta House Attire in Nairobi."}
+      description={folderName ? `Browse the ${folderName} gallery by Fiesta House Maternity in Nairobi.` : "Browse luxury maternity and studio imagery by Fiesta House Maternity in Nairobi."}
       keywords="maternity gallery nairobi, luxury photoshoot gallery, fiesta house portfolio"
     >
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>

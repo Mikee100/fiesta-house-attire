@@ -118,7 +118,7 @@ const Index = () => {
   return (
     <>
       <Layout
-        title="Luxury Maternity Photography Nairobi | Fiesta House Attire"
+        title="Luxury Maternity Photography Nairobi | Fiesta House Maternity"
         description="Nairobi's premier luxury maternity studio. Designer gowns, professional makeup, and editorial photography at Diamond Plaza, Parklands."
         keywords="luxury maternity photography nairobi, best maternity photographer kenya, maternity gowns nairobi, pregnancy photoshoot nairobi, baby bump photoshoot nairobi"
       >
@@ -126,8 +126,8 @@ const Index = () => {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "PhotographyBusiness",
-            "name": "Fiesta House Attire",
-            "alternateName": "Fiesta House Maternity",
+            "name": "Fiesta House Maternity",
+            "alternateName": "Fiesta House Attire",
             "description": "Nairobi's premier luxury maternity photography studio offering exclusive designer gowns, professional makeup, and editorial portraits at Diamond Plaza II, Parklands.",
             "image": [
               "https://www.fiestahousematernity.com/og-image.jpg",
@@ -193,7 +193,7 @@ const Index = () => {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
-            "name": "Fiesta House Attire",
+            "name": "Fiesta House Maternity",
             "url": "https://www.fiestahousematernity.com",
             "description": "Nairobi's premier luxury maternity photography studio.",
             "inLanguage": "en-KE",
@@ -268,7 +268,7 @@ const Index = () => {
                 }}
               >
                 <h1 className="display h1-mobile" style={{ fontSize: "clamp(3rem, 10vw, 7rem)", marginBottom: "1rem", textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
-                  Fiesta House Attire
+                  Fiesta House Maternity
                 </h1>
                 <p style={{
                   fontSize: "clamp(1rem, 2vw, 1.4rem)",
