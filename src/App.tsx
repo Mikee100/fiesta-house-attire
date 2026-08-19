@@ -71,7 +71,7 @@ const App = () => (
               <Route path="/admin/blog" element={<ProtectedAdminRoute><AdminBlog /></ProtectedAdminRoute>} />
               <Route path="/admin/blog/new" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
               <Route path="/admin/blog/:id/edit" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
-              <Route path="/gallery/:folderId" element={<GalleryPage />} />
+              <Route path="/gallery/:gallerySlug" element={<GalleryPage />} />
               <Route path="/maternity-gowns" element={<MaternityGowns />} />
               <Route path="/videos" element={<Videos />} />
               <Route path="*" element={<NotFound />} />

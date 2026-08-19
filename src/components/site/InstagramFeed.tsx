@@ -19,7 +19,7 @@ const InstagramFeed = () => {
 
     const loadTiles = async () => {
       try {
-        const result = await api.fetchAssets(undefined, 1, 8);
+        const result = await api.fetchPublicAssets(undefined, 1, 8);
         const urls = Array.isArray(result?.assets)
           ? result.assets
               .map((item) => item?.url)

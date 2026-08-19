@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
-import { fetchPortfolios, fetchAssets, fetchFolders, fetchRecentBlogPosts, BlogPost } from "@/lib/api";
+import { fetchPortfolios, fetchPublicAssets, fetchPublicFolders, fetchRecentBlogPosts, BlogPost } from "@/lib/api";
 import {
   Accordion,
   AccordionContent,
@@ -83,10 +83,10 @@ const Index = () => {
       try {
         const [portfoliosData, assetsData, foldersData, postsData, heroAssetsData] = await Promise.all([
           fetchPortfolios(),
-          fetchAssets(undefined, 1, 12),
-          fetchFolders(),
+          fetchPublicAssets(undefined, 1, 12),
+          fetchPublicFolders(),
           fetchRecentBlogPosts(),
-          fetchAssets(HOME_CAROUSEL_FOLDER_ID, 1, MAX_HERO_SLIDES)
+          fetchPublicAssets(HOME_CAROUSEL_FOLDER_ID, 1, MAX_HERO_SLIDES)
         ]);
 
         if (portfoliosData) setPortfolios(portfoliosData);
@@ -322,7 +322,7 @@ const Index = () => {
                   subtitle: "Studio Shoots",
                   desc: "Step into our studio for an elegant maternity photography experience focused on poses and perfection.",
                   fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155044498_IMG_5453.jpg",
-                  link: "/gallery/2a2ab935-7752-4c1d-99a3-52c9046ef873"
+                  link: "/gallery/studio-shoots"
                 },
                 {
                   id: "b8b100e9-81ce-4778-bf57-0adee0b46fc0",
@@ -338,7 +338,7 @@ const Index = () => {
                   subtitle: "Cinematic Art",
                   desc: "Elevate your maternity story with Fiesta House's suspending concept-where gravity meets grace.",
                   fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg",
-                  link: "/gallery/1aea11b8-fd79-4602-9c44-af400754ebec"
+                  link: "/gallery/suspending-concept"
                 }
               ].map((concept, i) => {
                 const folder = folders.find(f => f.id === concept.id);

@@ -235,6 +235,37 @@ const sanitizeSlug = (value) => {
     .replace(/(^-|-$)/g, '');
 };
 
+const normalizePublicFolderSlug = (value) => {
+  if (typeof value !== 'string') return null;
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return normalized || null;
+};
+
+const ensureUniqueFolderPublicSlug = async (client, rawSlug, excludeFolderId = null) => {
+  const baseSlug = normalizePublicFolderSlug(rawSlug) || 'gallery';
+  let candidate = baseSlug;
+  let suffix = 2;
+
+  while (true) {
+    const conflictQuery = excludeFolderId
+      ? 'SELECT 1 FROM folders WHERE public_slug = $1 AND id <> $2 LIMIT 1'
+      : 'SELECT 1 FROM folders WHERE public_slug = $1 LIMIT 1';
+    const conflictParams = excludeFolderId ? [candidate, excludeFolderId] : [candidate];
+    const conflict = await client.query(conflictQuery, conflictParams);
+
+    if (conflict.rows.length === 0) {
+      return candidate;
+    }
+
+    candidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+};
+
 const sanitizeOptionalUrl = (value) => {
   if (value === null || value === undefined || value === '') return null;
   if (typeof value !== 'string') return null;
@@ -594,6 +625,39 @@ const initVideosDb = async () => {
 
 initVideosDb();
 
+const initMediaVisibilityDb = async () => {
+  try {
+    await pool.query('ALTER TABLE folders ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true');
+    await pool.query('ALTER TABLE folders ADD COLUMN IF NOT EXISTS public_slug TEXT');
+    await pool.query('ALTER TABLE assets ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true');
+    await pool.query('UPDATE folders SET is_public = true WHERE is_public IS NULL');
+    await pool.query('UPDATE assets SET is_public = true WHERE is_public IS NULL');
+    await pool.query(`
+      UPDATE folders
+      SET public_slug = regexp_replace(regexp_replace(lower(COALESCE(name, 'gallery')), '[^a-z0-9]+', '-', 'g'), '(^-|-$)', '', 'g')
+      WHERE public_slug IS NULL OR btrim(public_slug) = ''
+    `);
+    await pool.query(`
+      WITH ranked AS (
+        SELECT id, public_slug, ROW_NUMBER() OVER (PARTITION BY public_slug ORDER BY created_at ASC, id ASC) AS rn
+        FROM folders
+        WHERE public_slug IS NOT NULL
+      )
+      UPDATE folders f
+      SET public_slug = f.public_slug || '-' || (ranked.rn - 1)::text
+      FROM ranked
+      WHERE f.id = ranked.id
+        AND ranked.rn > 1
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_folders_is_public ON folders (is_public, name)');
+    await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_folders_public_slug_unique ON folders (public_slug) WHERE public_slug IS NOT NULL');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_assets_public_folder_created ON assets (is_public, folder_id, created_at DESC)');
+    console.log('✓ Media visibility columns initialized');
+  } catch (err) {
+    console.error('Media visibility DB Init Error:', err);
+  }
+};
+
 // Initialize Blog Database bits used by runtime APIs.
 const initBlogDb = async () => {
   try {
@@ -652,6 +716,7 @@ const initBlogDb = async () => {
 
 initBlogDb();
 initAuthDb();
+initMediaVisibilityDb();
 
 // Routes
 
@@ -1068,10 +1133,62 @@ app.delete('/portfolio-images/:id', requireAdminAuth, async (req, res) => {
   }
 });
 
+// Delete underlying library asset by portfolio image id (global)
+app.delete('/portfolio-images/:id/library-asset', requireAdminAuth, async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const imageResult = await client.query(
+      'SELECT url FROM portfolio_images WHERE id = $1 LIMIT 1',
+      [id]
+    );
+
+    if (imageResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Portfolio image not found' });
+    }
+
+    const imageUrl = imageResult.rows[0].url;
+
+    const removedAssets = await client.query(
+      'DELETE FROM assets WHERE url = $1 RETURNING id',
+      [imageUrl]
+    );
+
+    const removedPortfolioLinks = await client.query(
+      'DELETE FROM portfolio_images WHERE url = $1 RETURNING id',
+      [imageUrl]
+    );
+
+    const clearedCovers = await client.query(
+      'UPDATE portfolios SET cover_image_url = NULL WHERE cover_image_url = $1 RETURNING id',
+      [imageUrl]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      message: 'Asset deleted from library and removed from portfolios',
+      removedAssets: removedAssets.rowCount,
+      removedPortfolioLinks: removedPortfolioLinks.rowCount,
+      clearedPortfolioCovers: clearedCovers.rowCount,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete library asset' });
+  } finally {
+    client.release();
+  }
+});
+
 // --- Media Library (Folders & Assets) ---
 
 // Get all folders
-app.get('/folders', async (req, res) => {
+app.get('/folders', requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM folders ORDER BY name ASC');
     res.json(result.rows);
@@ -1082,23 +1199,33 @@ app.get('/folders', async (req, res) => {
 
 // Create folder
 app.post('/folders', requireAdminAuth, async (req, res) => {
-  const { name, parent_id } = req.body;
+  const { name, parent_id, public_slug } = req.body;
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
-      'INSERT INTO folders (name, parent_id) VALUES ($1, $2) RETURNING *',
-      [name, parent_id]
+    const finalSlug = await ensureUniqueFolderPublicSlug(client, public_slug || name);
+    const result = await client.query(
+      'INSERT INTO folders (name, parent_id, public_slug) VALUES ($1, $2, $3) RETURNING *',
+      [name.trim(), parent_id || null, finalSlug]
     );
     res.json(result.rows[0]);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to create folder' });
+  } finally {
+    client.release();
   }
 });
 
 // Update folder (e.g., set cover image)
 app.patch('/folders/:id', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
-  const { cover_image_url, name } = req.body;
+  const { cover_image_url, name, is_public, public_slug } = req.body;
   
+  const client = await pool.connect();
   try {
     let query = 'UPDATE folders SET ';
     const params = [];
@@ -1114,22 +1241,42 @@ app.patch('/folders/:id', requireAdminAuth, async (req, res) => {
       params.push(name);
       count++;
     }
+    if (is_public !== undefined) {
+      query += `is_public = $${count}, `;
+      params.push(Boolean(is_public));
+      count++;
+    }
+    if (public_slug !== undefined) {
+      const normalized = normalizePublicFolderSlug(public_slug);
+      const finalSlug = normalized
+        ? await ensureUniqueFolderPublicSlug(client, normalized, id)
+        : await ensureUniqueFolderPublicSlug(client, name || 'gallery', id);
+      query += `public_slug = $${count}, `;
+      params.push(finalSlug);
+      count++;
+    }
+
+    if (params.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
 
     // Remove trailing comma and space
     query = query.slice(0, -2);
     query += ` WHERE id = $${count} RETURNING *`;
     params.push(id);
 
-    const result = await pool.query(query, params);
+    const result = await client.query(query, params);
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update folder' });
+  } finally {
+    client.release();
   }
 });
 
 // Get assets (optionally filtered by folder) with pagination
-app.get('/assets', async (req, res) => {
+app.get('/assets', requireAdminAuth, async (req, res) => {
   const { folder_id, page = 1, limit = 20, search } = req.query;
   const offset = (page - 1) * limit;
 
@@ -1172,6 +1319,130 @@ app.get('/assets', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch assets' });
+  }
+});
+
+// Public folders list (safe fields only)
+app.get('/public/folders', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, parent_id, cover_image_url, is_public, public_slug
+       FROM folders
+       WHERE COALESCE(is_public, true) = true
+       ORDER BY name ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch public folders' });
+  }
+});
+
+// Public assets list (filtered to public assets/folders)
+app.get('/public/assets', async (req, res) => {
+  const folderId = typeof req.query.folder_id === 'string' ? req.query.folder_id : null;
+  const pageNum = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, Number.parseInt(String(req.query.limit ?? '20'), 10) || 20));
+  const offset = (pageNum - 1) * limitNum;
+
+  try {
+    const params = [];
+    let whereClause = `
+      WHERE COALESCE(a.is_public, true) = true
+        AND (a.folder_id IS NULL OR EXISTS (
+          SELECT 1 FROM folders f
+          WHERE f.id = a.folder_id
+            AND COALESCE(f.is_public, true) = true
+        ))
+    `;
+
+    if (folderId) {
+      params.push(folderId);
+      whereClause += ` AND a.folder_id = $${params.length}`;
+    }
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM assets a ${whereClause}`,
+      params
+    );
+    const totalCount = parseInt(countResult.rows[0].count, 10) || 0;
+
+    params.push(limitNum, offset);
+    const assetsQuery = `
+      SELECT a.id, a.url, a.folder_id, a.created_at
+      FROM assets a
+      ${whereClause}
+      ORDER BY a.created_at DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+    `;
+    const assetsResult = await pool.query(assetsQuery, params);
+
+    res.json({
+      assets: assetsResult.rows,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limitNum),
+      currentPage: pageNum,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch public assets' });
+  }
+});
+
+app.get('/public/gallery/:slug/assets', async (req, res) => {
+  const requestedSlug = normalizePublicFolderSlug(req.params.slug || '');
+  const pageNum = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, Number.parseInt(String(req.query.limit ?? '20'), 10) || 20));
+  const offset = (pageNum - 1) * limitNum;
+
+  if (!requestedSlug) {
+    return res.status(400).json({ error: 'Invalid gallery slug' });
+  }
+
+  try {
+    const folderResult = await pool.query(
+      `SELECT id, name, parent_id, cover_image_url, is_public, public_slug
+       FROM folders
+       WHERE public_slug = $1
+         AND COALESCE(is_public, true) = true
+       LIMIT 1`,
+      [requestedSlug]
+    );
+
+    if (folderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Gallery not found' });
+    }
+
+    const folder = folderResult.rows[0];
+    const countResult = await pool.query(
+      `SELECT COUNT(*)
+       FROM assets a
+       WHERE a.folder_id = $1
+         AND COALESCE(a.is_public, true) = true`,
+      [folder.id]
+    );
+    const totalCount = parseInt(countResult.rows[0].count, 10) || 0;
+
+    const assetsResult = await pool.query(
+      `SELECT id, url, folder_id, created_at
+       FROM assets
+       WHERE folder_id = $1
+         AND COALESCE(is_public, true) = true
+       ORDER BY created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [folder.id, limitNum, offset]
+    );
+
+    res.json({
+      folder,
+      assets: assetsResult.rows,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limitNum),
+      currentPage: pageNum,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch gallery assets' });
   }
 });
 

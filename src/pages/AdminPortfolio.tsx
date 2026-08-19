@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { ChevronLeft, Plus, Trash2, Image as ImageIcon, Library, Folder, Search, CheckCircle2, Eye } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, Image as ImageIcon, Library, Folder, Search, CheckCircle2, Eye, DatabaseZap } from "lucide-react";
 import AdminPage from "@/components/admin/AdminPage";
 import AdminSection from "@/components/admin/AdminSection";
 import SEO from "@/components/site/SEO";
@@ -184,12 +184,12 @@ const AdminPortfolio = () => {
     }
   };
 
-  const handleDeleteImage = async (imageId: string) => {
-    const result = await api.deleteImage(imageId);
+  const handleRemoveImageFromPortfolio = async (imageId: string) => {
+    const result = await api.removeImageFromPortfolio(imageId);
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success("Image removed");
+      toast.success("Image removed from this portfolio");
       fetchPortfolioDetails();
     }
   };
@@ -212,7 +212,7 @@ const AdminPortfolio = () => {
     setSelectedPortfolioImageIds([]);
   };
 
-  const handleDeleteSelectedPortfolioImages = async () => {
+  const handleRemoveSelectedPortfolioImages = async () => {
     if (selectedPortfolioImageIds.length === 0) return;
 
     setIsProcessing(true);
@@ -221,7 +221,7 @@ const AdminPortfolio = () => {
 
       for (const imageId of selectedPortfolioImageIds) {
         // Keep operations sequential to reduce transient API failures.
-        const result = await api.deleteImage(imageId);
+        const result = await api.removeImageFromPortfolio(imageId);
         if (result?.error) {
           failedIds.push(imageId);
         }
@@ -229,11 +229,67 @@ const AdminPortfolio = () => {
 
       const deletedCount = selectedPortfolioImageIds.length - failedIds.length;
       if (deletedCount > 0) {
-        toast.success(`Removed ${deletedCount} image${deletedCount === 1 ? "" : "s"}`);
+        toast.success(`Removed ${deletedCount} image${deletedCount === 1 ? "" : "s"} from this portfolio`);
       }
 
       if (failedIds.length > 0) {
-        toast.error(`Failed to remove ${failedIds.length} image${failedIds.length === 1 ? "" : "s"}`);
+        toast.error(`Failed to remove ${failedIds.length} image${failedIds.length === 1 ? "" : "s"} from this portfolio`);
+      }
+
+      setSelectedPortfolioImageIds((prev) => prev.filter((id) => failedIds.includes(id)));
+      await fetchPortfolioDetails();
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteLibraryAssetFromPortfolioImage = async (imageId: string) => {
+    const confirmed = window.confirm(
+      "Delete this image from the media library globally? This will remove it from all portfolios and clear it as a cover image where used."
+    );
+    if (!confirmed) return;
+
+    setIsProcessing(true);
+    try {
+      const result = await api.deleteLibraryAssetFromPortfolioImage(imageId);
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Image deleted from library globally");
+        setSelectedPortfolioImageIds([]);
+        await fetchPortfolioDetails();
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteSelectedFromLibrary = async () => {
+    if (selectedPortfolioImageIds.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Delete ${selectedPortfolioImageIds.length} selected image${selectedPortfolioImageIds.length === 1 ? "" : "s"} from the media library globally? This removes them from all portfolios too.`
+    );
+    if (!confirmed) return;
+
+    setIsProcessing(true);
+    try {
+      const failedIds: string[] = [];
+
+      for (const imageId of selectedPortfolioImageIds) {
+        const result = await api.deleteLibraryAssetFromPortfolioImage(imageId);
+        if (result?.error) {
+          failedIds.push(imageId);
+        }
+      }
+
+      const deletedCount = selectedPortfolioImageIds.length - failedIds.length;
+      if (deletedCount > 0) {
+        toast.success(`Deleted ${deletedCount} image${deletedCount === 1 ? "" : "s"} from library globally`);
+      }
+
+      if (failedIds.length > 0) {
+        toast.error(`Failed to delete ${failedIds.length} image${failedIds.length === 1 ? "" : "s"} from library`);
       }
 
       setSelectedPortfolioImageIds((prev) => prev.filter((id) => failedIds.includes(id)));
@@ -538,10 +594,19 @@ const AdminPortfolio = () => {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={handleDeleteSelectedPortfolioImages}
+                    onClick={handleRemoveSelectedPortfolioImages}
                     disabled={selectedPortfolioImageIds.length === 0 || isProcessing}
                   >
-                    Delete Selected ({selectedPortfolioImageIds.length})
+                    Remove Selected ({selectedPortfolioImageIds.length})
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelectedFromLibrary}
+                    disabled={selectedPortfolioImageIds.length === 0 || isProcessing}
+                    className="bg-red-700 hover:bg-red-800"
+                  >
+                    Delete Selected from Library
                   </Button>
                 </div>
               }
@@ -564,15 +629,28 @@ const AdminPortfolio = () => {
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
                         <div className="flex gap-2">
                           <Button
+                            variant="secondary"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveImageFromPortfolio(img.id);
+                            }}
+                            className="h-10 w-10 bg-white/95 text-red-600 hover:bg-white border border-red-200 shadow-md"
+                            title="Remove from this portfolio"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </Button>
+                          <Button
                             variant="destructive"
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteImage(img.id);
+                              handleDeleteLibraryAssetFromPortfolioImage(img.id);
                             }}
-                            className="h-9 w-9"
+                            className="h-9 w-9 bg-red-700 hover:bg-red-800"
+                            title="Delete from library globally"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <DatabaseZap className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="secondary"

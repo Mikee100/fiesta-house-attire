@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MasonryImage from "@/components/site/MasonryImage";
 
 const GalleryPage = () => {
-  const { folderId } = useParams<{ folderId: string }>();
+  const { gallerySlug } = useParams<{ gallerySlug: string }>();
   const [images, setImages] = useState<api.AssetRecord[]>([]);
   const [folderName, setFolderName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -15,14 +15,18 @@ const GalleryPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [foldersData, assetsData] = await Promise.all([
-          api.fetchFolders(),
-          api.fetchAssets(folderId, 1, 100) // Fetch up to 100 images
-        ]);
+        if (!gallerySlug) {
+          setImages([]);
+          setFolderName("");
+          return;
+        }
 
-        if (foldersData) {
-          const folder = foldersData.find((f) => f.id === folderId);
-          if (folder) setFolderName(folder.name);
+        const assetsData = await api.fetchPublicGalleryAssetsBySlug(gallerySlug, 1, 100);
+
+        if (assetsData?.folder?.name) {
+          setFolderName(assetsData.folder.name);
+        } else {
+          setFolderName("");
         }
 
         if (assetsData && assetsData.assets) {
@@ -36,7 +40,7 @@ const GalleryPage = () => {
     };
 
     fetchData();
-  }, [folderId]);
+  }, [gallerySlug]);
 
   return (
     <Layout

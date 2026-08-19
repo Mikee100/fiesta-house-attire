@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Folder, ChevronRight, Plus, Images } from "lucide-react";
+import { Folder, ChevronRight, Plus, Images, Copy, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
 import AdminPage from "@/components/admin/AdminPage";
@@ -75,6 +75,59 @@ const AdminFolders = () => {
     await loadFolders();
   };
 
+  const handleToggleFolderVisibility = async (folder: api.FolderRecord) => {
+    const nextIsPublic = !(folder.is_public ?? true);
+    const result = await api.updateFolder(folder.id, { is_public: nextIsPublic });
+
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(nextIsPublic ? "Folder is now public" : "Folder is now private");
+    await loadFolders();
+  };
+
+  const normalizeSlugInput = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+  const handleUpdatePublicSlug = async (folder: api.FolderRecord) => {
+    const current = folder.public_slug || "";
+    const nextRaw = window.prompt("Set public gallery slug (letters, numbers, hyphens)", current);
+    if (nextRaw === null) return;
+
+    const nextSlug = normalizeSlugInput(nextRaw);
+    if (!nextSlug) {
+      toast.error("Slug cannot be empty");
+      return;
+    }
+
+    const result = await api.updateFolder(folder.id, { public_slug: nextSlug });
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(`Public URL updated to /gallery/${nextSlug}`);
+    await loadFolders();
+  };
+
+  const handleCopyPublicGalleryLink = async (folder: api.FolderRecord) => {
+    if (!folder.public_slug) {
+      toast.error("This folder has no public slug yet");
+      return;
+    }
+
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const url = `${origin}/gallery/${folder.public_slug}`;
+    await navigator.clipboard.writeText(url);
+    toast.success("Public gallery URL copied");
+  };
+
   return (
     <>
       <SEO title="Admin Folders" noindex nofollow />
@@ -145,14 +198,32 @@ const AdminFolders = () => {
                     </div>
                     <div className="border-t p-3 text-left">
                       <span className="block truncate text-xs font-medium">{folder.name}</span>
+                      <span className="mt-1 block truncate text-[10px] text-slate-500">/gallery/{folder.public_slug || "(not-set)"}</span>
+                      <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${folder.is_public === false ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                        {folder.is_public === false ? "Private" : "Public"}
+                      </span>
                     </div>
                   </button>
-                  <div className="border-t px-3 py-2">
+                  <div className="border-t px-3 py-2 space-y-2">
                     <Link to={`/admin/assets?folderId=${folder.id}`}>
                       <Button variant="outline" size="sm" className="w-full">
                         <Images className="mr-2 h-4 w-4" /> Open Media
                       </Button>
                     </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => handleToggleFolderVisibility(folder)}
+                    >
+                      {folder.is_public === false ? "Make Public" : "Make Private"}
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleUpdatePublicSlug(folder)}>
+                      <LinkIcon className="mr-2 h-4 w-4" /> Edit Gallery URL
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleCopyPublicGalleryLink(folder)}>
+                      <Copy className="mr-2 h-4 w-4" /> Copy Public Link
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -180,6 +251,21 @@ const AdminFolders = () => {
                         <p className="truncate text-xs text-slate-500">{getFolderPath(folder)}</p>
                       </div>
                       <div className="flex items-center gap-2">
+                        <span className="max-w-[210px] truncate rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-700">
+                          /gallery/{folder.public_slug || "(not-set)"}
+                        </span>
+                        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${folder.is_public === false ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                          {folder.is_public === false ? "Private" : "Public"}
+                        </span>
+                        <Button variant="outline" size="sm" onClick={() => handleUpdatePublicSlug(folder)}>
+                          <LinkIcon className="mr-2 h-4 w-4" /> Edit URL
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleCopyPublicGalleryLink(folder)}>
+                          <Copy className="mr-2 h-4 w-4" /> Copy Link
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleToggleFolderVisibility(folder)}>
+                          {folder.is_public === false ? "Make Public" : "Make Private"}
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => setCurrentFolderId(folder.parent_id ?? null)}>
                           View Parent
                         </Button>

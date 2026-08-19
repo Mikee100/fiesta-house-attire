@@ -26,6 +26,34 @@ async function migrate() {
     await pool.query('ALTER TABLE folders ADD COLUMN IF NOT EXISTS cover_image_url TEXT');
     console.log('✓ Successfully ensured cover_image_url exists on folders');
 
+    // 1b. Add public visibility controls for folders/assets
+    await pool.query('ALTER TABLE folders ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true');
+    await pool.query('ALTER TABLE folders ADD COLUMN IF NOT EXISTS public_slug TEXT');
+    await pool.query('ALTER TABLE assets ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true');
+    await pool.query('UPDATE folders SET is_public = true WHERE is_public IS NULL');
+    await pool.query('UPDATE assets SET is_public = true WHERE is_public IS NULL');
+    await pool.query(`
+      UPDATE folders
+      SET public_slug = regexp_replace(regexp_replace(lower(COALESCE(name, 'gallery')), '[^a-z0-9]+', '-', 'g'), '(^-|-$)', '', 'g')
+      WHERE public_slug IS NULL OR btrim(public_slug) = ''
+    `);
+    await pool.query(`
+      WITH ranked AS (
+        SELECT id, public_slug, ROW_NUMBER() OVER (PARTITION BY public_slug ORDER BY created_at ASC, id ASC) AS rn
+        FROM folders
+        WHERE public_slug IS NOT NULL
+      )
+      UPDATE folders f
+      SET public_slug = f.public_slug || '-' || (ranked.rn - 1)::text
+      FROM ranked
+      WHERE f.id = ranked.id
+        AND ranked.rn > 1
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_folders_is_public ON folders (is_public, name)');
+    await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_folders_public_slug_unique ON folders (public_slug) WHERE public_slug IS NOT NULL');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_assets_public_folder_created ON assets (is_public, folder_id, created_at DESC)');
+    console.log('✓ Ensured media visibility columns and indexes exist');
+
     // 2. Deduplicate portfolio_images
     console.log('Deduplicating portfolio_images...');
     await pool.query(`
