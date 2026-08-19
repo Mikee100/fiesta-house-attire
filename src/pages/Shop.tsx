@@ -43,7 +43,7 @@ const Shop = () => {
 
   return (
     <Layout
-      title="Shop & Gift Vouchers | Fiesta House Attire"
+      title="Shop & Gift Vouchers | Fiesta House Maternity"
       description="Purchase luxury maternity photography packages and gift vouchers. The perfect gift for expectant mothers in Nairobi."
     >
       <script type="application/ld+json">

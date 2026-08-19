@@ -871,7 +871,7 @@ export default function Videos() {
   return (
     <Layout
       title="Maternity Films Nairobi | Fiesta House Videos"
-      description="Watch cinematic maternity films by Fiesta House Attire. Luxury sessions in motion with elegant styling and intentional storytelling."
+      description="Watch cinematic maternity films by Fiesta House Maternity. Luxury sessions in motion with elegant styling and intentional storytelling."
       keywords="maternity videos nairobi, maternity films kenya, fiesta house videos"
     >
       <script type="application/ld+json">

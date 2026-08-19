@@ -48,9 +48,9 @@ const Contact = () => {
 
   return (
     <Layout
-      title="Contact & Booking | Fiesta House Attire Nairobi"
-      description="Book your luxury maternity photoshoot at Fiesta House Attire in Nairobi. Reach us for availability, package guidance, and personalized session planning."
-      keywords="contact fiesta house attire, book maternity photoshoot nairobi, maternity studio booking kenya"
+      title="Contact & Booking | Fiesta House Maternity Nairobi"
+      description="Book your luxury maternity photoshoot at Fiesta House Maternity in Nairobi. Reach us for availability, package guidance, and personalized session planning."
+      keywords="contact fiesta house maternity, book maternity photoshoot nairobi, maternity studio booking kenya"
     >
       <script type="application/ld+json">
         {JSON.stringify({
@@ -66,12 +66,12 @@ const Contact = () => {
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "ContactPage",
-          "name": "Contact & Booking - Fiesta House Attire",
-          "description": "Book a luxury maternity photography session at Fiesta House Attire in Nairobi.",
+          "name": "Contact & Booking - Fiesta House Maternity",
+          "description": "Book a luxury maternity photography session at Fiesta House Maternity in Nairobi.",
           "url": "https://www.fiestahousematernity.com/contact",
           "mainEntity": {
             "@type": "PhotographyBusiness",
-            "name": "Fiesta House Attire",
+            "name": "Fiesta House Maternity",
             "telephone": "+254720111928",
             "email": "info@fiestahouseattire.com",
             "address": {

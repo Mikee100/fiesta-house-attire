@@ -152,7 +152,7 @@ const Footer = () => {
               opacity: 0.6,
               marginBottom: "1rem"
             }}>
-              Fiesta House Attire owns the copyrights to all the images and has exclusive right to use, edit, print, reproduce, and distribute their images without permission.
+              Fiesta House Maternity owns the copyrights to all the images and has exclusive right to use, edit, print, reproduce, and distribute their images without permission.
             </p>
             <p style={{ fontSize: "0.86rem", opacity: 0.5 }}>
               info@fiestahouseattire.com · Diamond Plaza II, Nairobi
@@ -191,7 +191,7 @@ const Footer = () => {
             letterSpacing: "0.05em"
           }}
         >
-          <span>© 2026 FIESTA HOUSE ATTIRE. ALL RIGHTS RESERVED.</span>
+          <span>© 2026 FIESTA HOUSE MATERNITY. ALL RIGHTS RESERVED.</span>
           <span>LUXURY MATERNITY STUDIO</span>
         </div>
       </div>

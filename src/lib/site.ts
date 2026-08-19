@@ -1,7 +1,7 @@
 export const WHATSAPP_NUMBER = "254720111928";
 
 export const whatsappLink = (
-  message = "Hello Fiesta House Attire, I'd like to book a maternity session."
+  message = "Hello Fiesta House Maternity, I'd like to book a maternity session."
 ) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
 export const packages = [

@@ -9,7 +9,7 @@ const Cart = () => {
 
   return (
     <Layout
-      title="Your Cart | Fiesta House Attire"
+      title="Your Cart | Fiesta House Maternity"
       description="Review your selected photography packages and gift vouchers."
       noindex
       nofollow

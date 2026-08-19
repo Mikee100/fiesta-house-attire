@@ -13,7 +13,7 @@ interface SEOProps {
   nofollow?: boolean;
 }
 
-const SITE_NAME = 'Fiesta House Attire';
+const SITE_NAME = 'Fiesta House Maternity';
 const DEFAULT_OG_IMAGE = 'https://www.fiestahousematernity.com/og-image.jpg';
 const DEFAULT_OG_URL = 'https://www.fiestahousematernity.com';
 const BRAND_THEME_COLOR = '#330b25'; // --plum
@@ -37,7 +37,7 @@ const SEO: React.FC<SEOProps> = ({
       : `${title} | ${SITE_NAME}`
     : `${SITE_NAME} | Luxury Maternity Photography Nairobi`;
 
-  const defaultDescription = "Fiesta House Attire is Nairobi's premier luxury maternity studio. Exclusive designer gowns, professional makeup, and editorial photography in a private studio.";
+  const defaultDescription = "Fiesta House Maternity is Nairobi's premier luxury maternity studio. Exclusive designer gowns, professional makeup, and editorial photography in a private studio.";
   const metaDescription = description || defaultDescription;
   const defaultKeywords = "maternity photoshoot nairobi, luxury maternity photography, pregnancy photoshoot, nairobi maternity studio, designer maternity gowns, baby bump photoshoot kenya";
   const metaKeywords = keywords ? `${defaultKeywords}, ${keywords}` : defaultKeywords;
@@ -63,7 +63,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta property="og:image" content={ogImage} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content="Fiesta House Attire – Luxury Maternity Photography Nairobi" />
+      <meta property="og:image:alt" content="Fiesta House Maternity – Luxury Maternity Photography Nairobi" />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content="en_KE" />
 
@@ -73,7 +73,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={metaDescription} />
       <meta name="twitter:image" content={ogImage} />
-      <meta name="twitter:image:alt" content="Fiesta House Attire – Luxury Maternity Photography Nairobi" />
+      <meta name="twitter:image:alt" content="Fiesta House Maternity – Luxury Maternity Photography Nairobi" />
       <meta name="twitter:domain" content="fiestahousematernity.com" />
     </Helmet>
   );
