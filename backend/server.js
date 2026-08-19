@@ -2710,7 +2710,7 @@ async function sendOrderEmails(order, items) {
 
   // Send to Admin
   await transporter.sendMail({
-    from: '"Fiesta House Shop" <' + process.env.SMTP_USER + '>',
+    from: '"Fiesta House Shop Maternity" <' + process.env.SMTP_USER + '>',
     to: 'info@fiestahouseattire.com', // Admin email
     subject: `New Shop Order: ${order.customer_name}`,
     html: adminEmailContent
