@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
@@ -874,6 +874,16 @@ export default function Videos() {
       description="Watch cinematic maternity films by Fiesta House Attire. Luxury sessions in motion with elegant styling and intentional storytelling."
       keywords="maternity videos nairobi, maternity films kenya, fiesta house videos"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Videos & Films", "item": "https://www.fiestahousematernity.com/videos" }
+          ]
+        })}
+      </script>
       <style>{`
         .vp-fade { opacity:0; transform:translateY(24px); transition:opacity .8s ease,transform .8s ease; }
         .vp-in   { opacity:1 !important; transform:translateY(0) !important; }

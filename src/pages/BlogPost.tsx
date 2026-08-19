@@ -188,8 +188,47 @@ const BlogPostPage = () => {
     <Layout
       title={post.title}
       description={post.excerpt || `Read ${post.title} on Fiesta House Attire's blog.`}
-      ogImage={post.cover_image_url}
+      ogImage={post.cover_image_url || undefined}
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          "headline": post.title,
+          "description": post.excerpt || `Read ${post.title} on Fiesta House Attire's blog.`,
+          "image": post.cover_image_url ? [post.cover_image_url] : ["https://www.fiestahousematernity.com/og-image.jpg"],
+          "datePublished": post.published_at || post.created_at,
+          "dateModified": post.updated_at || post.published_at || post.created_at,
+          "author": {
+            "@type": "Organization",
+            "name": post.author || "Fiesta House Attire",
+            "url": "https://www.fiestahousematernity.com"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "Fiesta House Attire",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://www.fiestahousematernity.com/og-image.jpg"
+            }
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": `https://www.fiestahousematernity.com/blog/${post.slug}`
+          }
+        })}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://www.fiestahousematernity.com/blog" },
+            { "@type": "ListItem", "position": 3, "name": post.title, "item": `https://www.fiestahousematernity.com/blog/${post.slug}` }
+          ]
+        })}
+      </script>
       <div className="fixed left-0 top-0 z-[70] h-0.5 w-full pointer-events-none">
         <div
           className="h-full bg-gradient-to-r from-[var(--sky-blue)] to-[var(--magenta)] transition-[width] duration-150"

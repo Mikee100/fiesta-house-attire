@@ -46,6 +46,16 @@ const Shop = () => {
       title="Shop & Gift Vouchers | Fiesta House Attire"
       description="Purchase luxury maternity photography packages and gift vouchers. The perfect gift for expectant mothers in Nairobi."
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Shop", "item": "https://www.fiestahousematernity.com/shop" }
+          ]
+        })}
+      </script>
       {/* Hero Section */}
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
