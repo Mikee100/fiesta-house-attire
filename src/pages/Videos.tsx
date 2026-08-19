@@ -132,11 +132,15 @@ const fetchVimeoThumbnail = (vimeoId: string): Promise<string | null> => {
   }
 
   const promise = fetch(
-    `https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}&width=640`,
+    `https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}&width=1280`,
   )
     .then((r) => (r.ok ? r.json() : null))
     .then((data: { thumbnail_url?: string } | null) => {
-      const url = data?.thumbnail_url ?? null;
+      let url = data?.thumbnail_url ?? null;
+      if (url) {
+        // Vimeo oEmbed may still return a 640 variant; promote to 1280 when available.
+        url = url.replace(/_(640|720|960)(\.[a-z]+)(\?.*)?$/i, '_1280$2$3');
+      }
       vimeoThumbCache.set(vimeoId, url);
       vimeoThumbInflight.delete(vimeoId);
       return url;
@@ -154,6 +158,7 @@ const fetchVimeoThumbnail = (vimeoId: string): Promise<string | null> => {
 const getYouTubeThumbnailCandidates = (videoId: string) => [
   `https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp`,
   `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+  `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
   `https://i.ytimg.com/vi_webp/${videoId}/sddefault.webp`,
   `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`,
   `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
