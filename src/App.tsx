@@ -15,6 +15,7 @@ const PortfolioCategory = lazy(() => import("./pages/PortfolioCategory.tsx"));
 const Experience = lazy(() => import("./pages/Experience.tsx"));
 const Pricing = lazy(() => import("./pages/Pricing.tsx"));
 const Contact = lazy(() => import("./pages/Contact.tsx"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy.tsx"));
 const About = lazy(() => import("./pages/About.tsx"));
 const Blog = lazy(() => import("./pages/Blog.tsx"));
 const BlogPostPage = lazy(() => import("./pages/BlogPost.tsx"));
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/shop" element={<Shop />} />

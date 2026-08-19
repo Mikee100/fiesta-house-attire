@@ -17,6 +17,7 @@ const prerenderRoutes = [
   "/pricing",
   "/blog",
   "/contact",
+  "/privacy-policy",
   "/experience",
   "/maternity-gowns",
   "/videos",
