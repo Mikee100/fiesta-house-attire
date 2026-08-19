@@ -97,6 +97,27 @@ const PortfolioCategory = () => {
       description={`View the ${portfolio.title} collection at Fiesta House Attire. Luxury maternity photography in Nairobi featuring our signature aesthetics.`}
       ogImage={portfolio.images[0]}
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Portfolio", "item": "https://www.fiestahousematernity.com/portfolio" },
+            { "@type": "ListItem", "position": 3, "name": portfolio.title, "item": `https://www.fiestahousematernity.com/portfolio/${portfolio.slug || id}` }
+          ]
+        })}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ImageGallery",
+          "name": `${portfolio.title} - Fiesta House Attire`,
+          "description": `Luxury maternity photography collection: ${portfolio.title}`,
+          "url": `https://www.fiestahousematernity.com/portfolio/${portfolio.slug || id}`,
+          "image": portfolio.images
+        })}
+      </script>
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "6rem" }}>

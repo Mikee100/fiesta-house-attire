@@ -52,6 +52,37 @@ const Contact = () => {
       description="Book your luxury maternity photoshoot at Fiesta House Attire in Nairobi. Reach us for availability, package guidance, and personalized session planning."
       keywords="contact fiesta house attire, book maternity photoshoot nairobi, maternity studio booking kenya"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Contact & Booking", "item": "https://www.fiestahousematernity.com/contact" }
+          ]
+        })}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          "name": "Contact & Booking - Fiesta House Attire",
+          "description": "Book a luxury maternity photography session at Fiesta House Attire in Nairobi.",
+          "url": "https://www.fiestahousematernity.com/contact",
+          "mainEntity": {
+            "@type": "PhotographyBusiness",
+            "name": "Fiesta House Attire",
+            "telephone": "+254720111928",
+            "email": "info@fiestahouseattire.com",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",
+              "addressLocality": "Nairobi",
+              "addressCountry": "KE"
+            }
+          }
+        })}
+      </script>
       {/* Brand color hero bar */}
       <div
         style={{

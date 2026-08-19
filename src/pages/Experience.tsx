@@ -195,6 +195,16 @@ const Experience = () => {
       description="Discover the Fiesta House maternity experience in Nairobi, from gown selection and professional makeup to guided posing and heirloom image delivery."
       keywords="maternity photoshoot experience nairobi, luxury maternity studio process, pregnancy session journey"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "The Experience", "item": "https://www.fiestahousematernity.com/experience" }
+          ]
+        })}
+      </script>
       {/* Walkthrough Section */}
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
