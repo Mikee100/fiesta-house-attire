@@ -53,6 +53,8 @@ const initDb = async () => {
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         name TEXT NOT NULL,
         parent_id UUID REFERENCES folders(id) ON DELETE CASCADE,
+        is_public BOOLEAN DEFAULT true,
+        public_slug TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
@@ -64,6 +66,7 @@ const initDb = async () => {
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         url TEXT NOT NULL,
         folder_id UUID REFERENCES folders(id) ON DELETE SET NULL,
+        is_public BOOLEAN DEFAULT true,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);

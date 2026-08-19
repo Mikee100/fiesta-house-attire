@@ -42,6 +42,8 @@ export interface FolderRecord {
   name: string;
   parent_id?: string | null;
   cover_image_url?: string | null;
+  is_public?: boolean;
+  public_slug?: string | null;
 }
 
 export interface AssetRecord {
@@ -53,6 +55,21 @@ export interface PaginatedAssets {
   assets: AssetRecord[];
   totalPages: number;
 }
+
+export interface PublicGalleryAssetsResponse extends PaginatedAssets {
+  totalCount?: number;
+  currentPage?: number;
+  folder?: FolderRecord | null;
+}
+
+const normalizeGallerySlug = (value: string): string => {
+  if (!value) return '';
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
 
 export const fetchPortfolios = async (): Promise<PortfolioRecord[] | null> => {
   try {
@@ -143,11 +160,31 @@ export const deleteImage = async (imageId: string) => {
   return await res.json();
 };
 
+export const removeImageFromPortfolio = async (imageId: string) => {
+  const res = await authenticatedFetch(`${API_URL}/portfolio-images/${imageId}`, {
+    method: 'DELETE'
+  });
+  return await res.json();
+};
+
+export const deleteLibraryAssetFromPortfolioImage = async (imageId: string) => {
+  const res = await authenticatedFetch(`${API_URL}/portfolio-images/${imageId}/library-asset`, {
+    method: 'DELETE'
+  });
+  return await res.json();
+};
+
 // --- Media Library ---
 
 export const fetchFolders = async (): Promise<FolderRecord[]> => {
-  const res = await fetch(`${API_URL}/folders`, { cache: 'no-store' });
+  const res = await authenticatedFetch(`${API_URL}/folders`, { cache: 'no-store' });
   return await res.json();
+};
+
+export const fetchPublicFolders = async (): Promise<FolderRecord[]> => {
+  const res = await fetch(`${API_URL}/public/folders`, { cache: 'no-store' });
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
 };
 
 export const createFolder = async (name: string, parentId?: string) => {
@@ -159,7 +196,7 @@ export const createFolder = async (name: string, parentId?: string) => {
   return await res.json();
 };
 
-export const updateFolder = async (id: string, data: { cover_image_url?: string; name?: string }) => {
+export const updateFolder = async (id: string, data: { cover_image_url?: string; name?: string; is_public?: boolean; public_slug?: string | null }) => {
   const res = await authenticatedFetch(`${API_URL}/folders/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -173,8 +210,52 @@ export const fetchAssets = async (folderId?: string, page: number = 1, limit: nu
   if (folderId) url += `&folder_id=${folderId}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
   
+  const res = await authenticatedFetch(url, { cache: 'no-store' });
+  return await res.json();
+};
+
+export const fetchPublicAssets = async (folderId?: string, page: number = 1, limit: number = 20): Promise<PaginatedAssets> => {
+  let url = `${API_URL}/public/assets?page=${page}&limit=${limit}`;
+  if (folderId) url += `&folder_id=${folderId}`;
+
   const res = await fetch(url, { cache: 'no-store' });
   return await res.json();
+};
+
+export const fetchPublicGalleryAssetsBySlug = async (gallerySlug: string, page: number = 1, limit: number = 100): Promise<PublicGalleryAssetsResponse> => {
+  const normalizedSlug = normalizeGallerySlug(gallerySlug);
+  const safeSlug = encodeURIComponent(normalizedSlug);
+  const url = `${API_URL}/public/gallery/${safeSlug}/assets?page=${page}&limit=${limit}`;
+  const res = await fetch(url, { cache: 'no-store' });
+
+  if (res.ok) {
+    return await res.json();
+  }
+
+  // Backward compatibility: if backend is still on ID-based public APIs,
+  // resolve the slug from folder name/public_slug client-side and fetch by folder ID.
+  try {
+    const folders = await fetchPublicFolders();
+    const matchedFolder = folders.find((folder) => {
+      const fromPublicSlug = normalizeGallerySlug(folder.public_slug || '');
+      const fromName = normalizeGallerySlug(folder.name || '');
+      return fromPublicSlug === normalizedSlug || fromName === normalizedSlug;
+    });
+
+    if (!matchedFolder) {
+      return { assets: [], totalPages: 1, totalCount: 0, currentPage: 1, folder: null };
+    }
+
+    const assetsData = await fetchPublicAssets(matchedFolder.id, page, limit);
+    return {
+      ...assetsData,
+      folder: matchedFolder,
+      totalCount: assetsData.assets?.length || 0,
+      currentPage: page,
+    };
+  } catch {
+    return { assets: [], totalPages: 1, totalCount: 0, currentPage: 1, folder: null };
+  }
 };
 
 export const addAssetsBulk = async (urls: string[], folderId?: string) => {

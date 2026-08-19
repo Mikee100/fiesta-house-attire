@@ -36,7 +36,7 @@ const MaternityGowns = () => {
       setLoading(true);
       try {
         const initialPageSize = 24;
-        const firstPage = await api.fetchAssets(gownsFolderId, 1, initialPageSize);
+        const firstPage = await api.fetchPublicAssets(gownsFolderId, 1, initialPageSize);
         const firstAssets = firstPage?.assets || [];
 
         if (firstAssets.length > 0) {
@@ -49,7 +49,7 @@ const MaternityGowns = () => {
         const totalPages = firstPage?.totalPages || 1;
         if (totalPages > 1) {
           for (let page = 2; page <= totalPages; page++) {
-            const nextPage = await api.fetchAssets(gownsFolderId, page, initialPageSize);
+            const nextPage = await api.fetchPublicAssets(gownsFolderId, page, initialPageSize);
             const nextAssets = nextPage?.assets || [];
             if (nextAssets.length > 0) {
               setImages((prev) => {
