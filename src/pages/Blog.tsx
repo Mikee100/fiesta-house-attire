@@ -79,7 +79,18 @@ const Blog = () => {
       description="Expert pregnancy photoshoot tips, styling advice, and professional maternity photography guidance from Nairobi's premier luxury studio."
       keywords="maternity photography blog, pregnancy photoshoot tips, styling for maternity shoot, nairobi maternity photography guide"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://www.fiestahousematernity.com/blog" }
+          ]
+        })}
+      </script>
       <main className="flex-grow pt-24 pb-24">
+
         <div className="container max-w-7xl mx-auto px-4 sm:px-6">
           
           {/* Hero Header */}

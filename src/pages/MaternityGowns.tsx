@@ -86,7 +86,18 @@ const MaternityGowns = () => {
       description="Explore our exclusive collection of luxury designer maternity gowns in Nairobi. From silk trains to delicate lace, find the perfect gown for your photoshoot at Fiesta House Attire."
       keywords="maternity gowns nairobi, designer pregnancy dresses kenya, luxury maternity shoot outfits, maternity photoshoot clothing, fiesta house gowns"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Maternity Gowns", "item": "https://www.fiestahousematernity.com/maternity-gowns" }
+          ]
+        })}
+      </script>
       {/* Hero Section */}
+
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 11vw, 9rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center", marginBottom: "8rem" }}>
