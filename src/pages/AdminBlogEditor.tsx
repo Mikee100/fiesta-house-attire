@@ -16,6 +16,93 @@ import SEO from "@/components/site/SEO";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
+const BLOCK_HTML_TAG_REGEX = /<(p|h1|h2|h3|h4|h5|h6|ul|ol|li|blockquote|img|pre|table|br)\b/i;
+const MARKDOWN_HEADING_REGEX = /^(#{1,6})\s+(.+)$/;
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const normalizeHeadingText = (value: string): string => {
+  let next = value.trim();
+  const boldWrapped = next.match(/^\*\*(.+)\*\*$/);
+  if (boldWrapped) {
+    next = boldWrapped[1].trim();
+  }
+  return next;
+};
+
+const convertPlainTextToHtml = (rawValue: string): string => {
+  const normalized = rawValue.replace(/\r\n?/g, "\n").trim();
+  if (!normalized) return "";
+
+  const lines = normalized.split("\n");
+  const blocks: string[] = [];
+  let paragraphBuffer: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraphBuffer.length === 0) return;
+    const paragraphText = paragraphBuffer.join(" ").replace(/\s+/g, " ").trim();
+    if (paragraphText) {
+      blocks.push(`<p>${escapeHtml(paragraphText)}</p>`);
+    }
+    paragraphBuffer = [];
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      continue;
+    }
+
+    const headingMatch = trimmed.match(MARKDOWN_HEADING_REGEX);
+    if (headingMatch) {
+      flushParagraph();
+      const level = Math.min(6, Math.max(1, headingMatch[1].length));
+      const headingText = normalizeHeadingText(headingMatch[2]);
+      if (headingText) {
+        blocks.push(`<h${level}>${escapeHtml(headingText)}</h${level}>`);
+      }
+      continue;
+    }
+
+    const boldOnlyLine = trimmed.match(/^\*\*(.+)\*\*$/);
+    if (boldOnlyLine) {
+      flushParagraph();
+      const headingText = normalizeHeadingText(boldOnlyLine[1]);
+      if (headingText) {
+        blocks.push(`<h3>${escapeHtml(headingText)}</h3>`);
+      }
+      continue;
+    }
+
+    paragraphBuffer.push(trimmed);
+  }
+
+  flushParagraph();
+  return blocks.join("\n");
+};
+
+const normalizeEditorContentForSave = (value: string): string => {
+  if (!value || typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  if (BLOCK_HTML_TAG_REGEX.test(trimmed)) {
+    return trimmed;
+  }
+
+  // If content appears to be plain text/markdown-like, convert it into HTML blocks.
+  return convertPlainTextToHtml(trimmed);
+};
+
+const hasHeadingTag = (value: string): boolean => /<h[1-6]\b/i.test(value);
+
 const AdminBlogEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -115,7 +202,12 @@ const AdminBlogEditor = () => {
     }
 
     setSaving(true);
-    const payload = { ...formData, status };
+    const normalizedContent = normalizeEditorContentForSave(formData.content || "");
+    const payload = { ...formData, content: normalizedContent, status };
+
+    if (status === "published" && normalizedContent && !hasHeadingTag(normalizedContent)) {
+      toast.warning("No headings detected in article body. Add section headings for better readability and SEO.");
+    }
 
     try {
       if (isEditing) {
