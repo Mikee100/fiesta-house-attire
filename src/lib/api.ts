@@ -448,6 +448,15 @@ export interface CreateShopOrderPayload {
   total_amount: number;
 }
 
+export interface ContactEnquiryPayload {
+  full_name: string;
+  phone: string;
+  email: string;
+  preferred_date: string;
+  package_interest: string;
+  message?: string;
+}
+
 export type ShopPackagesSource = 'live' | 'cache' | 'static' | 'empty';
 
 export interface ShopPackagesResult {
@@ -585,6 +594,15 @@ export const updateAdminShopPackage = async (
 
 export const createShopOrder = async (payload: CreateShopOrderPayload) => {
   const res = await fetch(`${API_URL}/shop/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+};
+
+export const submitContactEnquiry = async (payload: ContactEnquiryPayload) => {
+  const res = await fetch(`${API_URL}/contact-enquiries`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
