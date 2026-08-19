@@ -63,6 +63,16 @@ const Pricing = () => {
       description="Explore luxury maternity photoshoot pricing in Nairobi. 7 exclusive packages including designer gowns, professional makeup, and stunning studio photography at Fiesta House Attire."
       keywords="maternity photoshoot nairobi, pregnancy photography pricing, luxury maternity shoot, baby bump photoshoot nairobi, fiesta house attire pricing"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Pricing & Packages", "item": "https://www.fiestahousematernity.com/pricing" }
+          ]
+        })}
+      </script>
 
       {/* Hero Section */}
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>

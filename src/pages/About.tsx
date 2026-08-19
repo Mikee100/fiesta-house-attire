@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 
@@ -102,6 +102,16 @@ export default function About() {
       description="Learn about Fiesta House Attire, Nairobi's maternity studio where motherhood meets intentional artistry."
       keywords="about fiesta house, maternity photography nairobi, pregnancy photoshoot studio kenya"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "About", "item": "https://www.fiestahousematernity.com/about" }
+          ]
+        })}
+      </script>
       <style>{`
         .about-fade {
           opacity: 0;

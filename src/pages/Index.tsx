@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import { fetchPortfolios, fetchPublicAssets, fetchPublicFolders, fetchRecentBlogPosts, BlogPost } from "@/lib/api";
@@ -118,23 +118,35 @@ const Index = () => {
   return (
     <>
       <Layout
-        title="Luxury Maternity Photography Nairobi | The Sanctuary"
-        description="Nairobi's premier luxury maternity studio. Experience world-class maternity photography with designer gowns, professional makeup, and iconic studio sets at Fiesta House Attire."
+        title="Luxury Maternity Photography Nairobi | Fiesta House Attire"
+        description="Nairobi's premier luxury maternity studio. Designer gowns, professional makeup, and editorial photography at Diamond Plaza, Parklands."
         keywords="luxury maternity photography nairobi, best maternity photographer kenya, maternity gowns nairobi, pregnancy photoshoot nairobi, baby bump photoshoot nairobi"
       >
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            "name": "Fiesta House Maternity",
-            "image": "https://www.fiestahousematernity.com/og-image.jpg",
+            "@type": "PhotographyBusiness",
+            "name": "Fiesta House Attire",
+            "alternateName": "Fiesta House Maternity",
+            "description": "Nairobi's premier luxury maternity photography studio offering exclusive designer gowns, professional makeup, and editorial portraits at Diamond Plaza II, Parklands.",
+            "image": [
+              "https://www.fiestahousematernity.com/og-image.jpg",
+              "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg",
+              "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg"
+            ],
+            "logo": "https://www.fiestahousematernity.com/og-image.jpg",
             "@id": "https://www.fiestahousematernity.com",
             "url": "https://www.fiestahousematernity.com",
             "telephone": "+254720111928",
+            "email": "info@fiestahouseattire.com",
+            "priceRange": "KES 15,000 – KES 80,000",
+            "currenciesAccepted": "KES",
+            "paymentAccepted": "Cash, M-Pesa, Bank Transfer",
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",
               "addressLocality": "Nairobi",
+              "addressRegion": "Nairobi County",
               "addressCountry": "KE"
             },
             "geo": {
@@ -142,6 +154,7 @@ const Index = () => {
               "latitude": -1.2612,
               "longitude": 36.8228
             },
+            "hasMap": "https://maps.google.com/?q=Diamond+Plaza+II+Parklands+Nairobi",
             "openingHoursSpecification": {
               "@type": "OpeningHoursSpecification",
               "dayOfWeek": [
@@ -157,10 +170,44 @@ const Index = () => {
             },
             "sameAs": [
               "https://www.instagram.com/fiestahousematernity/",
-              "https://www.facebook.com/fiestahousematernity"
+              "https://www.facebook.com/fiestahousematernity",
+              "https://www.youtube.com/@fiestahousematernity",
+              "https://www.tiktok.com/@fiestahousematernity",
+              "https://www.pinterest.com/fiestahousematernity"
+            ],
+            "areaServed": {
+              "@type": "City",
+              "name": "Nairobi",
+              "sameAs": "https://en.wikipedia.org/wiki/Nairobi"
+            },
+            "knowsAbout": [
+              "Maternity Photography",
+              "Pregnancy Photoshoot",
+              "Luxury Studio Photography",
+              "Maternity Gowns",
+              "Baby Bump Photography"
             ]
           })}
         </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Fiesta House Attire",
+            "url": "https://www.fiestahousematernity.com",
+            "description": "Nairobi's premier luxury maternity photography studio.",
+            "inLanguage": "en-KE",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://www.fiestahousematernity.com/blog?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
+
         {/* Hero Section */}
         <section className="hero" style={{
           height: "100vh",

@@ -2572,21 +2572,45 @@ async function sendOrderEmails(order, items) {
 // The public site URL comes from one env var so a future domain change is a
 // single setting: set SITE_URL in Vercel and everything follows.
 
-const SITEMAP_SITE_URL = (process.env.SITE_URL || 'https://www.fiestahousematernity.com').replace(/\/$/, '');
+const normalizeSiteUrl = (value) => {
+  const fallback = 'https://www.fiestahousematernity.com';
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return fallback;
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try {
+    return new URL(withProtocol).origin;
+  } catch {
+    return fallback;
+  }
+};
+
+const SITEMAP_SITE_URL = normalizeSiteUrl(process.env.SITE_URL);
 const MATERNITY_GOWNS_FOLDER_ID = 'b8b100e9-81ce-4778-bf57-0adee0b46fc0';
 const IMAGE_SITEMAP_FALLBACK_IMAGE = `${SITEMAP_SITE_URL}/og-image.jpg`;
 
 const STATIC_ROUTES = [
-  { path: '/', priority: '1.0' },
-  { path: '/portfolio', priority: '0.8' },
-  { path: '/maternity-gowns', priority: '0.8' },
-  { path: '/pricing', priority: '0.8' },
-  { path: '/blog', priority: '0.8' },
-  { path: '/videos', priority: '0.8' },
-  { path: '/experience', priority: '0.7' },
-  { path: '/about', priority: '0.7' },
-  { path: '/contact', priority: '0.7' },
-  { path: '/shop', priority: '0.6' },
+  { path: '/', priority: '1.0', changefreq: 'weekly' },
+  { path: '/portfolio', priority: '0.8', changefreq: 'weekly' },
+  { path: '/maternity-gowns', priority: '0.8', changefreq: 'weekly' },
+  { path: '/pricing', priority: '0.8', changefreq: 'monthly' },
+  { path: '/blog', priority: '0.8', changefreq: 'weekly' },
+  { path: '/videos', priority: '0.8', changefreq: 'weekly' },
+  { path: '/experience', priority: '0.7', changefreq: 'monthly' },
+  { path: '/about', priority: '0.7', changefreq: 'monthly' },
+  { path: '/contact', priority: '0.7', changefreq: 'monthly' },
+  { path: '/shop', priority: '0.6', changefreq: 'weekly' },
+];
+
+// Known static images always seeded into the image sitemap so it is never empty.
+// These are hardcoded public URLs that exist in Supabase storage.
+const STATIC_IMAGE_SEEDS = [
+  { page: '/', url: `${SITEMAP_SITE_URL}/og-image.jpg` },
+  { page: '/maternity-gowns', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg' },
+  { page: '/', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg' },
+  { page: '/', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg' },
+  { page: '/portfolio', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg' },
+  { page: '/portfolio', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg' },
+  { page: '/portfolio', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887596251_IMG_0053-1365x2048.jpg' },
 ];
 
 const xmlEscape = (s) =>
@@ -2608,7 +2632,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
     for (const r of STATIC_ROUTES) {
       urls.push(
-        `  <url>\n    <loc>${SITEMAP_SITE_URL}${r.path === '/' ? '/' : r.path}</loc>\n    <lastmod>${today}</lastmod>\n    <priority>${r.priority}</priority>\n  </url>`
+        `  <url>\n    <loc>${SITEMAP_SITE_URL}${r.path === '/' ? '/' : r.path}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${r.changefreq}</changefreq>\n    <priority>${r.priority}</priority>\n  </url>`
       );
     }
 
@@ -2622,13 +2646,13 @@ app.get('/sitemap.xml', async (req, res) => {
 
     for (const p of portfolios.rows) {
       urls.push(
-        `  <url>\n    <loc>${SITEMAP_SITE_URL}/portfolio/${xmlEscape(p.slug)}</loc>\n    <lastmod>${isoDate(p.lastmod)}</lastmod>\n    <priority>0.7</priority>\n  </url>`
+        `  <url>\n    <loc>${SITEMAP_SITE_URL}/portfolio/${xmlEscape(p.slug)}</loc>\n    <lastmod>${isoDate(p.lastmod)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>`
       );
     }
 
     for (const p of posts.rows) {
       urls.push(
-        `  <url>\n    <loc>${SITEMAP_SITE_URL}/blog/${xmlEscape(p.slug)}</loc>\n    <lastmod>${isoDate(p.lastmod)}</lastmod>\n    <priority>0.6</priority>\n  </url>`
+        `  <url>\n    <loc>${SITEMAP_SITE_URL}/blog/${xmlEscape(p.slug)}</loc>\n    <lastmod>${isoDate(p.lastmod)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>`
       );
     }
 
@@ -2644,7 +2668,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
 app.get('/image-sitemap.xml', async (req, res) => {
   try {
-    const [portfolioImages, portfolioCovers, blogCovers, gownAssets] = await Promise.all([
+    const [portfolioImages, portfolioCovers, blogCovers, gownAssets, publicGalleryAssets, allPublicAssets] = await Promise.all([
       pool.query(
         `SELECT p.slug, pi.url
          FROM portfolio_images pi
@@ -2670,6 +2694,28 @@ app.get('/image-sitemap.xml', async (req, res) => {
          ORDER BY created_at DESC`,
         [MATERNITY_GOWNS_FOLDER_ID]
       ),
+      pool.query(
+        `SELECT f.public_slug AS slug, a.url
+         FROM assets a
+         JOIN folders f ON f.id = a.folder_id
+         WHERE a.url IS NOT NULL
+           AND TRIM(a.url) <> ''
+           AND f.public_slug IS NOT NULL
+           AND TRIM(f.public_slug) <> ''
+           AND COALESCE(f.is_public, TRUE) = TRUE
+           AND COALESCE(a.is_public, TRUE) = TRUE
+         ORDER BY a.created_at DESC`
+      ),
+      // Broad fallback: grab any publicly accessible asset URLs
+      pool.query(
+        `SELECT a.url
+         FROM assets a
+         WHERE a.url IS NOT NULL
+           AND TRIM(a.url) <> ''
+           AND COALESCE(a.is_public, TRUE) = TRUE
+         ORDER BY a.created_at DESC
+         LIMIT 200`
+      ),
     ]);
 
     const byPage = new Map();
@@ -2681,14 +2727,22 @@ app.get('/image-sitemap.xml', async (req, res) => {
       byPage.get(pagePath).add(trimmed);
     };
 
+    // Always seed known-good static images so the sitemap is never empty
+    for (const seed of STATIC_IMAGE_SEEDS) {
+      addImage(seed.page, seed.url);
+    }
+
     for (const row of portfolioImages.rows) {
       if (!row.slug) continue;
       addImage(`/portfolio/${row.slug}`, row.url);
+      // Also associate portfolio images with the main portfolio listing page
+      addImage('/portfolio', row.url);
     }
 
     for (const row of portfolioCovers.rows) {
       if (!row.slug) continue;
       addImage(`/portfolio/${row.slug}`, row.url);
+      addImage('/portfolio', row.url);
     }
 
     for (const row of blogCovers.rows) {
@@ -2700,9 +2754,21 @@ app.get('/image-sitemap.xml', async (req, res) => {
       addImage('/maternity-gowns', row.url);
     }
 
-    // Search Console rejects an image sitemap with zero <url> entries.
-    if (byPage.size === 0) {
-      addImage('/', IMAGE_SITEMAP_FALLBACK_IMAGE);
+    for (const row of publicGalleryAssets.rows) {
+      if (!row.slug) continue;
+      addImage(`/gallery/${row.slug}`, row.url);
+    }
+
+    // Broad fallback: if portfolio/gown queries returned nothing, spread public assets
+    // across homepage and portfolio so crawlers still find real photography content
+    if (allPublicAssets.rows.length > 0) {
+      const portfolioHasImages = [...byPage.keys()].some(k => k.startsWith('/portfolio'));
+      if (!portfolioHasImages) {
+        allPublicAssets.rows.forEach((row, idx) => {
+          // Alternate between / and /portfolio so images are discoverable
+          addImage(idx % 2 === 0 ? '/' : '/portfolio', row.url);
+        });
+      }
     }
 
     const urls = [];
