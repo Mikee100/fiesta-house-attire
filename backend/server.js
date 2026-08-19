@@ -10,7 +10,30 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
-const sanitizeHtml = require('sanitize-html');
+const sanitizeHtmlModule = require('sanitize-html');
+
+let hasWarnedAboutSanitizeHtmlFallback = false;
+const sanitizeHtml = (...args) => {
+  const candidate =
+    typeof sanitizeHtmlModule === 'function'
+      ? sanitizeHtmlModule
+      : (sanitizeHtmlModule && typeof sanitizeHtmlModule.default === 'function'
+        ? sanitizeHtmlModule.default
+        : null);
+
+  if (candidate) {
+    return candidate(...args);
+  }
+
+  if (!hasWarnedAboutSanitizeHtmlFallback) {
+    hasWarnedAboutSanitizeHtmlFallback = true;
+    console.error('sanitize-html module did not expose a callable export; using strip-tag fallback');
+  }
+
+  const input = args[0];
+  if (typeof input !== 'string') return '';
+  return input.replace(/<[^>]*>/g, '');
+};
 
 const app = express();
 const port = process.env.PORT || 5000;
