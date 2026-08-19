@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Layout from "@/components/site/Layout";
 
 const heroImg = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg";
@@ -9,7 +10,7 @@ const expImg2 = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/publ
 
 const stats = [
   { num: "500", suffix: "+", label: "Sessions Photographed" },
-  { num: "5",   suffix: "â˜…", label: "Client Satisfaction" },
+  { num: "5",   suffix: "+", label: "Client Satisfaction" },
   { num: "6",   suffix: "+", label: "Years in Nairobi" },
 ];
 
@@ -575,12 +576,13 @@ export default function About() {
 
   {/* Nav arrows */}
   <div style={{ display: "flex", gap: "8px", marginTop: "2rem", justifyContent: "flex-end" }}>
-    {["â†", "â†’"].map((arrow, i) => (
+    {[0, 1].map((i) => (
       <button key={i} onClick={() => setActiveStep(i === 0 ? (activeStep + 3) % 4 : (activeStep + 1) % 4)}
-        style={{ width: "36px", height: "36px", borderRadius: "50%", border: "0.5px solid rgba(44,44,42,0.2)", background: "transparent", cursor: "pointer", fontSize: "16px", color: "var(--muted)", transition: "all 0.2s" }}
+        style={{ width: "36px", height: "36px", borderRadius: "50%", border: "0.5px solid rgba(44,44,42,0.2)", background: "transparent", cursor: "pointer", color: "var(--muted)", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 }}
         onMouseEnter={e => { e.currentTarget.style.background = "var(--magenta)"; e.currentTarget.style.color = "white"; e.currentTarget.style.borderColor = "var(--magenta)"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.borderColor = "rgba(44,44,42,0.2)"; }}
-      >{arrow}</button>
+        aria-label={i === 0 ? "Previous step" : "Next step"}
+      >{i === 0 ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}</button>
     ))}
   </div>
 </section>
