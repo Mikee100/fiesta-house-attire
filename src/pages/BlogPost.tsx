@@ -28,6 +28,53 @@ const BlogPostPage = () => {
     return textOnly.length > 0;
   };
 
+  const hasBlockHtml = (value: string) => /<(p|h1|h2|h3|h4|h5|h6|ul|ol|li|blockquote|img|pre|table|br)\b/i.test(value);
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  const normalizeBodyHtml = (value?: string | null): string => {
+    if (!value || typeof value !== "string") return "";
+
+    const normalized = value.replace(/\r\n?/g, "\n").trim();
+    if (!normalized) return "";
+    if (hasBlockHtml(normalized)) return normalized;
+
+    let paragraphBlocks = normalized
+      .split(/\n\s*\n+/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean);
+
+    // Legacy migrated posts may arrive as one giant text block with no blank lines.
+    // In that case, split by sentence boundaries and group sentences into paragraphs.
+    if (paragraphBlocks.length <= 1) {
+      const sentenceChunks = normalized
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(/(?<=[.!?])\s+(?=[A-Z0-9"'])/)
+        .map((chunk) => chunk.trim())
+        .filter(Boolean);
+
+      if (sentenceChunks.length > 3) {
+        const grouped: string[] = [];
+        const sentencesPerParagraph = 2;
+        for (let i = 0; i < sentenceChunks.length; i += sentencesPerParagraph) {
+          grouped.push(sentenceChunks.slice(i, i + sentencesPerParagraph).join(" "));
+        }
+        paragraphBlocks = grouped;
+      }
+    }
+
+    const paragraphs = paragraphBlocks.map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`);
+
+    return paragraphs.join("\n");
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
     if (slug) fetchData(slug);
@@ -75,6 +122,8 @@ const BlogPostPage = () => {
     const wordCount = plainText ? plainText.split(" ").length : 0;
     return Math.max(1, Math.ceil(wordCount / 200));
   }, [post?.excerpt, post?.content]);
+
+  const normalizedBodyHtml = useMemo(() => normalizeBodyHtml(post?.content), [post?.content]);
 
   const fetchData = async (postSlug: string) => {
     setLoading(true);
@@ -298,14 +347,14 @@ const BlogPostPage = () => {
 
               {showBodyContent ? (
                 <div
-                  className="prose prose-lg prose-slate max-w-none 
+                  className="blog-body-content prose prose-lg prose-slate max-w-none 
                              prose-headings:font-display prose-headings:font-normal prose-headings:text-[var(--text)]
                              prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
                              prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
                              prose-p:text-slate-600 prose-p:leading-relaxed prose-p:mb-6
                              prose-a:text-[var(--sky-blue)] prose-a:no-underline hover:prose-a:text-[var(--magenta)]
                              prose-img:rounded-2xl prose-img:shadow-sm prose-img:my-10"
-                  dangerouslySetInnerHTML={{ __html: post.content || '' }}
+                  dangerouslySetInnerHTML={{ __html: normalizedBodyHtml }}
                 />
               ) : (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-6 md:p-8 text-center">

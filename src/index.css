@@ -522,3 +522,22 @@ select:focus {
   margin: 1.5rem 0;
 }
 
+/* Blog article content safety guards: keep paragraphs block-level with spacing
+   even if typography utility styles are missing or overridden. */
+.blog-body-content p {
+  display: block;
+  margin: 0 0 1.5rem;
+  line-height: 1.85;
+}
+
+.blog-body-content p:last-child {
+  margin-bottom: 0;
+}
+
+.blog-body-content h2,
+.blog-body-content h3,
+.blog-body-content h4 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
