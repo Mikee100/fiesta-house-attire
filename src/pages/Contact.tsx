@@ -1,6 +1,51 @@
+import { useState } from "react";
+import { toast } from "sonner";
 import Layout from "@/components/site/Layout";
+import * as api from "@/lib/api";
 
 const Contact = () => {
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+    preferred_date: "",
+    package_interest: "Standard (10k)",
+    message: "",
+  });
+
+  const handleChange = (field: keyof typeof formData) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
+    try {
+      const result = await api.submitContactEnquiry(formData);
+      if (!result?.success) {
+        throw new Error(result?.error || "Failed to send enquiry");
+      }
+
+      toast.success("Enquiry sent. We will contact you shortly.");
+      setFormData({
+        full_name: "",
+        phone: "",
+        email: "",
+        preferred_date: "",
+        package_interest: "Standard (10k)",
+        message: "",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to send enquiry";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <Layout
       title="Contact & Booking | Fiesta House Attire Nairobi"
@@ -33,7 +78,7 @@ const Contact = () => {
             className="display"
             style={{ fontSize: "clamp(3rem, 7vw, 5rem)", color: "var(--dark)", marginBottom: "0.5rem" }}
           >
-            {/* Book Your Session heading removed for minimalism */}
+            Book Your Session
           </h1>
           <div style={{ width: "80px", height: "4px", background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))", borderRadius: "2px", marginTop: "1.5rem" }} />
         </div>
@@ -48,7 +93,7 @@ const Contact = () => {
                 Fill in the details below and we will get back to you to confirm availability.
               </p>
 
-              <form style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                   <label
                     style={{
@@ -63,6 +108,8 @@ const Contact = () => {
                   </label>
                   <input
                     type="text"
+                    value={formData.full_name}
+                    onChange={handleChange("full_name")}
                     style={{
                       padding: "1rem 1.2rem",
                       border: "2px solid rgba(110,193,228,0.3)",
@@ -89,6 +136,8 @@ const Contact = () => {
                     </label>
                     <input
                       type="tel"
+                      value={formData.phone}
+                      onChange={handleChange("phone")}
                       style={{
                         padding: "1rem 1.2rem",
                         border: "2px solid rgba(110,193,228,0.3)",
@@ -113,6 +162,8 @@ const Contact = () => {
                     </label>
                     <input
                       type="email"
+                      value={formData.email}
+                      onChange={handleChange("email")}
                       style={{
                         padding: "1rem 1.2rem",
                         border: "2px solid rgba(110,193,228,0.3)",
@@ -140,6 +191,8 @@ const Contact = () => {
                     </label>
                     <input
                       type="date"
+                      value={formData.preferred_date}
+                      onChange={handleChange("preferred_date")}
                       style={{
                         padding: "1rem 1.2rem",
                         border: "2px solid rgba(110,193,228,0.3)",
@@ -163,6 +216,8 @@ const Contact = () => {
                       Package of Interest
                     </label>
                     <select
+                      value={formData.package_interest}
+                      onChange={handleChange("package_interest")}
                       style={{
                         padding: "1rem 1.2rem",
                         border: "2px solid rgba(110,193,228,0.3)",
@@ -196,6 +251,8 @@ const Contact = () => {
                   </label>
                   <textarea
                     rows={4}
+                    value={formData.message}
+                    onChange={handleChange("message")}
                     style={{
                       padding: "1rem 1.2rem",
                       border: "2px solid rgba(110,193,228,0.3)",
@@ -210,6 +267,7 @@ const Contact = () => {
                 <button
                   type="submit"
                   className="btn"
+                  disabled={submitting}
                   style={{
                     width: "fit-content",
                     background: "linear-gradient(135deg, var(--magenta), #8B3A78)",
@@ -220,7 +278,7 @@ const Contact = () => {
                     boxShadow: "0 6px 20px rgba(184,79,160,0.35)",
                   }}
                 >
-                  Send Enquiry
+                  {submitting ? "Sending..." : "Send Enquiry"}
                 </button>
               </form>
             </div>

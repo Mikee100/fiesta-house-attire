@@ -183,6 +183,16 @@ const orderLimiter = rateLimit({
   message: { error: 'Too many order attempts. Please try again later.' }
 });
 
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProduction ? 15 : 80,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many contact attempts. Please try again later.' }
+});
+
+const CONTACT_TEST_RECIPIENT = process.env.CONTACT_TEST_EMAIL || 'info@fiestahouseattire.com';
+
 const sanitizePlainText = (value, maxLength = 500) => {
   if (typeof value !== 'string') return null;
   const stripped = sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
@@ -2423,6 +2433,155 @@ app.post('/shop/orders', orderLimiter, async (req, res) => {
   }
 });
 
+// POST /contact-enquiries — submit booking interest from Contact page
+app.post('/contact-enquiries', contactLimiter, async (req, res) => {
+  const fullName = sanitizePlainText(req.body?.full_name, 120);
+  const phone = sanitizePlainText(req.body?.phone, 50);
+  const email = sanitizePlainText(req.body?.email, 160);
+  const preferredDate = sanitizePlainText(req.body?.preferred_date, 40);
+  const packageInterest = sanitizePlainText(req.body?.package_interest, 120);
+  const message = sanitizePlainText(req.body?.message, 2000);
+
+  if (!fullName || !phone || !email || !preferredDate || !packageInterest) {
+    return res.status(400).json({ error: 'Missing required enquiry details' });
+  }
+
+  const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!emailLooksValid) {
+    return res.status(400).json({ error: 'Please provide a valid email address' });
+  }
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    return res.status(500).json({ error: 'Email service is not configured on this server' });
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: process.env.SMTP_PORT || 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  const submittedAtIso = new Date().toISOString();
+  const brandColors = {
+    skyBlue: '#6EC1E4',
+    magenta: '#B84FA0',
+    cream: '#F9F5F2',
+    dark: '#1C1C1C',
+    slate: '#475467',
+    line: '#E5E7EB',
+  };
+
+  const adminText = [
+    'Fiesta House Maternity - New Contact & Booking Enquiry',
+    '',
+    `Name: ${fullName}`,
+    `Phone: ${phone}`,
+    `Email: ${email}`,
+    `Preferred Date: ${preferredDate}`,
+    `Package: ${packageInterest}`,
+    `Message: ${message || '(none)'}`,
+    '',
+    `Submitted At: ${submittedAtIso}`,
+  ].join('\n');
+
+  const adminHtml = `
+    <div style="margin:0; padding:0; background:#ffffff; font-family:Arial,Helvetica,sans-serif; color:${brandColors.dark};">
+      <div style="max-width:760px; margin:0 auto; border-top:8px solid ${brandColors.magenta};">
+        <div style="padding:14px 24px; background:#ffffff; border-bottom:1px solid ${brandColors.line};">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td style="font-size:22px; font-weight:700; letter-spacing:0.02em; color:${brandColors.dark}; font-family:Georgia, 'Times New Roman', serif;">Fiesta House Maternity</td>
+              <td style="text-align:right; font-size:12px; color:${brandColors.slate};">Nairobi, Kenya</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="padding:28px 24px 20px; background:linear-gradient(135deg, ${brandColors.skyBlue} 0%, ${brandColors.magenta} 100%);">
+          <div style="color:#ffffff; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; font-weight:700; opacity:0.95;">Contact & Booking</div>
+          <h1 style="margin:8px 0 4px; color:#ffffff; font-size:30px; line-height:1.2; font-family:Georgia, 'Times New Roman', serif;">New Enquiry Received</h1>
+          <p style="margin:0; color:rgba(255,255,255,0.92); font-size:14px;">A new lead came in from the Contact page.</p>
+        </div>
+
+        <div style="padding:22px 24px; border-bottom:1px solid ${brandColors.line}; background:#ffffff;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td style="padding:0 0 12px; border-bottom:1px solid ${brandColors.line}; width:180px; color:${brandColors.slate}; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; font-weight:700;">Full Name</td>
+              <td style="padding:0 0 12px; border-bottom:1px solid ${brandColors.line}; font-size:15px; font-weight:600;">${fullName}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0; border-bottom:1px solid ${brandColors.line}; color:${brandColors.slate}; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; font-weight:700;">Phone</td>
+              <td style="padding:12px 0; border-bottom:1px solid ${brandColors.line}; font-size:15px; font-weight:600;">${phone}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0; border-bottom:1px solid ${brandColors.line}; color:${brandColors.slate}; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; font-weight:700;">Email</td>
+              <td style="padding:12px 0; border-bottom:1px solid ${brandColors.line}; font-size:15px; font-weight:600;">
+                <a href="mailto:${email}" style="color:${brandColors.magenta}; text-decoration:none;">${email}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0; border-bottom:1px solid ${brandColors.line}; color:${brandColors.slate}; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; font-weight:700;">Preferred Date</td>
+              <td style="padding:12px 0; border-bottom:1px solid ${brandColors.line}; font-size:15px; font-weight:600;">${preferredDate}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0 0; color:${brandColors.slate}; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; font-weight:700;">Package</td>
+              <td style="padding:12px 0 0; font-size:15px; font-weight:600;">${packageInterest}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="padding:20px 24px; background:${brandColors.cream}; border-bottom:1px solid ${brandColors.line};">
+          <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:${brandColors.slate}; font-weight:700; margin-bottom:10px;">Client Message</div>
+          <div style="padding:0; font-size:14px; line-height:1.8; color:${brandColors.dark}; white-space:pre-wrap;">${message || '(none)'}</div>
+        </div>
+
+        <div style="padding:18px 24px 24px; background:#ffffff;">
+          <a href="tel:${phone}" style="display:inline-block; padding:10px 16px; border-radius:999px; background:${brandColors.skyBlue}; color:#fff; text-decoration:none; font-weight:700; margin-right:8px;">Call Client</a>
+          <a href="mailto:${email}" style="display:inline-block; padding:10px 16px; border-radius:999px; background:${brandColors.magenta}; color:#fff; text-decoration:none; font-weight:700;">Reply by Email</a>
+          <p style="margin:14px 0 0; font-size:12px; color:#98A2B3;">Submitted at ${submittedAtIso}</p>
+        </div>
+
+        <div style="padding:20px 24px 24px; background:${brandColors.cream}; border-top:1px solid ${brandColors.line};">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td style="font-size:13px; line-height:1.7; color:${brandColors.slate};">
+                Diamond Plaza, 4th Avenue Parklands, Nairobi County, Kenya
+                <br />
+                <a href="mailto:info@fiestahouseattire.com" style="color:${brandColors.magenta}; text-decoration:none;">info@fiestahouseattire.com</a>
+                &nbsp;|&nbsp;
+                <a href="https://www.fiestahousematernity.com" style="color:${brandColors.magenta}; text-decoration:none;">www.fiestahousematernity.com</a>
+              </td>
+              <td style="text-align:right; vertical-align:top; font-size:12px; color:#98A2B3; white-space:nowrap;">
+                Fiesta House Maternity
+                <br />
+                Contact Team
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: '"Fiesta House Contact" <' + process.env.SMTP_USER + '>',
+      to: CONTACT_TEST_RECIPIENT,
+      subject: `Contact Enquiry: ${fullName}`,
+      text: adminText,
+      html: adminHtml
+    });
+
+    res.json({ success: true, routedTo: CONTACT_TEST_RECIPIENT });
+  } catch (err) {
+    console.error('contact enquiry email error', err);
+    res.status(500).json({ error: 'Failed to send enquiry email' });
+  }
+});
+
 // Helper function for sending emails
 async function sendOrderEmails(order, items) {
   // Check if credentials exist to avoid crashes
@@ -2468,7 +2627,7 @@ async function sendOrderEmails(order, items) {
 
   const commonHeader = `
     <div style="text-align: center; padding: 30px 0; background: linear-gradient(135deg, ${brandColors.skyBlue} 0%, ${brandColors.magenta} 100%); border-radius: 12px 12px 0 0;">
-      <h1 style="color: white; margin: 0; font-family: serif; font-style: italic; font-size: 28px; letter-spacing: 1px;">Fiesta House Attire</h1>
+      <h1 style="color: white; margin: 0; font-family: serif; font-style: italic; font-size: 28px; letter-spacing: 1px;">Fiesta House Maternity</h1>
     </div>
   `;
 
@@ -2544,7 +2703,7 @@ async function sendOrderEmails(order, items) {
         </div>
       </div>
       <div style="text-align: center; padding: 20px; font-size: 11px; color: #aaa;">
-        &copy; 2026 Fiesta House Attire. Diamond Plaza, Nairobi. All rights reserved.
+        &copy; 2026 Fiesta House Maternity. Diamond Plaza, Nairobi. All rights reserved.
       </div>
     </div>
   `;
@@ -2559,7 +2718,7 @@ async function sendOrderEmails(order, items) {
 
   // Send to Customer
   await transporter.sendMail({
-    from: '"Fiesta House Attire" <' + process.env.SMTP_USER + '>',
+    from: '"Fiesta House Maternity" <' + process.env.SMTP_USER + '>',
     to: order.customer_email,
     subject: 'Your Fiesta House Order Confirmation',
     html: customerEmailContent
