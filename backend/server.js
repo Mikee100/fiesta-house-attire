@@ -236,6 +236,85 @@ const sanitizeRichText = (value) => {
   }).trim();
 };
 
+const BLOCK_HTML_TAG_REGEX = /<(p|h1|h2|h3|h4|h5|h6|ul|ol|li|blockquote|img|pre|table|br)\b/i;
+const MARKDOWN_HEADING_REGEX = /^(#{1,6})\s+(.+)$/;
+
+const escapeHtmlForRichText = (value) => value
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/\"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+const normalizeHeadingText = (value) => {
+  let next = value.trim();
+  const boldWrapped = next.match(/^\*\*(.+)\*\*$/);
+  if (boldWrapped) {
+    next = boldWrapped[1].trim();
+  }
+  return next;
+};
+
+const convertPlainTextToRichHtml = (rawValue) => {
+  const normalized = rawValue.replace(/\r\n?/g, '\n').trim();
+  if (!normalized) return '';
+
+  const lines = normalized.split('\n');
+  const blocks = [];
+  let paragraphBuffer = [];
+
+  const flushParagraph = () => {
+    if (paragraphBuffer.length === 0) return;
+    const paragraphText = paragraphBuffer.join(' ').replace(/\s+/g, ' ').trim();
+    if (paragraphText) {
+      blocks.push(`<p>${escapeHtmlForRichText(paragraphText)}</p>`);
+    }
+    paragraphBuffer = [];
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      continue;
+    }
+
+    const headingMatch = trimmed.match(MARKDOWN_HEADING_REGEX);
+    if (headingMatch) {
+      flushParagraph();
+      const level = Math.min(6, Math.max(1, headingMatch[1].length));
+      const headingText = normalizeHeadingText(headingMatch[2]);
+      if (headingText) {
+        blocks.push(`<h${level}>${escapeHtmlForRichText(headingText)}</h${level}>`);
+      }
+      continue;
+    }
+
+    const boldOnlyLine = trimmed.match(/^\*\*(.+)\*\*$/);
+    if (boldOnlyLine) {
+      flushParagraph();
+      const headingText = normalizeHeadingText(boldOnlyLine[1]);
+      if (headingText) {
+        blocks.push(`<h3>${escapeHtmlForRichText(headingText)}</h3>`);
+      }
+      continue;
+    }
+
+    paragraphBuffer.push(trimmed);
+  }
+
+  flushParagraph();
+  return blocks.join('\n');
+};
+
+const normalizeRichTextInput = (value) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  if (BLOCK_HTML_TAG_REGEX.test(trimmed)) return trimmed;
+  return convertPlainTextToRichHtml(trimmed);
+};
+
 const sanitizeSlug = (value) => {
   const safe = sanitizePlainText(value, 180);
   if (!safe) return null;
@@ -2084,7 +2163,7 @@ app.post('/blog-posts', requireAdminAuth, async (req, res) => {
   const safeTitle = sanitizePlainText(title, 180);
   const safeSlug = sanitizeSlug(slug);
   const safeExcerpt = sanitizePlainText(excerpt, 1200);
-  const safeContent = sanitizeRichText(content);
+  const safeContent = sanitizeRichText(normalizeRichTextInput(content));
   const safeCoverImageUrl = sanitizeOptionalUrl(cover_image_url);
   const safeAuthor = sanitizePlainText(author || 'admin', 80) || 'admin';
 
@@ -2128,7 +2207,7 @@ app.put('/blog-posts/:id', requireAdminAuth, async (req, res) => {
   const safeTitle = sanitizePlainText(title, 180);
   const safeSlug = sanitizeSlug(slug);
   const safeExcerpt = sanitizePlainText(excerpt, 1200);
-  const safeContent = sanitizeRichText(content);
+  const safeContent = sanitizeRichText(normalizeRichTextInput(content));
   const safeCoverImageUrl = sanitizeOptionalUrl(cover_image_url);
   const safeAuthor = sanitizePlainText(author || 'admin', 80) || 'admin';
 

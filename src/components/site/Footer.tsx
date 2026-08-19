@@ -108,6 +108,7 @@ const Footer = () => {
                  { to: "/about", label: "About" },
                  { to: "/pricing", label: "Pricing" },
                  { to: "/contact", label: "Book" },
+                 { to: "/privacy-policy", label: "Privacy Policy" },
                ].map((link) => (
                  <Link
                    key={link.to}
