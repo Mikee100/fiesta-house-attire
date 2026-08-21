@@ -26,6 +26,7 @@ const prerenderRoutes = [
 
 const rawApiUrl = process.env.PRERENDER_API_URL || process.env.VITE_API_URL || "http://localhost:5000";
 const buildDate = new Date().toISOString().slice(0, 10);
+const writeStaticSitemaps = String(process.env.PRERENDER_WRITE_STATIC_SITEMAPS || "").toLowerCase() === "true";
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -421,9 +422,14 @@ async function main() {
 
     const prerendered = await prerenderRoutesToHtml(baseUrl, allRoutes);
     if (!prerendered) {
-      console.warn("[prerender] continuing without HTML snapshots (sitemaps will still be generated)");
+      console.warn("[prerender] continuing without HTML snapshots");
     }
-    await generateSitemaps(allRoutes, dynamicData.imageEntries);
+    if (writeStaticSitemaps) {
+      await generateSitemaps(allRoutes, dynamicData.imageEntries);
+      console.log("[prerender] static sitemaps generated (PRERENDER_WRITE_STATIC_SITEMAPS=true)");
+    } else {
+      console.log("[prerender] static sitemap generation skipped (dynamic backend sitemap is the source of truth)");
+    }
     console.log("[prerender] complete");
   } finally {
     server.close();
