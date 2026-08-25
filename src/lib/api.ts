@@ -637,6 +637,13 @@ export interface AnalyticsClickTrendItem {
   clicks: number;
 }
 
+export interface AnalyticsVisitsTimeseriesItem {
+  granularity: 'day' | 'week' | 'month' | 'year';
+  bucket: string;
+  bucket_start: string;
+  visits: number;
+}
+
 export interface AnalyticsTopEventTypeItem {
   event_name: string;
   count: number;
@@ -751,6 +758,17 @@ export const fetchAnalyticsEventMix = async (from: string, to: string): Promise<
 export const fetchAnalyticsClickTrend = async (from: string, to: string): Promise<AnalyticsClickTrendItem[]> => {
   const range = buildAnalyticsRangeQuery(from, to);
   const res = await authenticatedFetch(`${API_URL}/admin/analytics/click-trend?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsVisitsTimeseries = async (
+  from: string,
+  to: string,
+  granularity: 'day' | 'week' | 'month' | 'year' = 'day'
+): Promise<AnalyticsVisitsTimeseriesItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/visits-timeseries?${range}&granularity=${granularity}`);
   const data = await res.json();
   return Array.isArray(data) ? data : [];
 };

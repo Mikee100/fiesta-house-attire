@@ -24,15 +24,17 @@ const safeNumber = (value: unknown): number => {
   return Number.isFinite(numeric) ? numeric : 0;
 };
 
-const percentageDelta = (current: number, previous: number): number | null => {
-  if (previous <= 0) return null;
-  return ((current - previous) / previous) * 100;
-};
+const toHumanToken = (value: string): string =>
+  value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-const formatSignedPercent = (value: number | null | undefined): string => {
-  if (value === null || value === undefined || !Number.isFinite(value)) return "No previous-period data";
-  const rounded = Math.round(value * 10) / 10;
-  return `${rounded > 0 ? "+" : ""}${rounded}%`;
+const formatTopClickDisplayName = (eventName: string, label?: string | null): string => {
+  const eventPart = toHumanToken(eventName);
+  const labelPart = toHumanToken(label || "");
+  if (!labelPart) return eventPart;
+  return `${eventPart} • ${labelPart}`;
 };
 
 const getSectionFromSearch = (raw: string | null): DeepDiveSection => {
@@ -112,7 +114,11 @@ const AdminAnalyticsDeepDive = () => {
   const topClicksChartData = useMemo(
     () =>
       topClicksFull
-        .map((item) => ({ name: `${item.event_name}${item.label ? `: ${item.label}` : ""}`, count: safeNumber(item.count) }))
+        .map((item) => ({
+          name: formatTopClickDisplayName(item.event_name, item.label),
+          rawName: `${item.event_name}${item.label ? `: ${item.label}` : ""}`.toLowerCase(),
+          count: safeNumber(item.count),
+        }))
         .sort((a, b) => b.count - a.count),
     [topClicksFull],
   );
@@ -126,7 +132,10 @@ const AdminAnalyticsDeepDive = () => {
   );
 
   const filteredTopClicksChartData = useMemo(
-    () => topClicksChartData.filter((row) => row.name.toLowerCase().includes(normalizedTopClicksQuery)).slice(0, topNValue),
+    () =>
+      topClicksChartData
+        .filter((row) => row.rawName.includes(normalizedTopClicksQuery) || row.name.toLowerCase().includes(normalizedTopClicksQuery))
+        .slice(0, topNValue),
     [topClicksChartData, normalizedTopClicksQuery, topNValue],
   );
 
