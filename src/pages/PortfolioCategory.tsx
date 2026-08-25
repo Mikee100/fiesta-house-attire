@@ -97,7 +97,7 @@ const PortfolioCategory = () => {
     setLightboxIdx(index);
     setLightboxSrc(imageUrl);
     setLightboxOpen(true);
-    trackEvent("gallery_image_open", portfolio.title || "portfolio_gallery");
+    trackEvent("gallery_image_open", "portfolio_category");
   };
 
   return (
@@ -155,7 +155,7 @@ const PortfolioCategory = () => {
                 key={i}
                 className="masonry-item fade-in group"
                 style={{ animationDelay: `${i * 0.05}s`, cursor: "zoom-in" }}
-                data-track={`gallery_image_open:${portfolio.title}`}
+                data-track="gallery_image_open:portfolio_category"
                 onClick={() => {
                   if (img) openLightbox(i, img);
                 }}

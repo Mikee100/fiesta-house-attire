@@ -29,6 +29,7 @@ const AdminBlogEditor = lazy(() => import("./pages/AdminBlogEditor.tsx"));
 const AdminVideos = lazy(() => import("./pages/AdminVideos.tsx"));
 const AdminPricing = lazy(() => import("./pages/AdminPricing.tsx"));
 const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics.tsx"));
+const AdminAnalyticsDeepDive = lazy(() => import("./pages/AdminAnalyticsDeepDive.tsx"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin.tsx"));
 const GalleryPage = lazy(() => import("./pages/GalleryPage.tsx"));
 const MaternityGowns = lazy(() => import("./pages/MaternityGowns.tsx"));
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/admin/videos" element={<ProtectedAdminRoute><AdminVideos /></ProtectedAdminRoute>} />
               <Route path="/admin/pricing" element={<ProtectedAdminRoute><AdminPricing /></ProtectedAdminRoute>} />
               <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminAnalytics /></ProtectedAdminRoute>} />
+              <Route path="/admin/analytics/deep-dive" element={<ProtectedAdminRoute><AdminAnalyticsDeepDive /></ProtectedAdminRoute>} />
               <Route path="/admin/blog" element={<ProtectedAdminRoute><AdminBlog /></ProtectedAdminRoute>} />
               <Route path="/admin/blog/new" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
               <Route path="/admin/blog/:id/edit" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
