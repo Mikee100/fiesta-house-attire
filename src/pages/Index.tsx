@@ -322,7 +322,12 @@ const Index = () => {
                   const coverImage = getPortfolioCoverImage(portfolio);
 
                   return (
-                  <Link key={portfolio.id} to={`/portfolio/${portfolio.slug || portfolio.id}`} className="group relative overflow-hidden aspect-[3/4]">
+                  <Link
+                    key={portfolio.id}
+                    to={`/portfolio/${portfolio.slug || portfolio.id}`}
+                    data-track={`portfolio_click:home_collection_${portfolio.slug || portfolio.id}`}
+                    className="group relative overflow-hidden aspect-[3/4]"
+                  >
                     {coverImage && (
                       <img
                         src={coverImage}
@@ -345,7 +350,7 @@ const Index = () => {
             </div>
             {!loading && portfolios.length > 6 && (
               <div style={{ display: "flex", justifyContent: "center", marginTop: "2rem" }}>
-                <Link to="/portfolio" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)", fontWeight: 600, padding: "0.75rem 2.5rem", fontSize: "1.1rem" }}>
+                <Link to="/portfolio" data-track="portfolio_click:home_find_more" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)", fontWeight: 600, padding: "0.75rem 2.5rem", fontSize: "1.1rem" }}>
                   Find More
                 </Link>
               </div>
@@ -393,7 +398,7 @@ const Index = () => {
 
                 return (
                   <div key={i} className="group cursor-pointer">
-                    <Link to={concept.link}>
+                    <Link to={concept.link} data-track={`collection_click:home_signature_${concept.id}`}>
                       <div className="overflow-hidden aspect-[4/5] mb-8 relative">
                         <img
                           src={displayImg}
@@ -433,7 +438,7 @@ const Index = () => {
                 <p>
                   Every detail is intentional. From rare designer maternity gowns and professional makeup artistry to guided posing and an all-women team trained specifically to care for expectant mothers, everything is executed at a world-class standard.
                 </p>
-                <Link to="/experience" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way</Link>
+                <Link to="/experience" data-track="experience_click:home_sanctuary_text" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way</Link>
               </div>
               <div style={{ position: "relative" }} className="mobile-center">
                 <img src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg" alt="Maternity Portrait" width={1200} height={1600} loading="lazy" decoding="async" style={{ width: "100%", height: "auto", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
@@ -485,7 +490,7 @@ const Index = () => {
               }}>
                 Our Nairobi studio is a private, fully curated sanctuary designed specifically for the expectant mother. We don't just take photos; we create environments where your maternity story is transformed into timeless art.
               </p>
-              <Link to="/experience" className="btn btn-primary" style={{
+              <Link to="/experience" data-track="experience_click:home_sanctuary_hero" className="btn btn-primary" style={{
                 backgroundColor: "var(--sky-blue)",
                 border: "none",
                 padding: "1.2rem 3rem",
@@ -582,7 +587,7 @@ const Index = () => {
                     </span>
                   ))}
                 </div>
-                <Link to="/maternity-gowns" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>The Collection</Link>
+                <Link to="/maternity-gowns" data-track="gowns_click:home_gowns_section" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>The Collection</Link>
               </div>
             </div>
           </div>
@@ -711,8 +716,8 @@ const Index = () => {
                 </div>
 
                 <div style={{ marginTop: "4rem", display: "flex", gap: "1.5rem" }}>
-                  <a href="https://www.instagram.com/fiestahousematernity/" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Instagram" style={{ color: "var(--sky-blue)" }}><Instagram /></a>
-                  <a href="https://www.facebook.com/fiestahousematernity" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Facebook" style={{ color: "var(--sky-blue)" }}><Facebook /></a>
+                  <a href="https://www.instagram.com/fiestahousematernity/" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Instagram" data-track="social_click:home_instagram" style={{ color: "var(--sky-blue)" }}><Instagram /></a>
+                  <a href="https://www.facebook.com/fiestahousematernity" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Facebook" data-track="social_click:home_facebook" style={{ color: "var(--sky-blue)" }}><Facebook /></a>
                 </div>
               </div>
 
@@ -741,6 +746,7 @@ const Index = () => {
                       href="https://maps.google.com"
                       target="_blank"
                       rel="noreferrer"
+                      data-track="location_click:home_get_directions"
                       style={{
                         display: "block",
                         marginTop: "1.5rem",
@@ -801,7 +807,7 @@ const Index = () => {
                   Give the expectant mother in your life an experience she will never forget. Our luxury gift vouchers are the perfect way to celebrate a new chapter with art that lasts a lifetime.
                 </p>
                 <div style={{ marginTop: "2.5rem" }}>
-                  <Link to="/shop" className="btn btn-magenta">Purchase a Voucher</Link>
+                  <Link to="/shop" className="btn btn-magenta" data-track="voucher_click:home_gift_section">Purchase a Voucher</Link>
                 </div>
               </div>
               <div style={{ position: "relative" }}>
@@ -929,8 +935,8 @@ const Index = () => {
               </div>
 
               <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }} className="mobile-center justify-center home-final-cta-actions">
-                <Link to="/contact" className="btn btn-magenta home-final-cta-btn" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
-                <a href="https://wa.me/254720111928" className="btn btn-whatsapp home-final-cta-btn" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
+                <Link to="/contact" className="btn btn-magenta home-final-cta-btn" data-track="booking_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
+                <a href="https://wa.me/254720111928" className="btn btn-whatsapp home-final-cta-btn" data-track="whatsapp_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
               </div>
             </div>
           </div>

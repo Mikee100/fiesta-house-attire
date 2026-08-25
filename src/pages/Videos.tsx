@@ -1081,7 +1081,7 @@ export default function Videos() {
                 <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.4rem", fontWeight: 300, fontStyle: "italic", color: "#fff", lineHeight: 1.3, marginBottom: "2rem" }}>
                   Want a film<br />of your own?
                 </p>
-                <Link to="/contact" style={{ display: "inline-block", padding: ".7rem 1.6rem", border: ".5px solid rgba(255,255,255,.3)", color: "rgba(255,255,255,.8)", textDecoration: "none", fontSize: ".62rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
+                <Link to="/contact" data-track="booking_click:videos_grid_cta" style={{ display: "inline-block", padding: ".7rem 1.6rem", border: ".5px solid rgba(255,255,255,.3)", color: "rgba(255,255,255,.8)", textDecoration: "none", fontSize: ".62rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
                   Book a Session
                 </Link>
               </div>
@@ -1099,7 +1099,7 @@ export default function Videos() {
             Your pregnancy deserves<br />
             to be <em style={{ fontStyle: "normal", color: "var(--magenta,#660032)" }}>felt</em>, not just seen.
           </h2>
-          <Link to="/contact" style={{ display: "inline-block", padding: ".9rem 2.8rem", background: "var(--magenta,#660032)", color: "#fff", textDecoration: "none", fontSize: ".68rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
+          <Link to="/contact" data-track="booking_click:videos_final_cta" style={{ display: "inline-block", padding: ".9rem 2.8rem", background: "var(--magenta,#660032)", color: "#fff", textDecoration: "none", fontSize: ".68rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
             Book Your Film Session
           </Link>
         </div>

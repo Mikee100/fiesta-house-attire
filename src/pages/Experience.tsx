@@ -362,7 +362,7 @@ const Experience = () => {
               <p style={{ fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8, marginBottom: "2rem" }}>
                 Capture the rhythm of life with our cinematic maternity films. We combine artful cinematography with professional sound design to create a short film that tells the story of your pregnancy in motion.
               </p>
-              <Link to="/videos" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>View Maternity Films</Link>
+              <Link to="/videos" className="btn btn-outline" data-track="video_gallery_click:experience_films_section" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>View Maternity Films</Link>
             </div>
           </div>
         </div>
@@ -373,8 +373,8 @@ const Experience = () => {
         <div className="container">
           <h2 className="display h2-mobile" style={{ fontSize: "4rem", marginBottom: "3rem" }}>Ready to begin?</h2>
           <div style={{ display: "flex", gap: "1.5rem", justifyContent: "center", flexWrap: "wrap" }}>
-             <a href="https://wa.me/254720111928" className="btn btn-whatsapp" style={{ padding: "1.2rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
-             <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--sky-blue)", padding: "1.2rem 2rem", fontSize: "0.85rem" }}>Book Online</Link>
+             <a href="https://wa.me/254720111928" className="btn btn-whatsapp" data-track="whatsapp_click:experience_final_cta" style={{ padding: "1.2rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
+             <Link to="/contact" className="btn btn-primary" data-track="booking_click:experience_final_cta" style={{ backgroundColor: "var(--sky-blue)", padding: "1.2rem 2rem", fontSize: "0.85rem" }}>Book Online</Link>
           </div>
         </div>
       </section>

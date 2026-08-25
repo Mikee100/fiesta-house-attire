@@ -610,6 +610,121 @@ export const submitContactEnquiry = async (payload: ContactEnquiryPayload) => {
   return await res.json();
 };
 
+export interface AnalyticsTopClickItem {
+  event_name: string;
+  label: string;
+  count: number;
+}
+
+export interface AnalyticsPageViewItem {
+  day: string;
+  views: number;
+}
+
+export interface AnalyticsDeviceBreakdownItem {
+  device_type: string;
+  count: number;
+}
+
+export interface AnalyticsEventMix {
+  total: number;
+  page_views: number;
+  click_events: number;
+}
+
+export interface AnalyticsClickTrendItem {
+  day: string;
+  clicks: number;
+}
+
+export interface AnalyticsEventRow {
+  id: string;
+  event_name: string;
+  label: string | null;
+  page_url: string | null;
+  session_id: string | null;
+  referrer: string | null;
+  device_type: string | null;
+  created_at: string;
+}
+
+export interface AnalyticsRecentResponse {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  rows: AnalyticsEventRow[];
+}
+
+const buildAnalyticsRangeQuery = (from: string, to: string): string => {
+  const search = new URLSearchParams({ from, to });
+  return search.toString();
+};
+
+export const fetchAnalyticsTopClicks = async (from: string, to: string, limit = 12): Promise<AnalyticsTopClickItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/top-clicks?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsPageViews = async (from: string, to: string): Promise<AnalyticsPageViewItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/page-views?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsDeviceBreakdown = async (from: string, to: string): Promise<AnalyticsDeviceBreakdownItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/device-breakdown?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsEventMix = async (from: string, to: string): Promise<AnalyticsEventMix> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/event-mix?${range}`);
+  const data = await res.json();
+  return {
+    total: Number(data?.total || 0),
+    page_views: Number(data?.page_views || 0),
+    click_events: Number(data?.click_events || 0),
+  };
+};
+
+export const fetchAnalyticsClickTrend = async (from: string, to: string): Promise<AnalyticsClickTrendItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/click-trend?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsRecentEvents = async (
+  from: string,
+  to: string,
+  page = 1,
+  pageSize = 25,
+  eventType: "all" | "page_view" | "clicks" = "all"
+): Promise<AnalyticsRecentResponse> => {
+  const search = new URLSearchParams({
+    from,
+    to,
+    page: String(page),
+    pageSize: String(pageSize),
+    eventType,
+  });
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/recent?${search.toString()}`);
+  const data = await res.json();
+  return {
+    page: Number(data?.page || page),
+    pageSize: Number(data?.pageSize || pageSize),
+    total: Number(data?.total || 0),
+    totalPages: Number(data?.totalPages || 1),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
 // --- Videos ---
 
 export interface VideoItem {

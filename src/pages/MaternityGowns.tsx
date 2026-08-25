@@ -5,6 +5,7 @@ import * as api from "@/lib/api";
 import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
 import MasonryImage from "@/components/site/MasonryImage";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { trackEvent } from "@/lib/tracking";
 
 const MaternityGowns = () => {
   const [images, setImages] = useState<api.AssetRecord[]>([]);
@@ -29,6 +30,14 @@ const MaternityGowns = () => {
       setLightboxIdx(nextIdx);
       setLightboxSrc(images[nextIdx]?.url || null);
     }
+  };
+
+  const openLightbox = (index: number, imageUrl: string) => {
+    if (!imageUrl) return;
+    setLightboxIdx(index);
+    setLightboxSrc(imageUrl);
+    setLightboxOpen(true);
+    trackEvent("gallery_image_open", "maternity_gowns");
   };
 
   useEffect(() => {
@@ -118,19 +127,14 @@ const MaternityGowns = () => {
                   key={img.id} 
                   className="masonry-item fade-in group relative"
                   style={{ animationDelay: `${i * 0.05}s`, cursor: "zoom-in" }}
+                  data-track="gallery_image_open:maternity_gowns"
                   onClick={() => {
-                    if (img?.url) {
-                      setLightboxIdx(i);
-                      setLightboxSrc(img.url);
-                      setLightboxOpen(true);
-                    }
+                    if (img?.url) openLightbox(i, img.url);
                   }}
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if ((e.key === "Enter" || e.key === " ") && img?.url) {
-                      setLightboxIdx(i);
-                      setLightboxSrc(img.url);
-                      setLightboxOpen(true);
+                      openLightbox(i, img.url);
                     }
                   }}
                   role="button"

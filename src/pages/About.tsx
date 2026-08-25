@@ -591,6 +591,7 @@ export default function About() {
           </h2>
           <Link
             to="/contact"
+            data-track="booking_click:about_final_cta"
             style={{
               display: "inline-block",
               padding: "1rem 3rem",

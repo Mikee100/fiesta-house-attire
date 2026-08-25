@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Library, FolderTree, ExternalLink, Camera, FileText, Clapperboard, LogOut, BadgeDollarSign } from "lucide-react";
+import { LayoutDashboard, Library, FolderTree, ExternalLink, Camera, FileText, Clapperboard, LogOut, BadgeDollarSign, BarChart3 } from "lucide-react";
 import { logoutAdmin } from "@/lib/adminAuth";
 
 const AdminNavbar = () => {
@@ -85,6 +85,16 @@ const AdminNavbar = () => {
                 >
                   <BadgeDollarSign size={16} />
                   Pricing
+                </Button>
+              </Link>
+              <Link to="/admin/analytics">
+                <Button
+                  variant={isActive('/admin/analytics') ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <BarChart3 size={16} />
+                  Analytics
                 </Button>
               </Link>
             </div>
