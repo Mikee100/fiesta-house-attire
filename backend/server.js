@@ -191,6 +191,9 @@ const contactLimiter = rateLimit({
   message: { error: 'Too many contact attempts. Please try again later.' }
 });
 
+const MAX_ANALYTICS_PAGE_SIZE = 200;
+const DEFAULT_ANALYTICS_PAGE_SIZE = 50;
+
 const CONTACT_TEST_RECIPIENT = process.env.CONTACT_TEST_EMAIL || 'info@fiestahouseattire.com';
 
 const sanitizePlainText = (value, maxLength = 500) => {
@@ -803,9 +806,67 @@ const initBlogDb = async () => {
   }
 };
 
+const initAnalyticsDb = async () => {
+  try {
+    await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS events (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        event_name TEXT NOT NULL,
+        label TEXT,
+        page_url TEXT,
+        session_id TEXT,
+        referrer TEXT,
+        device_type TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at DESC)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_events_event_name_created_at ON events(event_name, created_at DESC)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_events_device_type_created_at ON events(device_type, created_at DESC)');
+    console.log('✓ Analytics events table initialized');
+  } catch (err) {
+    console.error('Analytics DB Init Error:', err);
+  }
+};
+
 initBlogDb();
 initAuthDb();
 initMediaVisibilityDb();
+initAnalyticsDb();
+
+const getAnalyticsDateRange = (req) => {
+  const now = new Date();
+  const defaultFrom = new Date(now);
+  defaultFrom.setDate(defaultFrom.getDate() - 30);
+
+  const fromRaw = typeof req.query.from === 'string' ? req.query.from : null;
+  const toRaw = typeof req.query.to === 'string' ? req.query.to : null;
+
+  const parseDateInput = (value, endOfDay = false) => {
+    if (!value) return null;
+    const trimmed = String(value).trim();
+    if (!trimmed) return null;
+
+    // If client sends YYYY-MM-DD, expand to full-day UTC boundaries.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return new Date(`${trimmed}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`);
+    }
+
+    return new Date(trimmed);
+  };
+
+  const fromDate = fromRaw ? (parseDateInput(fromRaw, false) || defaultFrom) : defaultFrom;
+  const toDate = toRaw ? (parseDateInput(toRaw, true) || now) : now;
+
+  const safeFrom = Number.isNaN(fromDate.getTime()) ? defaultFrom : fromDate;
+  const safeTo = Number.isNaN(toDate.getTime()) ? now : toDate;
+
+  const from = safeFrom <= safeTo ? safeFrom : safeTo;
+  const to = safeTo >= safeFrom ? safeTo : safeFrom;
+
+  return { from, to };
+};
 
 // Routes
 
@@ -941,6 +1002,219 @@ app.post('/auth/refresh', authRefreshLimiter, requireCsrfToken, async (req, res)
     res.clearCookie(REFRESH_TOKEN_COOKIE, getRefreshCookieOptions());
     res.clearCookie(CSRF_TOKEN_COOKIE, getCsrfCookieOptions());
     return res.status(401).json({ error: 'Failed to refresh session' });
+  }
+});
+
+app.post('/api/track', async (req, res) => {
+  const body = req.body || {};
+  const eventName = typeof body.event_name === 'string' ? body.event_name.trim().slice(0, 120) : '';
+
+  if (!eventName) {
+    return res.status(202).json({ ok: true });
+  }
+
+  const label = typeof body.label === 'string' ? body.label.trim().slice(0, 300) : null;
+  const pageUrl = typeof body.page_url === 'string' ? body.page_url.trim().slice(0, 500) : null;
+  const sessionId = typeof body.session_id === 'string' ? body.session_id.trim().slice(0, 128) : null;
+  const referrer = typeof body.referrer === 'string' ? body.referrer.trim().slice(0, 500) : null;
+  const deviceType = typeof body.device_type === 'string' ? body.device_type.trim().slice(0, 40) : null;
+  const rawTimestamp = typeof body.timestamp === 'string' ? body.timestamp : null;
+  const parsedTimestamp = rawTimestamp ? new Date(rawTimestamp) : null;
+  const createdAt = parsedTimestamp && !Number.isNaN(parsedTimestamp.getTime()) ? parsedTimestamp : new Date();
+
+  pool.query(
+    `INSERT INTO events (event_name, label, page_url, session_id, referrer, device_type, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [eventName, label, pageUrl, sessionId, referrer, deviceType, createdAt]
+  ).catch((error) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('track insert failed', error);
+    }
+  });
+
+  return res.status(202).json({ ok: true });
+});
+
+app.get('/admin/analytics/top-clicks', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const limitRaw = Number(req.query.limit || 12);
+  const limit = Number.isFinite(limitRaw)
+    ? Math.max(1, Math.min(50, Math.floor(limitRaw)))
+    : 12;
+
+  try {
+    const result = await pool.query(
+      `SELECT event_name, COALESCE(NULLIF(label, ''), '(no label)') AS label, COUNT(*)::int AS count
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+         AND event_name <> 'page_view'
+       GROUP BY event_name, label
+       ORDER BY count DESC
+       LIMIT $3`,
+      [from.toISOString(), to.toISOString(), limit]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('admin analytics top-clicks error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/page-views', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+
+  try {
+    const result = await pool.query(
+      `SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+              COUNT(*)::int AS views
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+         AND event_name = 'page_view'
+       GROUP BY date_trunc('day', created_at)
+       ORDER BY date_trunc('day', created_at) ASC`,
+      [from.toISOString(), to.toISOString()]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('admin analytics page-views error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/event-mix', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         COUNT(*)::int AS total,
+         COUNT(*) FILTER (WHERE event_name = 'page_view')::int AS page_views,
+         COUNT(*) FILTER (WHERE event_name <> 'page_view')::int AS click_events
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2`,
+      [from.toISOString(), to.toISOString()]
+    );
+
+    const row = result.rows[0] || { total: 0, page_views: 0, click_events: 0 };
+    res.json({
+      total: Number(row.total || 0),
+      page_views: Number(row.page_views || 0),
+      click_events: Number(row.click_events || 0),
+    });
+  } catch (err) {
+    console.error('admin analytics event-mix error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/click-trend', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+
+  try {
+    const result = await pool.query(
+      `SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+              COUNT(*)::int AS clicks
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+         AND event_name <> 'page_view'
+       GROUP BY date_trunc('day', created_at)
+       ORDER BY date_trunc('day', created_at) ASC`,
+      [from.toISOString(), to.toISOString()]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('admin analytics click-trend error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/device-breakdown', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+
+  try {
+    const result = await pool.query(
+      `SELECT COALESCE(NULLIF(device_type, ''), 'unknown') AS device_type,
+              COUNT(*)::int AS count
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+       GROUP BY device_type
+       ORDER BY count DESC`,
+      [from.toISOString(), to.toISOString()]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('admin analytics device-breakdown error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/recent', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const pageRaw = Number(req.query.page || 1);
+  const pageSizeRaw = Number(req.query.pageSize || DEFAULT_ANALYTICS_PAGE_SIZE);
+  const eventTypeRaw = typeof req.query.eventType === 'string' ? req.query.eventType.trim().toLowerCase() : 'all';
+  const eventType = ['all', 'page_view', 'clicks'].includes(eventTypeRaw) ? eventTypeRaw : 'all';
+  const page = Number.isFinite(pageRaw) ? Math.max(1, Math.floor(pageRaw)) : 1;
+  const pageSize = Number.isFinite(pageSizeRaw)
+    ? Math.max(1, Math.min(MAX_ANALYTICS_PAGE_SIZE, Math.floor(pageSizeRaw)))
+    : DEFAULT_ANALYTICS_PAGE_SIZE;
+  const offset = (page - 1) * pageSize;
+
+  const whereClauses = [
+    'created_at >= $1',
+    'created_at <= $2',
+  ];
+  const params = [from.toISOString(), to.toISOString()];
+
+  if (eventType === 'page_view') {
+    whereClauses.push("event_name = 'page_view'");
+  } else if (eventType === 'clicks') {
+    whereClauses.push("event_name <> 'page_view'");
+  }
+
+  const whereSql = whereClauses.join(' AND ');
+  const limitParamIndex = params.length + 1;
+  const offsetParamIndex = params.length + 2;
+
+  try {
+    const [rowsResult, countResult] = await Promise.all([
+      pool.query(
+        `SELECT id, event_name, label, page_url, session_id, referrer, device_type, created_at
+         FROM events
+         WHERE ${whereSql}
+         ORDER BY created_at DESC
+         LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`,
+        [...params, pageSize, offset]
+      ),
+      pool.query(
+        `SELECT COUNT(*)::int AS total
+         FROM events
+         WHERE ${whereSql}`,
+        params
+      )
+    ]);
+
+    const total = countResult.rows[0]?.total || 0;
+
+    res.json({
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      rows: rowsResult.rows,
+    });
+  } catch (err) {
+    console.error('admin analytics recent error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
 

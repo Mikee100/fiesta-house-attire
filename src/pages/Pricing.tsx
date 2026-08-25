@@ -216,6 +216,7 @@ const Pricing = () => {
 
                     <a
                       href={`https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20book%20the%20${pkg.name}%20package.`}
+                      data-track={`package_click:${pkg.name}`}
                       className="btn"
                       style={{
                         width: "100%",

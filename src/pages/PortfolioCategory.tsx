@@ -7,6 +7,7 @@ import * as api from "@/lib/api";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
 import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
 import MasonryImage from "@/components/site/MasonryImage";
+import { trackEvent } from "@/lib/tracking";
 
 const PortfolioCategory = () => {
   const { id } = useParams<{ id: string }>();
@@ -91,6 +92,14 @@ const PortfolioCategory = () => {
     }
   };
 
+  const openLightbox = (index: number, imageUrl: string) => {
+    if (!imageUrl) return;
+    setLightboxIdx(index);
+    setLightboxSrc(imageUrl);
+    setLightboxOpen(true);
+    trackEvent("gallery_image_open", portfolio.title || "portfolio_gallery");
+  };
+
   return (
     <Layout 
       title={portfolio.title}
@@ -146,19 +155,14 @@ const PortfolioCategory = () => {
                 key={i}
                 className="masonry-item fade-in group"
                 style={{ animationDelay: `${i * 0.05}s`, cursor: "zoom-in" }}
+                data-track={`gallery_image_open:${portfolio.title}`}
                 onClick={() => {
-                  if (img) {
-                    setLightboxIdx(i);
-                    setLightboxSrc(img);
-                    setLightboxOpen(true);
-                  }
+                  if (img) openLightbox(i, img);
                 }}
                 tabIndex={0}
                 onKeyDown={e => {
                   if ((e.key === "Enter" || e.key === " ") && img) {
-                    setLightboxIdx(i);
-                    setLightboxSrc(img);
-                    setLightboxOpen(true);
+                    openLightbox(i, img);
                   }
                 }}
                 aria-label={`View image ${i + 1} enlarged`}

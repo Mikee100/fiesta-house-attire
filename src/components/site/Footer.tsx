@@ -82,7 +82,7 @@ const Footer = () => {
             </p>
             <div style={{ display: "flex", gap: "1rem" }}>
               <a href="https://instagram.com/fiestahousematernity" target="_blank" rel="noreferrer" style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "0.92rem", fontWeight: "600", transition: "color 0.3s" }} onMouseEnter={e => e.currentTarget.style.color = "var(--sky-blue)"} onMouseLeave={e => e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)"}>Instagram</a>
-              <a href="https://wa.me/254720111928" target="_blank" rel="noreferrer" style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "0.92rem", fontWeight: "600", transition: "color 0.3s" }} onMouseEnter={e => e.currentTarget.style.color = "var(--sky-blue)"} onMouseLeave={e => e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)"}>WhatsApp</a>
+              <a href="https://wa.me/254720111928" target="_blank" rel="noreferrer" data-track="whatsapp_click:footer_link" style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "0.92rem", fontWeight: "600", transition: "color 0.3s" }} onMouseEnter={e => e.currentTarget.style.color = "var(--sky-blue)"} onMouseLeave={e => e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)"}>WhatsApp</a>
             </div>
           </div>
 

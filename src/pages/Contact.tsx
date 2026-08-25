@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
+import { trackEvent } from "@/lib/tracking";
 
 const Contact = () => {
   const [submitting, setSubmitting] = useState(false);
@@ -28,6 +29,8 @@ const Contact = () => {
       if (!result?.success) {
         throw new Error(result?.error || "Failed to send enquiry");
       }
+
+      trackEvent("contact_form_submit", formData.package_interest || "unspecified");
 
       toast.success("Enquiry sent. We will contact you shortly.");
       setFormData({
@@ -334,6 +337,7 @@ const Contact = () => {
                 />
                 <a
                   href="https://wa.me/254720111928"
+                  data-track="whatsapp_click:contact_page"
                   className="btn"
                   style={{
                     width: "100%",
@@ -364,7 +368,8 @@ const Contact = () => {
                     info@fiestahouseattire.com
                   </p>
                   <p>
-                    <strong style={{ color: "var(--sky-blue)" }}>Phone:</strong> 0720 111928
+                    <strong style={{ color: "var(--sky-blue)" }}>Phone:</strong>{" "}
+                    <a href="tel:+254720111928" data-track="phone_click:contact_page" style={{ color: "inherit" }}>0720 111928</a>
                   </p>
                   <p>
                     <strong style={{ color: "var(--magenta)" }}>Instagram:</strong>{" "}

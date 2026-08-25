@@ -100,6 +100,7 @@ const Navbar = () => {
       <div className="container nav-container">
         <Link
           to="/"
+          data-track="nav_click:logo"
           style={{
             display: "flex",
             alignItems: "center",
@@ -143,6 +144,7 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
+                data-track={`nav_click:${link.label.toLowerCase()}`}
                 className="nav-link"
                 onMouseEnter={(e) => {
                   handleLinkMouseEnter(e);
@@ -171,6 +173,7 @@ const Navbar = () => {
           <Link
             to="/cart"
             aria-label="Open cart"
+            data-track="cart_click:navbar"
             onMouseEnter={handleLinkMouseEnter}
             onMouseLeave={handleLinkMouseLeave}
             style={{
@@ -207,6 +210,7 @@ const Navbar = () => {
 
           <Link
             to="/contact"
+            data-track="booking_click:navbar_book_now"
             style={{
               background: "var(--sky-blue)",
               color: "white",
@@ -271,6 +275,7 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
+                data-track={`nav_mobile_click:${link.label.toLowerCase()}`}
                 onMouseEnter={handleLinkMouseEnter}
                 onMouseLeave={handleLinkMouseLeave}
                 style={{

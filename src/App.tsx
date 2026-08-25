@@ -8,6 +8,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { CartProvider } from "./context/CartContext";
 import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 import LuxuryRouteLoader from "./components/site/LuxuryRouteLoader";
+import TrackingClient from "./components/site/TrackingClient";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Portfolio = lazy(() => import("./pages/Portfolio.tsx"));
@@ -27,6 +28,7 @@ const AdminBlog = lazy(() => import("./pages/AdminBlog.tsx"));
 const AdminBlogEditor = lazy(() => import("./pages/AdminBlogEditor.tsx"));
 const AdminVideos = lazy(() => import("./pages/AdminVideos.tsx"));
 const AdminPricing = lazy(() => import("./pages/AdminPricing.tsx"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics.tsx"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin.tsx"));
 const GalleryPage = lazy(() => import("./pages/GalleryPage.tsx"));
 const MaternityGowns = lazy(() => import("./pages/MaternityGowns.tsx"));
@@ -48,6 +50,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <TrackingClient />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -70,6 +73,7 @@ const App = () => (
               <Route path="/admin/assets" element={<ProtectedAdminRoute><AdminAssets /></ProtectedAdminRoute>} />
               <Route path="/admin/videos" element={<ProtectedAdminRoute><AdminVideos /></ProtectedAdminRoute>} />
               <Route path="/admin/pricing" element={<ProtectedAdminRoute><AdminPricing /></ProtectedAdminRoute>} />
+              <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminAnalytics /></ProtectedAdminRoute>} />
               <Route path="/admin/blog" element={<ProtectedAdminRoute><AdminBlog /></ProtectedAdminRoute>} />
               <Route path="/admin/blog/new" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
               <Route path="/admin/blog/:id/edit" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
