@@ -868,6 +868,13 @@ const getAnalyticsDateRange = (req) => {
   return { from, to };
 };
 
+const getPreviousAnalyticsDateRange = (from, to) => {
+  const currentSpanMs = Math.max(0, to.getTime() - from.getTime());
+  const previousTo = new Date(from.getTime() - 1);
+  const previousFrom = new Date(previousTo.getTime() - currentSpanMs);
+  return { from: previousFrom, to: previousTo };
+};
+
 // Routes
 
 // --- Authentication API ---
@@ -1049,6 +1056,7 @@ app.get('/admin/analytics/top-clicks', requireAdminAuth, async (req, res) => {
        WHERE created_at >= $1
          AND created_at <= $2
          AND event_name <> 'page_view'
+         AND event_name NOT LIKE 'debug_%'
        GROUP BY event_name, label
        ORDER BY count DESC
        LIMIT $3`,
@@ -1058,6 +1066,215 @@ app.get('/admin/analytics/top-clicks', requireAdminAuth, async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('admin analytics top-clicks error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/business-kpis', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+
+  try {
+    const result = await pool.query(
+      `WITH in_range AS (
+         SELECT event_name, page_url, session_id, created_at
+         FROM events
+         WHERE created_at >= $1
+           AND created_at <= $2
+           AND event_name NOT LIKE 'debug_%'
+       ),
+       base AS (
+         SELECT
+           COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_visitors,
+           COUNT(*) FILTER (WHERE event_name = 'whatsapp_click')::int AS whatsapp_leads,
+           COUNT(*) FILTER (WHERE event_name IN ('gallery_image_open', 'video_gallery_click'))::int AS portfolio_engagement,
+           COUNT(*) FILTER (WHERE event_name IN ('booking_click', 'checkout_start', 'checkout_form_start', 'package_click'))::int AS booking_intent,
+           COUNT(DISTINCT NULLIF(session_id, '')) FILTER (WHERE event_name <> 'page_view')::int AS engaged_sessions
+         FROM in_range
+       ),
+       returning_sessions AS (
+         SELECT COUNT(*)::int AS returning_visitors
+         FROM (
+           SELECT session_id
+           FROM in_range
+           WHERE session_id IS NOT NULL AND session_id <> ''
+           GROUP BY session_id
+           HAVING COUNT(DISTINCT DATE(created_at)) > 1
+         ) r
+       )
+       SELECT
+         b.unique_visitors,
+         b.whatsapp_leads,
+         b.portfolio_engagement,
+         b.booking_intent,
+         b.engaged_sessions,
+         r.returning_visitors
+       FROM base b
+       CROSS JOIN returning_sessions r`,
+      [from.toISOString(), to.toISOString()]
+    );
+
+    const row = result.rows[0] || {};
+    const uniqueVisitors = Number(row.unique_visitors || 0);
+    const engagedSessions = Number(row.engaged_sessions || 0);
+
+    res.json({
+      unique_visitors: uniqueVisitors,
+      whatsapp_leads: Number(row.whatsapp_leads || 0),
+      portfolio_engagement: Number(row.portfolio_engagement || 0),
+      booking_intent: Number(row.booking_intent || 0),
+      returning_visitors: Number(row.returning_visitors || 0),
+      conversion_rate: uniqueVisitors > 0 ? Number(((engagedSessions / uniqueVisitors) * 100).toFixed(2)) : 0,
+    });
+  } catch (err) {
+    console.error('admin analytics business-kpis error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/funnel', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+
+  try {
+    const result = await pool.query(
+      `WITH in_range AS (
+         SELECT event_name, page_url, session_id
+         FROM events
+         WHERE created_at >= $1
+           AND created_at <= $2
+           AND event_name NOT LIKE 'debug_%'
+       ),
+       sessions AS (
+         SELECT DISTINCT session_id
+         FROM in_range
+         WHERE session_id IS NOT NULL AND session_id <> ''
+       )
+       SELECT
+         (SELECT COUNT(*)::int FROM sessions) AS visitors,
+         (SELECT COUNT(DISTINCT s.session_id)::int
+          FROM sessions s
+          JOIN in_range e ON e.session_id = s.session_id
+          WHERE e.event_name IN ('gallery_image_open', 'video_gallery_click')
+             OR e.page_url LIKE '/portfolio%'
+             OR e.page_url LIKE '/maternity-gowns%') AS portfolio_interest,
+         (SELECT COUNT(DISTINCT s.session_id)::int
+          FROM sessions s
+          JOIN in_range e ON e.session_id = s.session_id
+          WHERE e.event_name = 'package_click'
+             OR e.page_url LIKE '/pricing%') AS pricing_interest,
+         (SELECT COUNT(DISTINCT s.session_id)::int
+          FROM sessions s
+          JOIN in_range e ON e.session_id = s.session_id
+          WHERE e.event_name = 'whatsapp_click') AS whatsapp,
+         (SELECT COUNT(DISTINCT s.session_id)::int
+          FROM sessions s
+          JOIN in_range e ON e.session_id = s.session_id
+          WHERE e.event_name IN ('booking_click', 'checkout_start', 'checkout_form_start')) AS booking,
+         (SELECT COUNT(DISTINCT s.session_id)::int
+          FROM sessions s
+          JOIN in_range e ON e.session_id = s.session_id
+          WHERE e.event_name IN ('checkout_start', 'checkout_form_start')) AS checkout`,
+      [from.toISOString(), to.toISOString()]
+    );
+
+    const row = result.rows[0] || {};
+    res.json({
+      visitors: Number(row.visitors || 0),
+      portfolio_interest: Number(row.portfolio_interest || 0),
+      pricing_interest: Number(row.pricing_interest || 0),
+      whatsapp: Number(row.whatsapp || 0),
+      booking: Number(row.booking || 0),
+      checkout: Number(row.checkout || 0),
+    });
+  } catch (err) {
+    console.error('admin analytics funnel error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/top-pages', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const limitRaw = Number(req.query.limit || 10);
+  const limit = Number.isFinite(limitRaw)
+    ? Math.max(1, Math.min(50, Math.floor(limitRaw)))
+    : 10;
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         COALESCE(NULLIF(page_url, ''), '/') AS page,
+         COUNT(*)::int AS views,
+         COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_visitors
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+         AND event_name = 'page_view'
+       GROUP BY page
+       ORDER BY views DESC
+       LIMIT $3`,
+      [from.toISOString(), to.toISOString(), limit]
+    );
+
+    res.json(Array.isArray(result.rows) ? result.rows : []);
+  } catch (err) {
+    console.error('admin analytics top-pages error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/whatsapp-by-page', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const limitRaw = Number(req.query.limit || 10);
+  const limit = Number.isFinite(limitRaw)
+    ? Math.max(1, Math.min(50, Math.floor(limitRaw)))
+    : 10;
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         COALESCE(NULLIF(page_url, ''), '(unknown)') AS page,
+         COUNT(*)::int AS whatsapp_clicks,
+         COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_sessions
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+         AND event_name = 'whatsapp_click'
+       GROUP BY page
+       ORDER BY whatsapp_clicks DESC
+       LIMIT $3`,
+      [from.toISOString(), to.toISOString(), limit]
+    );
+
+    res.json(Array.isArray(result.rows) ? result.rows : []);
+  } catch (err) {
+    console.error('admin analytics whatsapp-by-page error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/top-event-types', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const limitRaw = Number(req.query.limit || 8);
+  const limit = Number.isFinite(limitRaw)
+    ? Math.max(1, Math.min(20, Math.floor(limitRaw)))
+    : 8;
+
+  try {
+    const result = await pool.query(
+      `SELECT event_name, COUNT(*)::int AS count
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+         AND event_name <> 'page_view'
+         AND event_name NOT LIKE 'debug_%'
+       GROUP BY event_name
+       ORDER BY count DESC
+       LIMIT $3`,
+      [from.toISOString(), to.toISOString(), limit]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('admin analytics top-event-types error', err);
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
@@ -1085,6 +1302,117 @@ app.get('/admin/analytics/page-views', requireAdminAuth, async (req, res) => {
   }
 });
 
+app.get('/admin/analytics/kpi-compare', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const previousRange = getPreviousAnalyticsDateRange(from, to);
+
+  try {
+    const [currentResult, previousResult] = await Promise.all([
+      pool.query(
+        `SELECT
+           COUNT(*)::int AS total_events,
+           COUNT(*) FILTER (WHERE event_name = 'page_view')::int AS page_views,
+           COUNT(*) FILTER (WHERE event_name <> 'page_view' AND event_name NOT LIKE 'debug_%')::int AS click_events
+         FROM events
+         WHERE created_at >= $1
+           AND created_at <= $2`,
+        [from.toISOString(), to.toISOString()]
+      ),
+      pool.query(
+        `SELECT
+           COUNT(*)::int AS total_events,
+           COUNT(*) FILTER (WHERE event_name = 'page_view')::int AS page_views,
+           COUNT(*) FILTER (WHERE event_name <> 'page_view' AND event_name NOT LIKE 'debug_%')::int AS click_events
+         FROM events
+         WHERE created_at >= $1
+           AND created_at <= $2`,
+        [previousRange.from.toISOString(), previousRange.to.toISOString()]
+      ),
+    ]);
+
+    const current = currentResult.rows[0] || { total_events: 0, page_views: 0, click_events: 0 };
+    const previous = previousResult.rows[0] || { total_events: 0, page_views: 0, click_events: 0 };
+
+    res.json({
+      current: {
+        total_events: Number(current.total_events || 0),
+        page_views: Number(current.page_views || 0),
+        click_events: Number(current.click_events || 0),
+      },
+      previous: {
+        total_events: Number(previous.total_events || 0),
+        page_views: Number(previous.page_views || 0),
+        click_events: Number(previous.click_events || 0),
+      },
+    });
+  } catch (err) {
+    console.error('admin analytics kpi-compare error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/cta-performance', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const previousRange = getPreviousAnalyticsDateRange(from, to);
+  const limitRaw = Number(req.query.limit || 20);
+  const limit = Number.isFinite(limitRaw)
+    ? Math.max(1, Math.min(100, Math.floor(limitRaw)))
+    : 20;
+
+  try {
+    const result = await pool.query(
+      `WITH current_clicks AS (
+         SELECT
+           event_name,
+           COALESCE(NULLIF(label, ''), '(no label)') AS label,
+           COUNT(*)::int AS clicks,
+           COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_sessions
+         FROM events
+         WHERE created_at >= $1
+           AND created_at <= $2
+           AND event_name <> 'page_view'
+           AND event_name NOT LIKE 'debug_%'
+         GROUP BY event_name, label
+       ),
+       previous_clicks AS (
+         SELECT
+           event_name,
+           COALESCE(NULLIF(label, ''), '(no label)') AS label,
+           COUNT(*)::int AS previous_clicks
+         FROM events
+         WHERE created_at >= $3
+           AND created_at <= $4
+           AND event_name <> 'page_view'
+           AND event_name NOT LIKE 'debug_%'
+         GROUP BY event_name, label
+       )
+       SELECT
+         c.event_name,
+         c.label,
+         c.clicks,
+         c.unique_sessions,
+         COALESCE(p.previous_clicks, 0)::int AS previous_clicks,
+         COALESCE(SUM(c.clicks) OVER (), 0)::int AS total_clicks
+       FROM current_clicks c
+       LEFT JOIN previous_clicks p ON p.event_name = c.event_name AND p.label = c.label
+       ORDER BY c.clicks DESC, c.event_name ASC, c.label ASC
+       LIMIT $5`,
+      [
+        from.toISOString(),
+        to.toISOString(),
+        previousRange.from.toISOString(),
+        previousRange.to.toISOString(),
+        limit,
+      ]
+    );
+
+    res.json(Array.isArray(result.rows) ? result.rows : []);
+  } catch (err) {
+    console.error('admin analytics cta-performance error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
 app.get('/admin/analytics/event-mix', requireAdminAuth, async (req, res) => {
   const { from, to } = getAnalyticsDateRange(req);
 
@@ -1093,7 +1421,7 @@ app.get('/admin/analytics/event-mix', requireAdminAuth, async (req, res) => {
       `SELECT
          COUNT(*)::int AS total,
          COUNT(*) FILTER (WHERE event_name = 'page_view')::int AS page_views,
-         COUNT(*) FILTER (WHERE event_name <> 'page_view')::int AS click_events
+         COUNT(*) FILTER (WHERE event_name <> 'page_view' AND event_name NOT LIKE 'debug_%')::int AS click_events
        FROM events
        WHERE created_at >= $1
          AND created_at <= $2`,
@@ -1123,6 +1451,7 @@ app.get('/admin/analytics/click-trend', requireAdminAuth, async (req, res) => {
        WHERE created_at >= $1
          AND created_at <= $2
          AND event_name <> 'page_view'
+         AND event_name NOT LIKE 'debug_%'
        GROUP BY date_trunc('day', created_at)
        ORDER BY date_trunc('day', created_at) ASC`,
       [from.toISOString(), to.toISOString()]

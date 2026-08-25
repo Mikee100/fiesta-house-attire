@@ -637,6 +637,61 @@ export interface AnalyticsClickTrendItem {
   clicks: number;
 }
 
+export interface AnalyticsTopEventTypeItem {
+  event_name: string;
+  count: number;
+}
+
+export interface AnalyticsKpiSnapshot {
+  total_events: number;
+  page_views: number;
+  click_events: number;
+}
+
+export interface AnalyticsKpiCompare {
+  current: AnalyticsKpiSnapshot;
+  previous: AnalyticsKpiSnapshot;
+}
+
+export interface AnalyticsCtaPerformanceItem {
+  event_name: string;
+  label: string;
+  clicks: number;
+  unique_sessions: number;
+  previous_clicks: number;
+  total_clicks: number;
+}
+
+export interface AnalyticsBusinessKpis {
+  unique_visitors: number;
+  whatsapp_leads: number;
+  portfolio_engagement: number;
+  booking_intent: number;
+  returning_visitors: number;
+  conversion_rate: number;
+}
+
+export interface AnalyticsFunnel {
+  visitors: number;
+  portfolio_interest: number;
+  pricing_interest: number;
+  whatsapp: number;
+  booking: number;
+  checkout: number;
+}
+
+export interface AnalyticsTopPageItem {
+  page: string;
+  views: number;
+  unique_visitors: number;
+}
+
+export interface AnalyticsWhatsappByPageItem {
+  page: string;
+  whatsapp_clicks: number;
+  unique_sessions: number;
+}
+
 export interface AnalyticsEventRow {
   id: string;
   event_name: string;
@@ -696,6 +751,89 @@ export const fetchAnalyticsEventMix = async (from: string, to: string): Promise<
 export const fetchAnalyticsClickTrend = async (from: string, to: string): Promise<AnalyticsClickTrendItem[]> => {
   const range = buildAnalyticsRangeQuery(from, to);
   const res = await authenticatedFetch(`${API_URL}/admin/analytics/click-trend?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsTopEventTypes = async (from: string, to: string, limit = 8): Promise<AnalyticsTopEventTypeItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/top-event-types?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsBusinessKpis = async (from: string, to: string): Promise<AnalyticsBusinessKpis> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/business-kpis?${range}`);
+  const data = await res.json();
+  return {
+    unique_visitors: Number(data?.unique_visitors || 0),
+    whatsapp_leads: Number(data?.whatsapp_leads || 0),
+    portfolio_engagement: Number(data?.portfolio_engagement || 0),
+    booking_intent: Number(data?.booking_intent || 0),
+    returning_visitors: Number(data?.returning_visitors || 0),
+    conversion_rate: Number(data?.conversion_rate || 0),
+  };
+};
+
+export const fetchAnalyticsFunnel = async (from: string, to: string): Promise<AnalyticsFunnel> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/funnel?${range}`);
+  const data = await res.json();
+  return {
+    visitors: Number(data?.visitors || 0),
+    portfolio_interest: Number(data?.portfolio_interest || 0),
+    pricing_interest: Number(data?.pricing_interest || 0),
+    whatsapp: Number(data?.whatsapp || 0),
+    booking: Number(data?.booking || 0),
+    checkout: Number(data?.checkout || 0),
+  };
+};
+
+export const fetchAnalyticsTopPages = async (from: string, to: string, limit = 10): Promise<AnalyticsTopPageItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/top-pages?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsWhatsappByPage = async (
+  from: string,
+  to: string,
+  limit = 10
+): Promise<AnalyticsWhatsappByPageItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/whatsapp-by-page?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsKpiCompare = async (from: string, to: string): Promise<AnalyticsKpiCompare> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/kpi-compare?${range}`);
+  const data = await res.json();
+
+  return {
+    current: {
+      total_events: Number(data?.current?.total_events || 0),
+      page_views: Number(data?.current?.page_views || 0),
+      click_events: Number(data?.current?.click_events || 0),
+    },
+    previous: {
+      total_events: Number(data?.previous?.total_events || 0),
+      page_views: Number(data?.previous?.page_views || 0),
+      click_events: Number(data?.previous?.click_events || 0),
+    },
+  };
+};
+
+export const fetchAnalyticsCtaPerformance = async (
+  from: string,
+  to: string,
+  limit = 20
+): Promise<AnalyticsCtaPerformanceItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/cta-performance?${range}&limit=${limit}`);
   const data = await res.json();
   return Array.isArray(data) ? data : [];
 };
