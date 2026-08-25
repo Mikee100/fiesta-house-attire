@@ -69,6 +69,44 @@ const formatSignedPercent = (value: number | null | undefined): string => {
 
 const formatPercent = (value: number): string => `${Math.round(value * 10) / 10}%`;
 
+const formatWeeklyDeltaMessage = (current: number, previous: number): { text: string; tone: "up" | "down" | "neutral" } => {
+  if (previous <= 0) {
+    if (current <= 0) return { text: "No change from 0 vs previous week", tone: "neutral" };
+    return { text: `New this week (${current.toLocaleString()})`, tone: "up" };
+  }
+
+  const delta = percentageDelta(current, previous);
+  if (delta === null || !Number.isFinite(delta)) {
+    return { text: "No comparable previous week", tone: "neutral" };
+  }
+
+  return {
+    text: `${formatSignedPercent(delta)} vs previous week`,
+    tone: delta < 0 ? "down" : "up",
+  };
+};
+
+const formatPeriodDeltaMessage = (
+  current: number,
+  previous: number,
+  unit: "day" | "week" | "month" | "year"
+): { text: string; tone: "up" | "down" | "neutral" } => {
+  if (previous <= 0) {
+    if (current <= 0) return { text: `No change from 0 vs previous ${unit}`, tone: "neutral" };
+    return { text: `New this ${unit} (${current.toLocaleString()})`, tone: "up" };
+  }
+
+  const delta = percentageDelta(current, previous);
+  if (delta === null || !Number.isFinite(delta)) {
+    return { text: `No comparable previous ${unit}`, tone: "neutral" };
+  }
+
+  return {
+    text: `${formatSignedPercent(delta)} vs previous ${unit}`,
+    tone: delta < 0 ? "down" : "up",
+  };
+};
+
 const csvEscape = (value: string | number): string => {
   const text = String(value ?? "");
   if (/[",\n]/.test(text)) {
@@ -80,6 +118,12 @@ const csvEscape = (value: string | number): string => {
 const daysBetween = (from: string, to: string): number => {
   const diff = new Date(to).getTime() - new Date(from).getTime();
   return Math.max(1, Math.round(diff / 86_400_000) + 1);
+};
+
+const shiftIsoDate = (iso: string, days: number): string => {
+  const date = new Date(iso);
+  date.setDate(date.getDate() + days);
+  return isoDate(date);
 };
 
 // Palette lives in one place so every chart, badge, and legend stays in sync.
@@ -100,6 +144,19 @@ const getEventBadgeClass = (name: string): string => {
   return EVENT_BADGE_STYLES[hash];
 };
 
+const toHumanToken = (value: string): string =>
+  value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const formatTopClickDisplayName = (eventName: string, label?: string | null): string => {
+  const eventPart = toHumanToken(eventName);
+  const labelPart = toHumanToken(label || "");
+  if (!labelPart) return eventPart;
+  return `${eventPart} • ${labelPart}`;
+};
+
 const DeviceIcon = ({ device, className }: { device: string; className?: string }) => {
   const normalized = device.toLowerCase();
   if (normalized.includes("mobile")) return <Smartphone className={className} />;
@@ -114,11 +171,15 @@ const DeviceIcon = ({ device, className }: { device: string; className?: string 
 
 const AdminAnalytics = () => {
   const navigate = useNavigate();
+  const [visitsGranularity, setVisitsGranularity] = useState<"day" | "week" | "month" | "year">("week");
   const [rangePreset, setRangePreset] = useState<"7" | "30" | "90" | "custom">("30");
   const [viewMode, setViewMode] = useState<"business" | "debug">("business");
-  const [deepDiveSection, setDeepDiveSection] = useState<"event_types" | "top_clicks" | "top_pages" | "whatsapp_pages" | "cta_performance">("top_clicks");
+  const [topNTopPages, setTopNTopPages] = useState<"8" | "15" | "30" | "50">("15");
+  const [topNWhatsappPages, setTopNWhatsappPages] = useState<"8" | "15" | "30" | "50">("15");
+  const [topNEventTypes, setTopNEventTypes] = useState<"8" | "15" | "30" | "50">("15");
+  const [topNTopClicks, setTopNTopClicks] = useState<"8" | "15" | "30" | "50">("15");
+  const [topNCta, setTopNCta] = useState<"8" | "15" | "30" | "50">("15");
   const [eventType, setEventType] = useState<"all" | "page_view" | "clicks">("all");
-  const [topN, setTopN] = useState<"8" | "15" | "30" | "50">("15");
   const [topPagesQuery, setTopPagesQuery] = useState("");
   const [whatsappPagesQuery, setWhatsappPagesQuery] = useState("");
   const [eventTypesQuery, setEventTypesQuery] = useState("");
@@ -156,17 +217,20 @@ const AdminAnalytics = () => {
   });
   const [topPages, setTopPages] = useState<api.AnalyticsTopPageItem[]>([]);
   const [whatsappByPage, setWhatsappByPage] = useState<api.AnalyticsWhatsappByPageItem[]>([]);
-  const [topClicksFull, setTopClicksFull] = useState<api.AnalyticsTopClickItem[]>([]);
-  const [topEventTypesFull, setTopEventTypesFull] = useState<api.AnalyticsTopEventTypeItem[]>([]);
-  const [topPagesFull, setTopPagesFull] = useState<api.AnalyticsTopPageItem[]>([]);
-  const [whatsappByPageFull, setWhatsappByPageFull] = useState<api.AnalyticsWhatsappByPageItem[]>([]);
-  const [ctaPerformanceFull, setCtaPerformanceFull] = useState<api.AnalyticsCtaPerformanceItem[]>([]);
   const [eventMix, setEventMix] = useState<api.AnalyticsEventMix>({
     total: 0,
     page_views: 0,
     click_events: 0,
   });
   const [clickTrend, setClickTrend] = useState<api.AnalyticsClickTrendItem[]>([]);
+  const [visitsDaySeries, setVisitsDaySeries] = useState<api.AnalyticsVisitsTimeseriesItem[]>([]);
+  const [visitsWeekSeries, setVisitsWeekSeries] = useState<api.AnalyticsVisitsTimeseriesItem[]>([]);
+  const [visitsMonthSeries, setVisitsMonthSeries] = useState<api.AnalyticsVisitsTimeseriesItem[]>([]);
+  const [visitsYearSeries, setVisitsYearSeries] = useState<api.AnalyticsVisitsTimeseriesItem[]>([]);
+  const [weeklyBusinessCurrent, setWeeklyBusinessCurrent] = useState<api.AnalyticsBusinessKpis | null>(null);
+  const [weeklyBusinessPrevious, setWeeklyBusinessPrevious] = useState<api.AnalyticsBusinessKpis | null>(null);
+  const [weeklyTopCtaCurrent, setWeeklyTopCtaCurrent] = useState<api.AnalyticsCtaPerformanceItem | null>(null);
+  const [weeklyTopCtaPrevious, setWeeklyTopCtaPrevious] = useState<api.AnalyticsCtaPerformanceItem | null>(null);
 
   const [eventsPage, setEventsPage] = useState(1);
   const [refreshTick, setRefreshTick] = useState(0);
@@ -179,12 +243,20 @@ const AdminAnalytics = () => {
     rows: [],
   });
 
-  const openDeepDivePage = (section: typeof deepDiveSection) => {
+  const openDeepDivePage = (section: "event_types" | "top_clicks" | "top_pages" | "whatsapp_pages" | "cta_performance") => {
+    const topNBySection: Record<typeof section, "8" | "15" | "30" | "50"> = {
+      top_pages: topNTopPages,
+      whatsapp_pages: topNWhatsappPages,
+      event_types: topNEventTypes,
+      top_clicks: topNTopClicks,
+      cta_performance: topNCta,
+    };
+
     const params = new URLSearchParams({
       section,
       from,
       to,
-      topN,
+      topN: topNBySection[section],
       topPagesQuery,
       whatsappPagesQuery,
       eventTypesQuery,
@@ -214,64 +286,92 @@ const AdminAnalytics = () => {
     const run = async () => {
       setLoading(true);
       try {
+        const weekEnd = activeRange.to;
+        const weekStart = shiftIsoDate(weekEnd, -6);
+        const prevWeekEnd = shiftIsoDate(weekStart, -1);
+        const prevWeekStart = shiftIsoDate(prevWeekEnd, -6);
+
         const [
           top,
           views,
           devices,
           eventTypes,
-          topFull,
-          eventTypesFull,
           compare,
           ctaRows,
-          ctaRowsFull,
           business,
           funnelData,
           pages,
-          pagesFull,
           waPages,
-          waPagesFull,
           mix,
           clickSeries,
           recent,
+          visitsDay,
+          visitsWeek,
+          visitsMonth,
+          visitsYear,
+          weekBusinessCurrent,
+          weekBusinessPrevious,
+          weekCtaCurrent,
+          weekCtaPrevious,
         ] = await Promise.all([
           api.fetchAnalyticsTopClicks(activeRange.from, activeRange.to, 12),
           api.fetchAnalyticsPageViews(activeRange.from, activeRange.to),
           api.fetchAnalyticsDeviceBreakdown(activeRange.from, activeRange.to),
           api.fetchAnalyticsTopEventTypes(activeRange.from, activeRange.to, 8),
-          api.fetchAnalyticsTopClicks(activeRange.from, activeRange.to, 50),
-          api.fetchAnalyticsTopEventTypes(activeRange.from, activeRange.to, 50),
           api.fetchAnalyticsKpiCompare(activeRange.from, activeRange.to),
           api.fetchAnalyticsCtaPerformance(activeRange.from, activeRange.to, 20),
-          api.fetchAnalyticsCtaPerformance(activeRange.from, activeRange.to, 100),
           api.fetchAnalyticsBusinessKpis(activeRange.from, activeRange.to),
           api.fetchAnalyticsFunnel(activeRange.from, activeRange.to),
           api.fetchAnalyticsTopPages(activeRange.from, activeRange.to, 8),
-          api.fetchAnalyticsTopPages(activeRange.from, activeRange.to, 50),
           api.fetchAnalyticsWhatsappByPage(activeRange.from, activeRange.to, 8),
-          api.fetchAnalyticsWhatsappByPage(activeRange.from, activeRange.to, 50),
           api.fetchAnalyticsEventMix(activeRange.from, activeRange.to),
           api.fetchAnalyticsClickTrend(activeRange.from, activeRange.to),
           api.fetchAnalyticsRecentEvents(activeRange.from, activeRange.to, eventsPage, 25, eventType),
+          api.fetchAnalyticsVisitsTimeseries(activeRange.from, activeRange.to, "day"),
+          api.fetchAnalyticsVisitsTimeseries(activeRange.from, activeRange.to, "week"),
+          api.fetchAnalyticsVisitsTimeseries(activeRange.from, activeRange.to, "month"),
+          api.fetchAnalyticsVisitsTimeseries(activeRange.from, activeRange.to, "year"),
+          api.fetchAnalyticsBusinessKpis(weekStart, weekEnd),
+          api.fetchAnalyticsBusinessKpis(prevWeekStart, prevWeekEnd),
+          api.fetchAnalyticsCtaPerformance(weekStart, weekEnd, 10),
+          api.fetchAnalyticsCtaPerformance(prevWeekStart, prevWeekEnd, 50),
         ]);
 
         setTopClicks(Array.isArray(top) ? top : []);
         setPageViews(Array.isArray(views) ? views : []);
         setDeviceBreakdown(Array.isArray(devices) ? devices : []);
         setTopEventTypes(Array.isArray(eventTypes) ? eventTypes : []);
-        setTopClicksFull(Array.isArray(topFull) ? topFull : []);
-        setTopEventTypesFull(Array.isArray(eventTypesFull) ? eventTypesFull : []);
         setKpiCompare(compare);
         setCtaPerformance(Array.isArray(ctaRows) ? ctaRows : []);
-        setCtaPerformanceFull(Array.isArray(ctaRowsFull) ? ctaRowsFull : []);
         setBusinessKpis(business);
         setFunnel(funnelData);
         setTopPages(Array.isArray(pages) ? pages : []);
-        setTopPagesFull(Array.isArray(pagesFull) ? pagesFull : []);
         setWhatsappByPage(Array.isArray(waPages) ? waPages : []);
-        setWhatsappByPageFull(Array.isArray(waPagesFull) ? waPagesFull : []);
         setEventMix(mix);
         setClickTrend(Array.isArray(clickSeries) ? clickSeries : []);
         setRecentEvents(recent);
+        setVisitsDaySeries(Array.isArray(visitsDay) ? visitsDay : []);
+        setVisitsWeekSeries(Array.isArray(visitsWeek) ? visitsWeek : []);
+        setVisitsMonthSeries(Array.isArray(visitsMonth) ? visitsMonth : []);
+        setVisitsYearSeries(Array.isArray(visitsYear) ? visitsYear : []);
+        setWeeklyBusinessCurrent(weekBusinessCurrent);
+        setWeeklyBusinessPrevious(weekBusinessPrevious);
+
+        const currentTopCta = Array.isArray(weekCtaCurrent) && weekCtaCurrent.length > 0 ? weekCtaCurrent[0] : null;
+        setWeeklyTopCtaCurrent(currentTopCta);
+
+        if (currentTopCta && Array.isArray(weekCtaPrevious)) {
+          const previousMatch =
+            weekCtaPrevious.find(
+              (row) =>
+                row.event_name === currentTopCta.event_name &&
+                String(row.label || "") === String(currentTopCta.label || ""),
+            ) || null;
+          setWeeklyTopCtaPrevious(previousMatch);
+        } else {
+          setWeeklyTopCtaPrevious(null);
+        }
+
         setLastUpdatedAt(new Date());
       } catch {
         toast.error("Failed to load analytics data");
@@ -297,7 +397,8 @@ const AdminAnalytics = () => {
     () =>
       topClicks
         .map((item) => ({
-          name: `${item.event_name}${item.label ? `: ${item.label}` : ""}`,
+          name: formatTopClickDisplayName(item.event_name, item.label),
+          rawName: `${item.event_name}${item.label ? `: ${item.label}` : ""}`.toLowerCase(),
           count: safeNumber(item.count),
         }))
         .sort((a, b) => b.count - a.count),
@@ -350,26 +451,53 @@ const AdminAnalytics = () => {
     [funnel],
   );
 
-  const topClicksFullChartData = useMemo(
-    () =>
-      topClicksFull
-        .map((item) => ({
-          name: `${item.event_name}${item.label ? `: ${item.label}` : ""}`,
-          count: safeNumber(item.count),
-        }))
-        .sort((a, b) => b.count - a.count),
-    [topClicksFull],
+  const visitsSeriesByGranularity = useMemo(
+    () => ({
+      day: visitsDaySeries,
+      week: visitsWeekSeries,
+      month: visitsMonthSeries,
+      year: visitsYearSeries,
+    }),
+    [visitsDaySeries, visitsWeekSeries, visitsMonthSeries, visitsYearSeries],
   );
 
-  const topEventTypesFullChartData = useMemo(
-    () =>
-      topEventTypesFull
-        .map((item) => ({ name: item.event_name, count: safeNumber(item.count) }))
-        .sort((a, b) => b.count - a.count),
-    [topEventTypesFull],
+  const selectedVisitsSeries = visitsSeriesByGranularity[visitsGranularity] || [];
+  const visitsTrendChartData = useMemo(
+    () => selectedVisitsSeries.map((row) => ({ bucket: row.bucket, visits: safeNumber(row.visits) })),
+    [selectedVisitsSeries],
   );
 
-  const topNValue = Number(topN);
+  const buildVisitsStat = (rows: api.AnalyticsVisitsTimeseriesItem[]) => {
+    if (!rows || rows.length === 0) {
+      return {
+        current: 0,
+        previous: 0,
+        delta: null as number | null,
+      };
+    }
+
+    const sorted = [...rows].sort((a, b) => new Date(a.bucket_start).getTime() - new Date(b.bucket_start).getTime());
+    const current = safeNumber(sorted[sorted.length - 1]?.visits);
+    const previous = safeNumber(sorted[sorted.length - 2]?.visits);
+    return {
+      current,
+      previous,
+      delta: percentageDelta(current, previous),
+    };
+  };
+
+  const visitsStats = {
+    day: buildVisitsStat(visitsDaySeries),
+    week: buildVisitsStat(visitsWeekSeries),
+    month: buildVisitsStat(visitsMonthSeries),
+    year: buildVisitsStat(visitsYearSeries),
+  };
+
+  const topNTopPagesValue = Number(topNTopPages);
+  const topNWhatsappPagesValue = Number(topNWhatsappPages);
+  const topNEventTypesValue = Number(topNEventTypes);
+  const topNTopClicksValue = Number(topNTopClicks);
+  const topNCtaValue = Number(topNCta);
   const normalizedTopPagesQuery = topPagesQuery.trim().toLowerCase();
   const normalizedWhatsappPagesQuery = whatsappPagesQuery.trim().toLowerCase();
   const normalizedEventTypesQuery = eventTypesQuery.trim().toLowerCase();
@@ -380,64 +508,34 @@ const AdminAnalytics = () => {
     () =>
       topPages
         .filter((row) => (row.page || "/").toLowerCase().includes(normalizedTopPagesQuery))
-        .slice(0, topNValue),
-    [topPages, normalizedTopPagesQuery, topNValue],
+        .slice(0, topNTopPagesValue),
+    [topPages, normalizedTopPagesQuery, topNTopPagesValue],
   );
 
   const filteredWhatsappByPage = useMemo(
     () =>
       whatsappByPage
         .filter((row) => (row.page || "(unknown)").toLowerCase().includes(normalizedWhatsappPagesQuery))
-        .slice(0, topNValue),
-    [whatsappByPage, normalizedWhatsappPagesQuery, topNValue],
+        .slice(0, topNWhatsappPagesValue),
+    [whatsappByPage, normalizedWhatsappPagesQuery, topNWhatsappPagesValue],
   );
 
   const filteredTopEventTypesChartData = useMemo(
-    () => topEventTypesChartData.filter((row) => row.name.toLowerCase().includes(normalizedEventTypesQuery)).slice(0, topNValue),
-    [topEventTypesChartData, normalizedEventTypesQuery, topNValue],
+    () => topEventTypesChartData.filter((row) => row.name.toLowerCase().includes(normalizedEventTypesQuery)).slice(0, topNEventTypesValue),
+    [topEventTypesChartData, normalizedEventTypesQuery, topNEventTypesValue],
   );
 
   const filteredTopClicksChartData = useMemo(
-    () => topClicksChartData.filter((row) => row.name.toLowerCase().includes(normalizedTopClicksQuery)).slice(0, topNValue),
-    [topClicksChartData, normalizedTopClicksQuery, topNValue],
-  );
-
-  const filteredTopPagesFull = useMemo(
-    () => topPagesFull.filter((row) => (row.page || "/").toLowerCase().includes(normalizedTopPagesQuery)).slice(0, topNValue),
-    [topPagesFull, normalizedTopPagesQuery, topNValue],
-  );
-
-  const filteredWhatsappByPageFull = useMemo(
     () =>
-      whatsappByPageFull
-        .filter((row) => (row.page || "(unknown)").toLowerCase().includes(normalizedWhatsappPagesQuery))
-        .slice(0, topNValue),
-    [whatsappByPageFull, normalizedWhatsappPagesQuery, topNValue],
-  );
-
-  const filteredTopPagesFullChartData = useMemo(
-    () => filteredTopPagesFull.map((item) => ({ name: item.page || "/", count: safeNumber(item.views) })),
-    [filteredTopPagesFull],
-  );
-
-  const filteredWhatsappByPageFullChartData = useMemo(
-    () => filteredWhatsappByPageFull.map((item) => ({ name: item.page || "(unknown)", count: safeNumber(item.whatsapp_clicks) })),
-    [filteredWhatsappByPageFull],
-  );
-
-  const filteredTopEventTypesFullChartData = useMemo(
-    () => topEventTypesFullChartData.filter((row) => row.name.toLowerCase().includes(normalizedEventTypesQuery)).slice(0, topNValue),
-    [topEventTypesFullChartData, normalizedEventTypesQuery, topNValue],
-  );
-
-  const filteredTopClicksFullChartData = useMemo(
-    () => topClicksFullChartData.filter((row) => row.name.toLowerCase().includes(normalizedTopClicksQuery)).slice(0, topNValue),
-    [topClicksFullChartData, normalizedTopClicksQuery, topNValue],
+      topClicksChartData
+        .filter((row) => row.rawName.includes(normalizedTopClicksQuery) || row.name.toLowerCase().includes(normalizedTopClicksQuery))
+        .slice(0, topNTopClicksValue),
+    [topClicksChartData, normalizedTopClicksQuery, topNTopClicksValue],
   );
 
   const ctaEventOptions = useMemo(
-    () => Array.from(new Set(ctaPerformanceFull.map((row) => row.event_name))).sort((a, b) => a.localeCompare(b)),
-    [ctaPerformanceFull],
+    () => Array.from(new Set(ctaPerformance.map((row) => row.event_name))).sort((a, b) => a.localeCompare(b)),
+    [ctaPerformance],
   );
 
   const filterCtaRows = (rows: api.AnalyticsCtaPerformanceItem[]) =>
@@ -449,22 +547,9 @@ const AdminAnalytics = () => {
     });
 
   const filteredCtaPerformance = useMemo(
-    () => filterCtaRows(ctaPerformance).slice(0, topNValue),
-    [ctaPerformance, ctaEventFilter, normalizedCtaQuery, topNValue],
+    () => filterCtaRows(ctaPerformance).slice(0, topNCtaValue),
+    [ctaPerformance, ctaEventFilter, normalizedCtaQuery, topNCtaValue],
   );
-
-  const filteredCtaPerformanceFull = useMemo(
-    () => filterCtaRows(ctaPerformanceFull).slice(0, topNValue),
-    [ctaPerformanceFull, ctaEventFilter, normalizedCtaQuery, topNValue],
-  );
-
-  const deepDiveTitleMap: Record<typeof deepDiveSection, string> = {
-    event_types: "Top Event Types (Full)",
-    top_clicks: "Top Click Drilldown (Full)",
-    top_pages: "Top Pages (Full)",
-    whatsapp_pages: "WhatsApp By Page (Full)",
-    cta_performance: "CTA Performance (Full)",
-  };
 
   // ---- KPI summary ----
 
@@ -521,6 +606,45 @@ const AdminAnalytics = () => {
       value: formatCompact(safeNumber(businessKpis.returning_visitors)),
       icon: Smartphone,
       accent: "bg-teal-50 text-teal-600",
+    },
+  ];
+
+  const weeklyLeadsCurrent = safeNumber(weeklyBusinessCurrent?.whatsapp_leads);
+  const weeklyLeadsPrevious = safeNumber(weeklyBusinessPrevious?.whatsapp_leads);
+  const weeklyConversionCurrent = safeNumber(weeklyBusinessCurrent?.conversion_rate);
+  const weeklyConversionPrevious = safeNumber(weeklyBusinessPrevious?.conversion_rate);
+  const weeklyTopCtaCurrentClicks = safeNumber(weeklyTopCtaCurrent?.clicks);
+  const weeklyTopCtaPreviousClicks = safeNumber(weeklyTopCtaPrevious?.clicks);
+
+  const weeklySummaryCards = [
+    {
+      label: "Weekly leads",
+      value: formatCompact(weeklyLeadsCurrent),
+      delta: percentageDelta(weeklyLeadsCurrent, weeklyLeadsPrevious),
+      current: weeklyLeadsCurrent,
+      previous: weeklyLeadsPrevious,
+      sub: "WhatsApp leads (last 7d)",
+    },
+    {
+      label: "Weekly conversion",
+      value: formatPercent(weeklyConversionCurrent),
+      delta: percentageDelta(weeklyConversionCurrent, weeklyConversionPrevious),
+      current: weeklyConversionCurrent,
+      previous: weeklyConversionPrevious,
+      sub: "Lead conversion rate (last 7d)",
+    },
+    {
+      label: "Top CTA this week",
+      value: weeklyTopCtaCurrent
+        ? `${toHumanToken(weeklyTopCtaCurrent.event_name)} • ${toHumanToken(weeklyTopCtaCurrent.label || "(no label)")}`
+        : "No CTA clicks",
+      delta: percentageDelta(weeklyTopCtaCurrentClicks, weeklyTopCtaPreviousClicks),
+      current: weeklyTopCtaCurrentClicks,
+      previous: weeklyTopCtaPreviousClicks,
+      sub: weeklyTopCtaCurrent
+        ? `${weeklyTopCtaCurrentClicks.toLocaleString()} clicks`
+        : "No click data in last 7d",
+      compactValue: true,
     },
   ];
 
@@ -622,15 +746,15 @@ const AdminAnalytics = () => {
       <AdminPage
         title="Visitor Analytics"
         description="Track package interest, page views, WhatsApp actions, and engagement trends."
-        maxWidthClassName="max-w-7xl"
+        maxWidthClassName="max-w-6xl"
       >
         {/* Date range + controls */}
         <AdminSection
           title="Date Range"
           description="Filter analytics by period. Admin routes are excluded from tracking."
-          contentClassName="p-3"
+          contentClassName="p-2"
         >
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
             <div className="inline-flex items-center gap-1 rounded-md bg-slate-100 p-1">
               {[
                 { value: "7", label: "7d" },
@@ -725,37 +849,69 @@ const AdminAnalytics = () => {
 
         {/* KPI summary cards */}
         {viewMode === "business" ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {businessPrimaryCards.map((card) => (
-              <div
-                key={card.label}
-                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-              >
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${card.accent}`}>
-                  <card.icon size={18} />
+          <>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {businessPrimaryCards.map((card) => (
+                <div
+                  key={card.label}
+                  className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-3"
+                >
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${card.accent}`}>
+                    <card.icon size={16} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-[11px] font-medium text-slate-500">{card.label}</p>
+                    <p className="truncate text-lg font-semibold text-slate-900">
+                      {loading ? "—" : card.value}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-slate-500">{card.label}</p>
-                  <p className="truncate text-xl font-semibold text-slate-900">
-                    {loading ? "—" : card.value}
-                  </p>
-                </div>
+              ))}
+            </div>
+
+            <AdminSection
+              title="Weekly Business Summary"
+              description="Week-over-week movement for key decisions (last 7 days vs previous 7 days)."
+              contentClassName="p-1"
+            >
+              <div className="grid grid-cols-1 gap-1 md:grid-cols-3">
+                {weeklySummaryCards.map((card) => {
+                  const weeklyDelta = formatWeeklyDeltaMessage(card.current, card.previous);
+                  const tone =
+                    weeklyDelta.tone === "down"
+                      ? "text-rose-600"
+                      : weeklyDelta.tone === "up"
+                        ? "text-emerald-600"
+                        : "text-slate-500";
+                  return (
+                    <div key={card.label} className="rounded border border-slate-200 bg-slate-50 px-2 py-1">
+                      <p className="truncate text-[10px] font-medium text-slate-500">{card.label}</p>
+                      <p className={`${card.compactValue ? "text-[11px]" : "text-sm"} leading-tight font-semibold text-slate-900`}>
+                        {loading ? "—" : card.value}
+                      </p>
+                      <p className="truncate text-[10px] leading-tight text-slate-500">{card.sub}</p>
+                      <p className={`text-[10px] leading-tight font-medium ${tone}`}>
+                        {loading ? "—" : weeklyDelta.text}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </AdminSection>
+          </>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {kpiCards.map((card) => (
               <div
                 key={card.label}
-                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-3"
               >
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${card.accent}`}>
-                  <card.icon size={18} />
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${card.accent}`}>
+                  <card.icon size={16} />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-slate-500">{card.label}</p>
-                  <p className="truncate text-xl font-semibold text-slate-900">
+                  <p className="truncate text-[11px] font-medium text-slate-500">{card.label}</p>
+                  <p className="truncate text-lg font-semibold text-slate-900">
                     {loading ? "—" : card.value}
                   </p>
                   {!loading && card.showDelta !== false && (
@@ -769,13 +925,77 @@ const AdminAnalytics = () => {
           </div>
         )}
 
+        <AdminSection
+          title="Website Visits"
+          description="Visits by day, week, month, and year with trend view."
+          contentClassName="p-1.5"
+        >
+          <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-slate-200 bg-white px-2 py-1.5">
+            {([
+              { key: "day", label: "Per day" },
+              { key: "week", label: "Per week" },
+              { key: "month", label: "Per month" },
+              { key: "year", label: "Per year" },
+            ] as Array<{ key: "day" | "week" | "month" | "year"; label: string }>).map((item) => {
+              const stat = visitsStats[item.key];
+              const periodDelta = formatPeriodDeltaMessage(stat.current, stat.previous, item.key);
+              const tone = periodDelta.tone === "down" ? "text-rose-600" : periodDelta.tone === "up" ? "text-emerald-600" : "text-slate-500";
+              return (
+                <p key={item.key} className="truncate text-[11px] leading-tight">
+                  <span className="font-medium text-slate-600">{item.label}:</span>{" "}
+                  <span className="font-semibold text-slate-900">{loading ? "—" : stat.current.toLocaleString()}</span>{" "}
+                  <span className={`font-medium ${tone}`}>({loading ? "—" : periodDelta.text})</span>
+                </p>
+              );
+            })}
+          </div>
+
+          <div className="mb-2 inline-flex items-center gap-0.5 rounded-md bg-slate-100 p-0.5">
+            {([
+              { value: "day", label: "Day" },
+              { value: "week", label: "Week" },
+              { value: "month", label: "Month" },
+              { value: "year", label: "Year" },
+            ] as Array<{ value: "day" | "week" | "month" | "year"; label: string }>).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setVisitsGranularity(option.value)}
+                className={`h-6 rounded px-2 text-[11px] font-medium transition ${
+                  visitsGranularity === option.value
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-56 w-full">
+            {!loading && visitsTrendChartData.length === 0 ? (
+              <EmptyState message="No visit data in this range yet." />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={visitsTrendChartData} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="bucket" tick={{ fontSize: 11, fill: "#64748b" }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} />
+                  <Bar dataKey="visits" radius={[6, 6, 0, 0]} fill="#0ea5e9" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </AdminSection>
+
         {viewMode === "debug" && (
           <AdminSection title="Business Snapshot" description="Owner-focused metrics for lead generation and intent.">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
               {businessCards.map((card) => (
-                <div key={card.label} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div key={card.label} className="rounded-md border border-slate-200 bg-slate-50 p-2.5">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{card.label}</p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">{loading ? "—" : card.value}</p>
+                  <p className="mt-0.5 text-base font-semibold text-slate-900">{loading ? "—" : card.value}</p>
                 </div>
               ))}
             </div>
@@ -784,9 +1004,9 @@ const AdminAnalytics = () => {
 
         {viewMode === "business" && (
         <>
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <AdminSection title="Business Funnel" description="Visitor journey from exploration to intent actions.">
-            <div className="h-72 w-full">
+            <div className="h-64 w-full">
               {!loading && funnelChartData.every((item) => item.value === 0) ? (
                 <EmptyState message="No funnel events in this range yet." />
               ) : (
@@ -803,27 +1023,44 @@ const AdminAnalytics = () => {
             </div>
           </AdminSection>
 
-          <AdminSection title="Funnel Step Drop-offs" description="Step-to-step change. This can increase if users enter mid-funnel.">
+          <AdminSection title="Funnel Step Drop-offs" description="How many users were kept or lost from one step to the next.">
             <div className="space-y-2">
               {funnelChartData.map((entry, idx) => {
                 if (idx === 0) return null;
                 const prev = funnelChartData[idx - 1]?.value || 0;
-                const stepChange = prev > 0 ? ((entry.value - prev) / prev) * 100 : null;
-                const isDropOff = stepChange !== null && stepChange < 0;
-                const isGrowth = stepChange !== null && stepChange > 0;
-                const changeLabel =
-                  stepChange === null
-                    ? "No baseline (0 in previous step)"
-                    : isDropOff
-                      ? `${Math.abs(stepChange).toFixed(1)}% drop-off`
-                      : isGrowth
-                        ? `+${stepChange.toFixed(1)}% increase`
-                        : "0.0% change";
+                const curr = entry.value;
+
+                let changeLabel = "";
+                let toneClass = "text-slate-500";
+                let icon: "down" | "up" | null = null;
+
+                if (prev === 0 && curr === 0) {
+                  changeLabel = "No activity in either step";
+                } else if (prev === 0 && curr > 0) {
+                  changeLabel = `Started here: ${curr.toLocaleString()} users`;
+                  toneClass = "text-emerald-600";
+                  icon = "up";
+                } else {
+                  const conversion = (curr / prev) * 100;
+                  if (curr <= prev) {
+                    const dropOff = 100 - conversion;
+                    const lost = prev - curr;
+                    changeLabel = `Kept ${curr.toLocaleString()}/${prev.toLocaleString()} (${conversion.toFixed(1)}%) • Lost ${lost.toLocaleString()} (${dropOff.toFixed(1)}%)`;
+                    toneClass = dropOff > 0 ? "text-rose-600" : "text-emerald-600";
+                    icon = dropOff > 0 ? "down" : null;
+                  } else {
+                    const increase = ((curr - prev) / prev) * 100;
+                    const entered = curr - prev;
+                    changeLabel = `More users entered here: +${entered.toLocaleString()} (+${increase.toFixed(1)}%)`;
+                    toneClass = "text-emerald-600";
+                    icon = "up";
+                  }
+                }
                 return (
-                  <div key={entry.step} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
-                    <span className="text-sm text-slate-700">{funnelChartData[idx - 1].step} to {entry.step}</span>
-                    <span className={`inline-flex items-center gap-1 text-sm font-medium ${isDropOff ? "text-rose-600" : isGrowth ? "text-emerald-600" : "text-slate-500"}`}>
-                      {isDropOff ? <ArrowDownRight size={14} /> : isGrowth ? <ArrowUpRight size={14} /> : null}
+                  <div key={entry.step} className="flex items-center justify-between rounded-md border border-slate-200 px-2.5 py-1.5">
+                    <span className="text-xs text-slate-700">{funnelChartData[idx - 1].step} to {entry.step}</span>
+                    <span className={`inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium ${toneClass}`}>
+                      {icon === "down" ? <ArrowDownRight size={14} /> : icon === "up" ? <ArrowUpRight size={14} /> : null}
                       {changeLabel}
                     </span>
                   </div>
@@ -833,35 +1070,32 @@ const AdminAnalytics = () => {
           </AdminSection>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <AdminSection
             title="Top Pages"
             description="Most visited pages and unique visitors."
             actions={(
               <button
                 type="button"
-                onClick={() => {
-                  setDeepDiveSection("top_pages");
-                  openDeepDivePage("top_pages");
-                }}
+                onClick={() => openDeepDivePage("top_pages")}
                 className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Expand
               </button>
             )}
           >
-            <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
               <input
                 type="text"
                 value={topPagesQuery}
                 onChange={(event) => setTopPagesQuery(event.target.value)}
                 placeholder="Filter page path"
-                className="h-8 min-w-[180px] rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
+                className="h-7 min-w-[170px] rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-800"
               />
               <select
-                value={topN}
-                onChange={(event) => setTopN(event.target.value as "8" | "15" | "30" | "50")}
-                className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700"
+                value={topNTopPages}
+                onChange={(event) => setTopNTopPages(event.target.value as "8" | "15" | "30" | "50")}
+                className="h-7 rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-700"
               >
                 <option value="8">Top 8</option>
                 <option value="15">Top 15</option>
@@ -870,27 +1104,27 @@ const AdminAnalytics = () => {
               </select>
             </div>
             <div className="overflow-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-3 py-2.5">Page</th>
-                    <th className="px-3 py-2.5 text-right">Views</th>
-                    <th className="px-3 py-2.5 text-right">Unique</th>
+                    <th className="px-2.5 py-2">Page</th>
+                    <th className="px-2.5 py-2 text-right">Views</th>
+                    <th className="px-2.5 py-2 text-right">Unique</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
                   {filteredTopPages.length === 0 ? (
                     <tr>
-                      <td className="px-3 py-6 text-center text-slate-500" colSpan={3}>
+                      <td className="px-2.5 py-5 text-center text-slate-500" colSpan={3}>
                         {loading ? "Loading pages…" : "No matching pages for this filter."}
                       </td>
                     </tr>
                   ) : (
                     filteredTopPages.map((row) => (
                       <tr key={row.page}>
-                        <td className="max-w-[320px] truncate px-3 py-2.5 text-slate-700">{row.page || "/"}</td>
-                        <td className="px-3 py-2.5 text-right font-medium text-slate-900">{safeNumber(row.views).toLocaleString()}</td>
-                        <td className="px-3 py-2.5 text-right text-slate-600">{safeNumber(row.unique_visitors).toLocaleString()}</td>
+                        <td className="max-w-[320px] truncate px-2.5 py-2 text-slate-700">{row.page || "/"}</td>
+                        <td className="px-2.5 py-2 text-right font-medium text-slate-900">{safeNumber(row.views).toLocaleString()}</td>
+                        <td className="px-2.5 py-2 text-right text-slate-600">{safeNumber(row.unique_visitors).toLocaleString()}</td>
                       </tr>
                     ))
                   )}
@@ -905,10 +1139,7 @@ const AdminAnalytics = () => {
             actions={(
               <button
                 type="button"
-                onClick={() => {
-                  setDeepDiveSection("whatsapp_pages");
-                  openDeepDivePage("whatsapp_pages");
-                }}
+                onClick={() => openDeepDivePage("whatsapp_pages")}
                 className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Expand
@@ -924,8 +1155,8 @@ const AdminAnalytics = () => {
                 className="h-8 min-w-[180px] rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
               />
               <select
-                value={topN}
-                onChange={(event) => setTopN(event.target.value as "8" | "15" | "30" | "50")}
+                value={topNWhatsappPages}
+                onChange={(event) => setTopNWhatsappPages(event.target.value as "8" | "15" | "30" | "50")}
                 className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700"
               >
                 <option value="8">Top 8</option>
@@ -969,9 +1200,9 @@ const AdminAnalytics = () => {
 
         {viewMode === "debug" && (
         <>
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           <AdminSection title="Event Mix" description="Quick split of page views vs tracked button clicks.">
-            <div className="h-64 w-full">
+            <div className="h-56 w-full">
               {!loading && eventMixChartData.every((item) => item.count === 0) ? (
                 <EmptyState message="No events captured in this range yet." />
               ) : (
@@ -993,7 +1224,7 @@ const AdminAnalytics = () => {
           </AdminSection>
 
           <AdminSection title="Clicks Over Time" description="Daily trend for non-page_view actions.">
-            <div className="h-64 w-full">
+            <div className="h-56 w-full">
               {!loading && clickTrendChartData.length === 0 ? (
                 <EmptyState message="No click events in this range yet." />
               ) : (
@@ -1024,35 +1255,32 @@ const AdminAnalytics = () => {
           </AdminSection>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           <AdminSection
             title="Top Event Types"
             description="High-level click volume by event name (labels grouped)."
             actions={(
               <button
                 type="button"
-                onClick={() => {
-                  setDeepDiveSection("event_types");
-                  openDeepDivePage("event_types");
-                }}
+                onClick={() => openDeepDivePage("event_types")}
                 className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Expand
               </button>
             )}
           >
-            <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
               <input
                 type="text"
                 value={eventTypesQuery}
                 onChange={(event) => setEventTypesQuery(event.target.value)}
                 placeholder="Filter event name"
-                className="h-8 min-w-[180px] rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
+                className="h-7 min-w-[170px] rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-800"
               />
               <select
-                value={topN}
-                onChange={(event) => setTopN(event.target.value as "8" | "15" | "30" | "50")}
-                className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700"
+                value={topNEventTypes}
+                onChange={(event) => setTopNEventTypes(event.target.value as "8" | "15" | "30" | "50")}
+                className="h-7 rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-700"
               >
                 <option value="8">Top 8</option>
                 <option value="15">Top 15</option>
@@ -1060,7 +1288,7 @@ const AdminAnalytics = () => {
                 <option value="50">Top 50</option>
               </select>
             </div>
-            <div className="h-72 w-full">
+            <div className="h-64 w-full">
               {!loading && filteredTopEventTypesChartData.length === 0 ? (
                 <EmptyState message="No matching event types for this filter." />
               ) : (
@@ -1084,28 +1312,25 @@ const AdminAnalytics = () => {
             actions={(
               <button
                 type="button"
-                onClick={() => {
-                  setDeepDiveSection("top_clicks");
-                  openDeepDivePage("top_clicks");
-                }}
+                onClick={() => openDeepDivePage("top_clicks")}
                 className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Expand
               </button>
             )}
           >
-            <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
               <input
                 type="text"
                 value={topClicksQuery}
                 onChange={(event) => setTopClicksQuery(event.target.value)}
                 placeholder="Filter event or label"
-                className="h-8 min-w-[180px] rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
+                className="h-7 min-w-[170px] rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-800"
               />
               <select
-                value={topN}
-                onChange={(event) => setTopN(event.target.value as "8" | "15" | "30" | "50")}
-                className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700"
+                value={topNTopClicks}
+                onChange={(event) => setTopNTopClicks(event.target.value as "8" | "15" | "30" | "50")}
+                className="h-7 rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-700"
               >
                 <option value="8">Top 8</option>
                 <option value="15">Top 15</option>
@@ -1113,7 +1338,7 @@ const AdminAnalytics = () => {
                 <option value="50">Top 50</option>
               </select>
             </div>
-            <div className="h-80 w-full">
+            <div className="h-64 w-full">
               {!loading && filteredTopClicksChartData.length === 0 ? (
                 <EmptyState message="No matching click entries for this filter." />
               ) : (
@@ -1134,15 +1359,15 @@ const AdminAnalytics = () => {
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={150}
+                      width={130}
                       tick={{ fontSize: 11, fill: "#334155" }}
-                      tickFormatter={(value: string) => (value.length > 22 ? `${value.slice(0, 22)}…` : value)}
+                      tickFormatter={(value: string) => (value.length > 18 ? `${value.slice(0, 18)}…` : value)}
                     />
                     <Tooltip
                       cursor={{ fill: "#f1f5f9" }}
                       contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
                     />
-                    <Bar dataKey="count" fill="url(#topClicksGradient)" radius={[0, 6, 6, 0]} barSize={16} />
+                    <Bar dataKey="count" fill="url(#topClicksGradient)" radius={[0, 6, 6, 0]} barSize={13} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -1152,12 +1377,12 @@ const AdminAnalytics = () => {
           {/* Device breakdown — donut communicates share-of-total better than bars */}
           <AdminSection title="Device Breakdown" description="Traffic split by device category.">
             {!loading && deviceChartData.length === 0 ? (
-              <div className="h-80 w-full">
+              <div className="h-72 w-full">
                 <EmptyState message="No device data in this range yet." />
               </div>
             ) : (
-              <div className="flex h-80 w-full flex-col items-center gap-4 sm:flex-row">
-                <div className="relative h-56 w-56 shrink-0">
+              <div className="flex h-64 w-full flex-col items-center gap-2 sm:flex-row">
+                <div className="relative h-48 w-48 shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -1166,8 +1391,8 @@ const AdminAnalytics = () => {
                         nameKey="device"
                         cx="50%"
                         cy="50%"
-                        innerRadius={62}
-                        outerRadius={92}
+                        innerRadius={52}
+                        outerRadius={78}
                         paddingAngle={3}
                         stroke="none"
                       >
@@ -1182,24 +1407,24 @@ const AdminAnalytics = () => {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-semibold text-slate-900">{formatCompact(deviceTotal)}</span>
-                    <span className="text-xs text-slate-500">sessions</span>
+                    <span className="text-xl font-semibold text-slate-900">{formatCompact(deviceTotal)}</span>
+                    <span className="text-[11px] text-slate-500">sessions</span>
                   </div>
                 </div>
 
-                <div className="w-full flex-1 space-y-2">
+                <div className="w-full flex-1 space-y-1">
                   {deviceChartData.map((entry, index) => {
                     const pct = deviceTotal > 0 ? (entry.count / deviceTotal) * 100 : 0;
                     return (
-                      <div key={entry.device} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-slate-50">
+                      <div key={entry.device} className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-slate-50">
                         <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          className="h-2 w-2 shrink-0 rounded-full"
                           style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                         />
                         <DeviceIcon device={entry.device} className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                        <span className="flex-1 truncate text-sm capitalize text-slate-700">{entry.device}</span>
-                        <span className="text-sm font-medium text-slate-900">{entry.count.toLocaleString()}</span>
-                        <span className="w-12 text-right text-xs text-slate-400">{pct.toFixed(0)}%</span>
+                        <span className="flex-1 truncate text-xs capitalize text-slate-700">{entry.device}</span>
+                        <span className="text-xs font-medium text-slate-900">{entry.count.toLocaleString()}</span>
+                        <span className="w-10 text-right text-[11px] text-slate-400">{pct.toFixed(0)}%</span>
                       </div>
                     );
                   })}
@@ -1211,7 +1436,7 @@ const AdminAnalytics = () => {
 
         {/* Page views trend — filled area reads growth/decline at a glance */}
         <AdminSection title="Page Views Over Time" description="Daily page view counts for the selected range.">
-          <div className="h-80 w-full">
+          <div className="h-64 w-full">
             {!loading && pageViewsChartData.length === 0 ? (
               <EmptyState message="No page views in this range yet." />
             ) : (
@@ -1252,10 +1477,7 @@ const AdminAnalytics = () => {
             <>
               <button
                 type="button"
-                onClick={() => {
-                  setDeepDiveSection("cta_performance");
-                  openDeepDivePage("cta_performance");
-                }}
+                onClick={() => openDeepDivePage("cta_performance")}
                 className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Expand
@@ -1272,18 +1494,18 @@ const AdminAnalytics = () => {
           )}
           contentClassName="p-0"
         >
-          <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-3 py-2">
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-slate-50/70 px-2.5 py-1.5">
             <input
               type="text"
               value={ctaQuery}
               onChange={(event) => setCtaQuery(event.target.value)}
               placeholder="Filter event or label"
-              className="h-8 min-w-[190px] rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
+              className="h-7 min-w-[180px] rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-800"
             />
             <select
               value={ctaEventFilter}
               onChange={(event) => setCtaEventFilter(event.target.value)}
-              className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700"
+              className="h-7 rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-700"
             >
               <option value="all">All events</option>
               {ctaEventOptions.map((eventName) => (
@@ -1293,9 +1515,9 @@ const AdminAnalytics = () => {
               ))}
             </select>
             <select
-              value={topN}
-              onChange={(event) => setTopN(event.target.value as "8" | "15" | "30" | "50")}
-              className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700"
+              value={topNCta}
+              onChange={(event) => setTopNCta(event.target.value as "8" | "15" | "30" | "50")}
+              className="h-7 rounded-md border border-slate-200 bg-white px-2 text-[11px] text-slate-700"
             >
               <option value="8">Top 8</option>
               <option value="15">Top 15</option>
@@ -1304,21 +1526,21 @@ const AdminAnalytics = () => {
             </select>
           </div>
           <div className="overflow-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Event</th>
-                  <th className="px-4 py-3">Label</th>
-                  <th className="px-4 py-3 text-right">Clicks</th>
-                  <th className="px-4 py-3 text-right">Unique Sessions</th>
-                  <th className="px-4 py-3 text-right">Share</th>
-                  <th className="px-4 py-3 text-right">Trend</th>
+                  <th className="px-3 py-2">Event</th>
+                  <th className="px-3 py-2">Label</th>
+                  <th className="px-3 py-2 text-right">Clicks</th>
+                  <th className="px-3 py-2 text-right">Unique Sessions</th>
+                  <th className="px-3 py-2 text-right">Share</th>
+                  <th className="px-3 py-2 text-right">Trend</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
                 {filteredCtaPerformance.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-500" colSpan={6}>
+                    <td className="px-3 py-6 text-center text-slate-500" colSpan={6}>
                       {loading ? "Loading CTA performance…" : "No matching CTA rows for this filter."}
                     </td>
                   </tr>
@@ -1329,16 +1551,16 @@ const AdminAnalytics = () => {
 
                     return (
                       <tr key={`${row.event_name}:${row.label}`} className="transition hover:bg-slate-50">
-                        <td className="whitespace-nowrap px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getEventBadgeClass(row.event_name)}`}>
+                        <td className="whitespace-nowrap px-3 py-2">
+                          <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-medium ${getEventBadgeClass(row.event_name)}`}>
                             {row.event_name}
                           </span>
                         </td>
-                        <td className="max-w-[220px] truncate px-4 py-3">{row.label || "(no label)"}</td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-900">{safeNumber(row.clicks).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{safeNumber(row.unique_sessions).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{share.toFixed(1)}%</td>
-                        <td className={`px-4 py-3 text-right font-medium ${trend !== null && trend < 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                        <td className="max-w-[220px] truncate px-3 py-2">{row.label || "(no label)"}</td>
+                        <td className="px-3 py-2 text-right font-medium text-slate-900">{safeNumber(row.clicks).toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right text-slate-600">{safeNumber(row.unique_sessions).toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right text-slate-600">{share.toFixed(1)}%</td>
+                        <td className={`px-3 py-2 text-right font-medium ${trend !== null && trend < 0 ? "text-rose-600" : "text-emerald-600"}`}>
                           {formatSignedPercent(trend)}
                         </td>
                       </tr>
@@ -1351,265 +1573,11 @@ const AdminAnalytics = () => {
         </AdminSection>
         )}
 
-        <AdminSection title="Deep Dive" description="Expand any analytics area to inspect the full dataset with larger visuals.">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              {[
-                { value: "top_clicks", label: "Click Drilldown" },
-                { value: "event_types", label: "Event Types" },
-                { value: "top_pages", label: "Top Pages" },
-                { value: "whatsapp_pages", label: "WhatsApp Pages" },
-                { value: "cta_performance", label: "CTA Table" },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setDeepDiveSection(option.value as typeof deepDiveSection)}
-                  className={`h-8 rounded-md px-3 text-xs font-medium transition ${
-                    deepDiveSection === option.value
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-2">
-              {(deepDiveSection === "top_pages" || deepDiveSection === "whatsapp_pages") && (
-                <input
-                  type="text"
-                  value={deepDiveSection === "top_pages" ? topPagesQuery : whatsappPagesQuery}
-                  onChange={(event) =>
-                    deepDiveSection === "top_pages"
-                      ? setTopPagesQuery(event.target.value)
-                      : setWhatsappPagesQuery(event.target.value)
-                  }
-                  placeholder="Filter page path"
-                  className="h-8 min-w-[190px] rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
-                />
-              )}
-
-              {(deepDiveSection === "top_clicks" || deepDiveSection === "event_types") && (
-                <input
-                  type="text"
-                  value={deepDiveSection === "top_clicks" ? topClicksQuery : eventTypesQuery}
-                  onChange={(event) =>
-                    deepDiveSection === "top_clicks"
-                      ? setTopClicksQuery(event.target.value)
-                      : setEventTypesQuery(event.target.value)
-                  }
-                  placeholder={deepDiveSection === "top_clicks" ? "Filter event or label" : "Filter event name"}
-                  className="h-8 min-w-[190px] rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
-                />
-              )}
-
-              {deepDiveSection === "cta_performance" && (
-                <>
-                  <input
-                    type="text"
-                    value={ctaQuery}
-                    onChange={(event) => setCtaQuery(event.target.value)}
-                    placeholder="Filter event or label"
-                    className="h-8 min-w-[190px] rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
-                  />
-                  <select
-                    value={ctaEventFilter}
-                    onChange={(event) => setCtaEventFilter(event.target.value)}
-                    className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700"
-                  >
-                    <option value="all">All events</option>
-                    {ctaEventOptions.map((eventName) => (
-                      <option key={`deep-cta-filter-${eventName}`} value={eventName}>
-                        {eventName}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
-
-              <select
-                value={topN}
-                onChange={(event) => setTopN(event.target.value as "8" | "15" | "30" | "50")}
-                className="h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700"
-              >
-                <option value="8">Top 8</option>
-                <option value="15">Top 15</option>
-                <option value="30">Top 30</option>
-                <option value="50">Top 50</option>
-              </select>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-3">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-slate-900">{deepDiveTitleMap[deepDiveSection]}</p>
-                <button
-                  type="button"
-                  onClick={() => openDeepDivePage(deepDiveSection)}
-                  className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Expand
-                </button>
-              </div>
-
-              {deepDiveSection === "top_clicks" && (
-                <div className="h-[440px]">
-                  {!loading && filteredTopClicksFullChartData.length === 0 ? (
-                    <EmptyState message="No matching click entries for this filter." />
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={filteredTopClicksFullChartData} layout="vertical" margin={{ top: 8, right: 20, left: 8, bottom: 8 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
-                        <YAxis type="category" dataKey="name" width={190} tick={{ fontSize: 11, fill: "#334155" }} tickFormatter={(value: string) => (value.length > 28 ? `${value.slice(0, 28)}…` : value)} />
-                        <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} />
-                        <Bar dataKey="count" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={14} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              )}
-
-              {deepDiveSection === "event_types" && (
-                <div className="h-[440px]">
-                  {!loading && filteredTopEventTypesFullChartData.length === 0 ? (
-                    <EmptyState message="No matching event types for this filter." />
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={filteredTopEventTypesFullChartData} margin={{ top: 8, right: 20, left: 0, bottom: 8 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} />
-                        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
-                        <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} />
-                        <Bar dataKey="count" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              )}
-
-              {deepDiveSection === "top_pages" && (
-                <>
-                  <div className="h-[280px] mb-3">
-                    {!loading && filteredTopPagesFullChartData.length === 0 ? (
-                      <EmptyState message="No matching pages for this filter." />
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={filteredTopPagesFullChartData} margin={{ top: 8, right: 20, left: 0, bottom: 8 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} tickFormatter={(value: string) => (value.length > 18 ? `${value.slice(0, 18)}…` : value)} />
-                          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
-                          <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} />
-                          <Bar dataKey="count" fill="#14b8a6" radius={[6, 6, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-                  <div className="max-h-[260px] overflow-auto rounded-lg border border-slate-200">
-                    <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-                      <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                        <tr>
-                          <th className="px-3 py-2.5">Page</th>
-                          <th className="px-3 py-2.5 text-right">Views</th>
-                          <th className="px-3 py-2.5 text-right">Unique</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
-                        {filteredTopPagesFull.map((row) => (
-                          <tr key={`deep-page-${row.page}`}>
-                            <td className="max-w-[340px] truncate px-3 py-2.5">{row.page || "/"}</td>
-                            <td className="px-3 py-2.5 text-right font-medium text-slate-900">{safeNumber(row.views).toLocaleString()}</td>
-                            <td className="px-3 py-2.5 text-right text-slate-600">{safeNumber(row.unique_visitors).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-
-              {deepDiveSection === "whatsapp_pages" && (
-                <>
-                  <div className="h-[280px] mb-3">
-                    {!loading && filteredWhatsappByPageFullChartData.length === 0 ? (
-                      <EmptyState message="No matching pages for this filter." />
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={filteredWhatsappByPageFullChartData} margin={{ top: 8, right: 20, left: 0, bottom: 8 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} tickFormatter={(value: string) => (value.length > 18 ? `${value.slice(0, 18)}…` : value)} />
-                          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
-                          <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} />
-                          <Bar dataKey="count" fill="#10b981" radius={[6, 6, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-                  <div className="max-h-[260px] overflow-auto rounded-lg border border-slate-200">
-                    <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-                      <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                        <tr>
-                          <th className="px-3 py-2.5">Page</th>
-                          <th className="px-3 py-2.5 text-right">Clicks</th>
-                          <th className="px-3 py-2.5 text-right">Unique</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
-                        {filteredWhatsappByPageFull.map((row) => (
-                          <tr key={`deep-wa-${row.page}`}>
-                            <td className="max-w-[340px] truncate px-3 py-2.5">{row.page || "(unknown)"}</td>
-                            <td className="px-3 py-2.5 text-right font-medium text-slate-900">{safeNumber(row.whatsapp_clicks).toLocaleString()}</td>
-                            <td className="px-3 py-2.5 text-right text-slate-600">{safeNumber(row.unique_sessions).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-
-              {deepDiveSection === "cta_performance" && (
-                <div className="max-h-[520px] overflow-auto rounded-lg border border-slate-200">
-                  <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-                    <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                      <tr>
-                        <th className="px-4 py-3">Event</th>
-                        <th className="px-4 py-3">Label</th>
-                        <th className="px-4 py-3 text-right">Clicks</th>
-                        <th className="px-4 py-3 text-right">Unique Sessions</th>
-                        <th className="px-4 py-3 text-right">Share</th>
-                        <th className="px-4 py-3 text-right">Trend</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
-                      {filteredCtaPerformanceFull.map((row) => {
-                        const share = ctaTotalClicks > 0 ? (safeNumber(row.clicks) / ctaTotalClicks) * 100 : 0;
-                        const trend = percentageDelta(safeNumber(row.clicks), safeNumber(row.previous_clicks));
-                        return (
-                          <tr key={`deep-cta-${row.event_name}-${row.label}`}>
-                            <td className="whitespace-nowrap px-4 py-3">{row.event_name}</td>
-                            <td className="max-w-[260px] truncate px-4 py-3">{row.label || "(no label)"}</td>
-                            <td className="px-4 py-3 text-right font-medium text-slate-900">{safeNumber(row.clicks).toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right text-slate-600">{safeNumber(row.unique_sessions).toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right text-slate-600">{share.toFixed(1)}%</td>
-                            <td className={`px-4 py-3 text-right font-medium ${trend !== null && trend < 0 ? "text-rose-600" : "text-emerald-600"}`}>
-                              {formatSignedPercent(trend)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </AdminSection>
-
         {viewMode === "debug" && (
         <AdminSection title="Recent Raw Events" description="Latest captured events with pagination and metadata." contentClassName="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Event Type</span>
-            <div className="inline-flex items-center gap-1 rounded-md bg-white p-1 ring-1 ring-slate-200">
+          <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-slate-200 bg-slate-50/70 px-2.5 py-1.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Event Type</span>
+            <div className="inline-flex items-center gap-0.5 rounded-md bg-white p-0.5 ring-1 ring-slate-200">
               {[
                 { value: "all", label: "All" },
                 { value: "clicks", label: "Clicks only" },
@@ -1619,7 +1587,7 @@ const AdminAnalytics = () => {
                   key={option.value}
                   type="button"
                   onClick={() => setEventType(option.value as "all" | "page_view" | "clicks")}
-                  className={`h-7 rounded px-2.5 text-xs font-medium transition ${
+                  className={`h-6 rounded px-2 text-[11px] font-medium transition ${
                     eventType === option.value
                       ? "bg-slate-900 text-white shadow-sm"
                       : "text-slate-600 hover:bg-slate-100"
@@ -1631,48 +1599,48 @@ const AdminAnalytics = () => {
             </div>
           </div>
           <div className="overflow-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Event</th>
-                  <th className="px-4 py-3">Label</th>
-                  <th className="px-4 py-3">Page</th>
-                  <th className="px-4 py-3">Device</th>
-                  <th className="px-4 py-3">Session</th>
+                  <th className="px-3 py-2">Time</th>
+                  <th className="px-3 py-2">Event</th>
+                  <th className="px-3 py-2">Label</th>
+                  <th className="px-3 py-2">Page</th>
+                  <th className="px-3 py-2">Device</th>
+                  <th className="px-3 py-2">Session</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
                 {recentEvents.rows.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-10 text-center text-slate-500" colSpan={6}>
+                    <td className="px-3 py-7 text-center text-slate-500" colSpan={6}>
                       {loading ? "Loading events…" : "No events found for this date range."}
                     </td>
                   </tr>
                 ) : (
                   recentEvents.rows.map((row) => (
                     <tr key={row.id} className="transition hover:bg-slate-50">
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-500">
+                      <td className="whitespace-nowrap px-3 py-2 text-slate-500">
                         {new Date(row.created_at).toLocaleString()}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3">
+                      <td className="whitespace-nowrap px-3 py-2">
                         <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getEventBadgeClass(
+                          className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-medium ${getEventBadgeClass(
                             row.event_name,
                           )}`}
                         >
                           {row.event_name}
                         </span>
                       </td>
-                      <td className="max-w-[220px] truncate px-4 py-3">{row.label || "—"}</td>
-                      <td className="max-w-[280px] truncate px-4 py-3 text-slate-500">{row.page_url || "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3">
+                      <td className="max-w-[220px] truncate px-3 py-2">{row.label || "—"}</td>
+                      <td className="max-w-[280px] truncate px-3 py-2 text-slate-500">{row.page_url || "—"}</td>
+                      <td className="whitespace-nowrap px-3 py-2">
                         <span className="inline-flex items-center gap-1.5 text-slate-600">
                           <DeviceIcon device={row.device_type || "unknown"} className="h-3.5 w-3.5 text-slate-400" />
                           {row.device_type || "unknown"}
                         </span>
                       </td>
-                      <td className="max-w-[180px] truncate px-4 py-3 font-mono text-xs text-slate-400">
+                      <td className="max-w-[180px] truncate px-3 py-2 font-mono text-[11px] text-slate-400">
                         {row.session_id || "—"}
                       </td>
                     </tr>
@@ -1681,7 +1649,7 @@ const AdminAnalytics = () => {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-600">
+          <div className="flex items-center justify-between border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
             <span>
               Page {recentEvents.page} of {recentEvents.totalPages}
               <span className="ml-2 text-slate-400">({recentEvents.total.toLocaleString()} total)</span>
@@ -1691,7 +1659,7 @@ const AdminAnalytics = () => {
                 type="button"
                 onClick={() => setEventsPage((prev) => Math.max(1, prev - 1))}
                 disabled={eventsPage <= 1 || loading}
-                className="rounded-md border border-slate-200 bg-white px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Previous
               </button>
@@ -1699,7 +1667,7 @@ const AdminAnalytics = () => {
                 type="button"
                 onClick={() => setEventsPage((prev) => Math.min(recentEvents.totalPages, prev + 1))}
                 disabled={eventsPage >= recentEvents.totalPages || loading}
-                className="rounded-md border border-slate-200 bg-white px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
               </button>

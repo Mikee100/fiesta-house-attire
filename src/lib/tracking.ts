@@ -17,6 +17,13 @@ const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL, isLocalHost);
 const TRACK_ENDPOINT = `${API_URL}/api/track`;
 const TRACKING_SESSION_KEY = "fiesta_tracking_session_id";
 
+const EVENT_NAME_ALIASES: Record<string, string> = {
+  nav_mobile_click: "nav_click",
+  video_gallery_click: "video_click",
+  package_click: "pricing_package_click",
+  voucher_click: "gift_voucher_click",
+};
+
 let trackingInitialized = false;
 let cachedSessionId: string | null = null;
 
@@ -67,6 +74,34 @@ const parseTrackAttribute = (value: string): { eventName: string; label: string 
   };
 };
 
+const normalizeKey = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
+
+const normalizeTrackPayload = (
+  eventName: string,
+  label?: string | null,
+): { eventName: string; label: string | null } => {
+  const baseEvent = normalizeKey(eventName);
+  const normalizedEvent = EVENT_NAME_ALIASES[baseEvent] || baseEvent;
+
+  if (!label) {
+    return { eventName: normalizedEvent, label: null };
+  }
+
+  // Keep page_view labels as URL paths for page-level analytics.
+  if (normalizedEvent === "page_view") {
+    return { eventName: normalizedEvent, label };
+  }
+
+  const normalizedLabel = normalizeKey(label);
+  return { eventName: normalizedEvent, label: normalizedLabel || null };
+};
+
 const postEvent = (payload: Record<string, unknown>): void => {
   try {
     const body = JSON.stringify(payload);
@@ -93,9 +128,12 @@ export const trackEvent = (eventName: string, label?: string | null): void => {
   if (!isBrowser) return;
   if (!eventName || isAdminPath(window.location.pathname)) return;
 
+  const normalized = normalizeTrackPayload(eventName, label);
+  if (!normalized.eventName) return;
+
   postEvent({
-    event_name: eventName,
-    label: label || null,
+    event_name: normalized.eventName,
+    label: normalized.label,
     page_url: `${window.location.pathname}${window.location.search}`,
     session_id: getSessionId(),
     referrer: document.referrer || null,

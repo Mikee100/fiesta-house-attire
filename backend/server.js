@@ -1302,6 +1302,49 @@ app.get('/admin/analytics/page-views', requireAdminAuth, async (req, res) => {
   }
 });
 
+app.get('/admin/analytics/visits-timeseries', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const granularityRaw = typeof req.query.granularity === 'string' ? req.query.granularity.trim().toLowerCase() : 'day';
+  const granularity = ['day', 'week', 'month', 'year'].includes(granularityRaw) ? granularityRaw : 'day';
+
+  const labelFormatByGranularity = {
+    day: 'YYYY-MM-DD',
+    week: 'IYYY-"W"IW',
+    month: 'YYYY-MM',
+    year: 'YYYY',
+  };
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         date_trunc('${granularity}', created_at) AS bucket_start,
+         to_char(date_trunc('${granularity}', created_at), '${labelFormatByGranularity[granularity]}') AS bucket,
+         COUNT(*)::int AS visits
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+         AND event_name = 'page_view'
+       GROUP BY bucket_start
+       ORDER BY bucket_start ASC`,
+      [from.toISOString(), to.toISOString()]
+    );
+
+    res.json(
+      Array.isArray(result.rows)
+        ? result.rows.map((row) => ({
+            granularity,
+            bucket: row.bucket,
+            bucket_start: row.bucket_start,
+            visits: Number(row.visits || 0),
+          }))
+        : []
+    );
+  } catch (err) {
+    console.error('admin analytics visits-timeseries error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
 app.get('/admin/analytics/kpi-compare', requireAdminAuth, async (req, res) => {
   const { from, to } = getAnalyticsDateRange(req);
   const previousRange = getPreviousAnalyticsDateRange(from, to);
