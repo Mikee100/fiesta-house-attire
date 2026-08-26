@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ScrollToTop from "./components/ScrollToTop";
 import { CartProvider } from "./context/CartContext";
 import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
+import AdminSessionWatcher from "./components/admin/AdminSessionWatcher";
 import LuxuryRouteLoader from "./components/site/LuxuryRouteLoader";
 import TrackingClient from "./components/site/TrackingClient";
 
@@ -52,6 +53,7 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <TrackingClient />
+          <AdminSessionWatcher />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/" element={<Index />} />

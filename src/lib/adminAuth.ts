@@ -2,7 +2,9 @@ const isBrowser = typeof window !== "undefined";
 const isLocalHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
 
 const normalizeApiBaseUrl = (rawValue: string | undefined, localHost: boolean): string => {
-  const fallback = localHost ? "http://localhost:5000" : "/backend";
+  const fallback = localHost
+    ? `${window.location.protocol}//${window.location.hostname}:5000`
+    : "/backend";
   if (!rawValue) return fallback;
 
   let normalized = rawValue.trim();
@@ -16,7 +18,15 @@ const normalizeApiBaseUrl = (rawValue: string | undefined, localHost: boolean): 
 
 const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL, isLocalHost);
 const CSRF_COOKIE_NAME = "fh_csrf_token";
+export const ADMIN_SESSION_EXPIRED_EVENT = "fh-admin-session-expired";
 let accessTokenMemory: string | null = null;
+let refreshInFlight: Promise<boolean> | null = null;
+let sessionInvalid = false;
+
+const notifySessionExpired = (): void => {
+  if (!isBrowser) return;
+  window.dispatchEvent(new CustomEvent(ADMIN_SESSION_EXPIRED_EVENT));
+};
 
 const decodeJwtPayload = (token: string): { exp?: number } | null => {
   try {
@@ -42,6 +52,7 @@ const getAccessToken = (): string | null => {
 
 const setAccessToken = (token: string): void => {
   accessTokenMemory = token;
+  sessionInvalid = false;
 };
 
 const clearAccessToken = (): void => {
@@ -86,13 +97,16 @@ export const loginAdmin = async (email: string, password: string): Promise<boole
     if (!res.ok || !data?.accessToken) return false;
 
     setAccessToken(data.accessToken);
+    sessionInvalid = false;
     return true;
   } catch {
     return false;
   }
 };
 
-export const refreshAdminSession = async (): Promise<boolean> => {
+const doRefreshAdminSession = async (): Promise<boolean> => {
+  if (sessionInvalid) return false;
+
   try {
     const headers = new Headers();
     applyCsrfHeader(headers);
@@ -106,15 +120,32 @@ export const refreshAdminSession = async (): Promise<boolean> => {
     const data = await res.json();
     if (!res.ok || !data?.accessToken) {
       clearAccessToken();
+      sessionInvalid = true;
+      notifySessionExpired();
       return false;
     }
 
     setAccessToken(data.accessToken);
+    sessionInvalid = false;
     return true;
   } catch {
     clearAccessToken();
+    sessionInvalid = true;
+    notifySessionExpired();
     return false;
   }
+};
+
+export const refreshAdminSession = async (): Promise<boolean> => {
+  if (refreshInFlight) {
+    return refreshInFlight;
+  }
+
+  refreshInFlight = doRefreshAdminSession().finally(() => {
+    refreshInFlight = null;
+  });
+
+  return refreshInFlight;
 };
 
 export const logoutAdmin = async (): Promise<void> => {
@@ -131,6 +162,7 @@ export const logoutAdmin = async (): Promise<void> => {
     // no-op
   } finally {
     clearAccessToken();
+    sessionInvalid = true;
   }
 };
 
@@ -161,15 +193,23 @@ export const authenticatedFetch = async (input: RequestInfo | URL, init: Request
     return response;
   }
 
+  if (sessionInvalid) {
+    notifySessionExpired();
+    return response;
+  }
+
   const refreshed = await refreshAdminSession();
   if (!refreshed) {
     clearAccessToken();
+    notifySessionExpired();
     return response;
   }
 
   response = await execute();
   if (response.status === 401) {
     clearAccessToken();
+    sessionInvalid = true;
+    notifySessionExpired();
   }
 
   return response;
