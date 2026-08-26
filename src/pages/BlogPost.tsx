@@ -9,6 +9,64 @@ import { Loader2, ChevronLeft, Calendar, User, Facebook, Twitter, Instagram, Mes
 import { Footer } from "react-day-picker";
 import Navbar from "@/components/site/Navbar";
 
+const hasRenderableContent = (html?: string | null) => {
+  if (!html) return false;
+  const textOnly = html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
+  return textOnly.length > 0;
+};
+
+const hasBlockHtml = (value: string) => /<(p|h1|h2|h3|h4|h5|h6|ul|ol|li|blockquote|img|pre|table|br)\b/i.test(value);
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const normalizeBodyHtml = (value?: string | null): string => {
+  if (!value || typeof value !== "string") return "";
+
+  const normalized = value.replace(/\r\n?/g, "\n").trim();
+  if (!normalized) return "";
+  if (hasBlockHtml(normalized)) return normalized;
+
+  let paragraphBlocks = normalized
+    .split(/\n\s*\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  // Legacy migrated posts may arrive as one giant text block with no blank lines.
+  // In that case, split by sentence boundaries and group sentences into paragraphs.
+  if (paragraphBlocks.length <= 1) {
+    const sentenceChunks = normalized
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(/(?<=[.!?])\s+(?=[A-Z0-9"'])/)
+      .map((chunk) => chunk.trim())
+      .filter(Boolean);
+
+    if (sentenceChunks.length > 3) {
+      const grouped: string[] = [];
+      const sentencesPerParagraph = 2;
+      for (let i = 0; i < sentenceChunks.length; i += sentencesPerParagraph) {
+        grouped.push(sentenceChunks.slice(i, i + sentencesPerParagraph).join(" "));
+      }
+      paragraphBlocks = grouped;
+    }
+  }
+
+  const paragraphs = paragraphBlocks.map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`);
+
+  return paragraphs.join("\n");
+};
+
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
@@ -16,64 +74,6 @@ const BlogPostPage = () => {
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [readingProgress, setReadingProgress] = useState(0);
-
-  const hasRenderableContent = (html?: string | null) => {
-    if (!html) return false;
-    const textOnly = html
-      .replace(/<style[\s\S]*?<\/style>/gi, "")
-      .replace(/<script[\s\S]*?<\/script>/gi, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/gi, " ")
-      .trim();
-    return textOnly.length > 0;
-  };
-
-  const hasBlockHtml = (value: string) => /<(p|h1|h2|h3|h4|h5|h6|ul|ol|li|blockquote|img|pre|table|br)\b/i.test(value);
-
-  const escapeHtml = (value: string) =>
-    value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-
-  const normalizeBodyHtml = (value?: string | null): string => {
-    if (!value || typeof value !== "string") return "";
-
-    const normalized = value.replace(/\r\n?/g, "\n").trim();
-    if (!normalized) return "";
-    if (hasBlockHtml(normalized)) return normalized;
-
-    let paragraphBlocks = normalized
-      .split(/\n\s*\n+/)
-      .map((paragraph) => paragraph.trim())
-      .filter(Boolean);
-
-    // Legacy migrated posts may arrive as one giant text block with no blank lines.
-    // In that case, split by sentence boundaries and group sentences into paragraphs.
-    if (paragraphBlocks.length <= 1) {
-      const sentenceChunks = normalized
-        .replace(/\s+/g, " ")
-        .trim()
-        .split(/(?<=[.!?])\s+(?=[A-Z0-9"'])/)
-        .map((chunk) => chunk.trim())
-        .filter(Boolean);
-
-      if (sentenceChunks.length > 3) {
-        const grouped: string[] = [];
-        const sentencesPerParagraph = 2;
-        for (let i = 0; i < sentenceChunks.length; i += sentencesPerParagraph) {
-          grouped.push(sentenceChunks.slice(i, i + sentencesPerParagraph).join(" "));
-        }
-        paragraphBlocks = grouped;
-      }
-    }
-
-    const paragraphs = paragraphBlocks.map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`);
-
-    return paragraphs.join("\n");
-  };
 
   useEffect(() => {
     window.scrollTo(0, 0);

@@ -16,12 +16,34 @@ import AdminSection from "@/components/admin/AdminSection";
 import SEO from "@/components/site/SEO";
 import * as api from "@/lib/api";
 
-type DeepDiveSection = "event_types" | "top_clicks" | "top_pages" | "whatsapp_pages" | "cta_performance";
+type DeepDiveSection =
+  | "event_types"
+  | "top_clicks"
+  | "top_pages"
+  | "whatsapp_pages"
+  | "cta_performance"
+  | "sources"
+  | "content_blog"
+  | "packages"
+  | "seo_queries"
+  | "seo_landing_pages"
+  | "seo_opportunities";
 type TopN = "8" | "15" | "30" | "50";
 
 const safeNumber = (value: unknown): number => {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const percentageDelta = (current: number, previous: number): number | null => {
+  if (previous <= 0) return null;
+  return ((current - previous) / previous) * 100;
+};
+
+const formatSignedPercent = (value: number | null | undefined): string => {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "No previous-period data";
+  const rounded = Math.round(value * 10) / 10;
+  return `${rounded > 0 ? "+" : ""}${rounded}%`;
 };
 
 const toHumanToken = (value: string): string =>
@@ -38,7 +60,19 @@ const formatTopClickDisplayName = (eventName: string, label?: string | null): st
 };
 
 const getSectionFromSearch = (raw: string | null): DeepDiveSection => {
-  if (raw === "event_types" || raw === "top_clicks" || raw === "top_pages" || raw === "whatsapp_pages" || raw === "cta_performance") {
+  if (
+    raw === "event_types"
+    || raw === "top_clicks"
+    || raw === "top_pages"
+    || raw === "whatsapp_pages"
+    || raw === "cta_performance"
+    || raw === "sources"
+    || raw === "content_blog"
+    || raw === "packages"
+    || raw === "seo_queries"
+    || raw === "seo_landing_pages"
+    || raw === "seo_opportunities"
+  ) {
     return raw;
   }
   return "top_clicks";
@@ -70,6 +104,16 @@ const AdminAnalyticsDeepDive = () => {
   const [topPagesFull, setTopPagesFull] = useState<api.AnalyticsTopPageItem[]>([]);
   const [whatsappByPageFull, setWhatsappByPageFull] = useState<api.AnalyticsWhatsappByPageItem[]>([]);
   const [ctaPerformanceFull, setCtaPerformanceFull] = useState<api.AnalyticsCtaPerformanceItem[]>([]);
+  const [sourceRows, setSourceRows] = useState<api.AnalyticsSourceRow[]>([]);
+  const [contentAnalytics, setContentAnalytics] = useState<api.AnalyticsContentResponse>({ blog: [], portfolio: [] });
+  const [packageAnalytics, setPackageAnalytics] = useState<api.AnalyticsPackagesResponse>({
+    pricing_visitors: 0,
+    whatsapp_from_pricing: 0,
+    package_clicks: [],
+  });
+  const [seoQueries, setSeoQueries] = useState<api.SeoQueryRow[]>([]);
+  const [seoLandingPages, setSeoLandingPages] = useState<api.SeoLandingPageRow[]>([]);
+  const [seoOpportunities, setSeoOpportunities] = useState<api.SeoOpportunityRow[]>([]);
 
   useEffect(() => {
     const run = async () => {
@@ -81,12 +125,24 @@ const AdminAnalyticsDeepDive = () => {
           pages,
           whatsappPages,
           ctaRows,
+          sources,
+          content,
+          packages,
+          queryRows,
+          landingPages,
+          opportunities,
         ] = await Promise.all([
           api.fetchAnalyticsTopClicks(from, to, 100),
           api.fetchAnalyticsTopEventTypes(from, to, 100),
           api.fetchAnalyticsTopPages(from, to, 100),
           api.fetchAnalyticsWhatsappByPage(from, to, 100),
           api.fetchAnalyticsCtaPerformance(from, to, 200),
+          api.fetchAnalyticsSources(from, to),
+          api.fetchAnalyticsContent(from, to, 100),
+          api.fetchAnalyticsPackages(from, to),
+          api.fetchSeoQueries(from, to, { limit: 100, sort: "impressions" }),
+          api.fetchSeoLandingPages(from, to, 100),
+          api.fetchSeoOpportunities(from, to),
         ]);
 
         setTopClicksFull(Array.isArray(clicks) ? clicks : []);
@@ -94,6 +150,12 @@ const AdminAnalyticsDeepDive = () => {
         setTopPagesFull(Array.isArray(pages) ? pages : []);
         setWhatsappByPageFull(Array.isArray(whatsappPages) ? whatsappPages : []);
         setCtaPerformanceFull(Array.isArray(ctaRows) ? ctaRows : []);
+        setSourceRows(Array.isArray(sources) ? sources : []);
+        setContentAnalytics(content);
+        setPackageAnalytics(packages);
+        setSeoQueries(Array.isArray(queryRows.rows) ? queryRows.rows : []);
+        setSeoLandingPages(Array.isArray(landingPages.rows) ? landingPages.rows : []);
+        setSeoOpportunities(Array.isArray(opportunities.opportunities) ? opportunities.opportunities : []);
       } catch {
         toast.error("Failed to load deep-dive analytics");
       } finally {
@@ -193,6 +255,12 @@ const AdminAnalyticsDeepDive = () => {
     top_pages: "Top Pages",
     whatsapp_pages: "WhatsApp By Page",
     cta_performance: "CTA Performance",
+    sources: "Acquisition Sources",
+    content_blog: "Top Blog Content",
+    packages: "Package Interest",
+    seo_queries: "Top Search Queries",
+    seo_landing_pages: "Top Organic Landing Pages",
+    seo_opportunities: "SEO Opportunities",
   };
 
   return (
@@ -225,6 +293,12 @@ const AdminAnalyticsDeepDive = () => {
               { value: "top_pages", label: "Top Pages" },
               { value: "whatsapp_pages", label: "WhatsApp Pages" },
               { value: "cta_performance", label: "CTA Table" },
+              { value: "sources", label: "Sources" },
+              { value: "content_blog", label: "Blog Content" },
+              { value: "packages", label: "Packages" },
+              { value: "seo_queries", label: "SEO Queries" },
+              { value: "seo_landing_pages", label: "SEO Landing" },
+              { value: "seo_opportunities", label: "SEO Opps" },
             ] as Array<{ value: DeepDiveSection; label: string }>).map((option) => (
               <button
                 key={option.value}
@@ -472,6 +546,186 @@ const AdminAnalyticsDeepDive = () => {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {section === "sources" && (
+            <div className="max-h-[72vh] overflow-auto rounded-lg border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Source</th>
+                    <th className="px-4 py-3">Medium</th>
+                    <th className="px-4 py-3 text-right">Visitors</th>
+                    <th className="px-4 py-3 text-right">Page Views</th>
+                    <th className="px-4 py-3 text-right">WhatsApp Clicks</th>
+                    <th className="px-4 py-3 text-right">Conversion</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                  {sourceRows.slice(0, topNValue).map((row) => {
+                    const visitors = safeNumber(row.visitors);
+                    const leads = safeNumber(row.whatsapp_sessions);
+                    const conversion = visitors > 0 ? (leads / visitors) * 100 : 0;
+                    return (
+                      <tr key={`deep-source-${row.source}-${row.medium}`}>
+                        <td className="px-4 py-3">{row.source}</td>
+                        <td className="px-4 py-3">{row.medium}</td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-900">{visitors.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right">{safeNumber(row.page_views).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right">{safeNumber(row.whatsapp_clicks).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right">{conversion.toFixed(1)}%</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {section === "content_blog" && (
+            <div className="max-h-[72vh] overflow-auto rounded-lg border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Article</th>
+                    <th className="px-4 py-3 text-right">Views</th>
+                    <th className="px-4 py-3 text-right">Organic</th>
+                    <th className="px-4 py-3 text-right">Unique</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                  {contentAnalytics.blog.slice(0, topNValue).map((row) => (
+                    <tr key={`deep-blog-${row.page}`}>
+                      <td className="max-w-[520px] truncate px-4 py-3">{row.page}</td>
+                      <td className="px-4 py-3 text-right font-medium text-slate-900">{safeNumber(row.views).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.organic_visits).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.unique_visitors).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {section === "packages" && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Pricing visitors</p>
+                  <p className="text-lg font-semibold text-slate-900">{safeNumber(packageAnalytics.pricing_visitors).toLocaleString()}</p>
+                </div>
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">WhatsApp from pricing</p>
+                  <p className="text-lg font-semibold text-slate-900">{safeNumber(packageAnalytics.whatsapp_from_pricing).toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="max-h-[58vh] overflow-auto rounded-lg border border-slate-200">
+                <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3">Package</th>
+                      <th className="px-4 py-3 text-right">Views</th>
+                      <th className="px-4 py-3 text-right">Unique Sessions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                    {packageAnalytics.package_clicks.slice(0, topNValue).map((row) => (
+                      <tr key={`deep-package-${row.package_name}`}>
+                        <td className="max-w-[420px] truncate px-4 py-3">{row.package_name}</td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-900">{safeNumber(row.clicks).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right text-slate-600">{safeNumber(row.unique_sessions).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {section === "seo_queries" && (
+            <div className="max-h-[72vh] overflow-auto rounded-lg border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Query</th>
+                    <th className="px-4 py-3 text-right">Clicks</th>
+                    <th className="px-4 py-3 text-right">Impressions</th>
+                    <th className="px-4 py-3 text-right">CTR</th>
+                    <th className="px-4 py-3 text-right">Position</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                  {seoQueries.slice(0, topNValue).map((row) => (
+                    <tr key={`deep-seo-query-${row.query}`}>
+                      <td className="max-w-[520px] truncate px-4 py-3">{row.query}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.clicks).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.impressions).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.ctr).toFixed(2)}%</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.avg_position).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {section === "seo_landing_pages" && (
+            <div className="max-h-[72vh] overflow-auto rounded-lg border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Page</th>
+                    <th className="px-4 py-3 text-right">Organic Clicks</th>
+                    <th className="px-4 py-3 text-right">Impressions</th>
+                    <th className="px-4 py-3 text-right">CTR</th>
+                    <th className="px-4 py-3 text-right">Position</th>
+                    <th className="px-4 py-3 text-right">Visitors</th>
+                    <th className="px-4 py-3 text-right">WhatsApp</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                  {seoLandingPages.slice(0, topNValue).map((row) => (
+                    <tr key={`deep-seo-page-${row.path}-${row.page}`}>
+                      <td className="max-w-[420px] truncate px-4 py-3">{row.path || row.page}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.organic_clicks).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.impressions).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.ctr).toFixed(2)}%</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.avg_position).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.website_visitors).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right">{safeNumber(row.whatsapp_clicks).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {section === "seo_opportunities" && (
+            <div className="max-h-[72vh] overflow-auto space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+              {seoOpportunities.slice(0, topNValue).map((item) => (
+                <div key={`deep-seo-opp-${item.type}-${item.query}`} className="rounded-md border border-slate-200 bg-white p-2.5">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                        item.priority === "high"
+                          ? "bg-rose-50 text-rose-700"
+                          : item.priority === "medium"
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {item.priority}
+                    </span>
+                    <p className="truncate text-sm font-medium text-slate-900">{item.query}</p>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    Impressions: {safeNumber(item.impressions).toLocaleString()} · Clicks: {safeNumber(item.clicks).toLocaleString()} · CTR: {safeNumber(item.ctr).toFixed(2)}% · Position: {safeNumber(item.position).toFixed(1)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-600">Why: {item.reason}</p>
+                  <p className="mt-1 text-xs font-medium text-slate-700">Recommended action: {item.action}</p>
+                </div>
+              ))}
             </div>
           )}
         </AdminSection>

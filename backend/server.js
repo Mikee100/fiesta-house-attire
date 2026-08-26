@@ -818,13 +818,63 @@ const initAnalyticsDb = async () => {
         session_id TEXT,
         referrer TEXT,
         device_type TEXT,
+        source TEXT,
+        medium TEXT,
+        utm_source TEXT,
+        utm_medium TEXT,
+        utm_campaign TEXT,
+        utm_content TEXT,
+        utm_term TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
     `);
+    // Add new columns to existing events tables gracefully
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS source TEXT');
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS medium TEXT');
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS utm_source TEXT');
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS utm_medium TEXT');
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS utm_campaign TEXT');
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS utm_content TEXT');
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS utm_term TEXT');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at DESC)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_events_event_name_created_at ON events(event_name, created_at DESC)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_events_device_type_created_at ON events(device_type, created_at DESC)');
-    console.log('✓ Analytics events table initialized');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_events_source_created_at ON events(source, created_at DESC)');
+    // Google Search Console data cache table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS search_console_data (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        date DATE NOT NULL,
+        query TEXT NOT NULL,
+        page TEXT NOT NULL,
+        country TEXT DEFAULT 'all',
+        device TEXT DEFAULT 'all',
+        clicks INTEGER DEFAULT 0,
+        impressions INTEGER DEFAULT 0,
+        ctr NUMERIC(10,6) DEFAULT 0,
+        position NUMERIC(10,4) DEFAULT 0,
+        synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(date, query, page, country, device)
+      )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_scd_date ON search_console_data(date DESC)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_scd_query ON search_console_data(query)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_scd_page ON search_console_data(page)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_scd_date_query ON search_console_data(date DESC, query)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_scd_date_page ON search_console_data(date DESC, page)');
+    // Search Console sync log
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS search_console_sync_log (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        status TEXT NOT NULL,
+        rows_upserted INTEGER DEFAULT 0,
+        date_from DATE,
+        date_to DATE,
+        error_message TEXT
+      )
+    `);
+    console.log('✓ Analytics events + Search Console tables initialized');
   } catch (err) {
     console.error('Analytics DB Init Error:', err);
   }
@@ -834,6 +884,66 @@ initBlogDb();
 initAuthDb();
 initMediaVisibilityDb();
 initAnalyticsDb();
+
+// ---------------------------------------------------------------------------
+// Source Detection Helper
+// ---------------------------------------------------------------------------
+
+const detectSourceFromReferrer = (referrer) => {
+  if (!referrer || typeof referrer !== 'string' || !referrer.trim()) {
+    return { source: 'direct', medium: 'none' };
+  }
+
+  let hostname = '';
+  try {
+    hostname = new URL(referrer.trim()).hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return { source: 'direct', medium: 'none' };
+  }
+
+  // Same-site referral (shouldn't normally happen since admin excluded, but guard anyway)
+  if (hostname === 'fiestahousematernity.com' || hostname === 'fiestahouseattire.com' || hostname === 'app.fiestahouseattire.com') {
+    return { source: 'internal', medium: 'internal' };
+  }
+
+  // Search engines → organic
+  const searchEngines = [
+    { pattern: /google\./, source: 'google' },
+    { pattern: /bing\./, source: 'bing' },
+    { pattern: /yahoo\./, source: 'yahoo' },
+    { pattern: /duckduckgo\./, source: 'duckduckgo' },
+    { pattern: /yandex\./, source: 'yandex' },
+  ];
+  for (const se of searchEngines) {
+    if (se.pattern.test(hostname)) {
+      return { source: se.source, medium: 'organic' };
+    }
+  }
+
+  // Social networks → social
+  const socialNetworks = [
+    { pattern: /instagram\./, source: 'instagram' },
+    { pattern: /facebook\./, source: 'facebook' },
+    { pattern: /fb\./, source: 'facebook' },
+    { pattern: /twitter\./, source: 'twitter' },
+    { pattern: /t\.co$/, source: 'twitter' },
+    { pattern: /tiktok\./, source: 'tiktok' },
+    { pattern: /youtube\./, source: 'youtube' },
+    { pattern: /youtu\.be/, source: 'youtube' },
+    { pattern: /linkedin\./, source: 'linkedin' },
+    { pattern: /pinterest\./, source: 'pinterest' },
+    { pattern: /snapchat\./, source: 'snapchat' },
+    { pattern: /whatsapp\./, source: 'whatsapp' },
+  ];
+  for (const sn of socialNetworks) {
+    if (sn.pattern.test(hostname)) {
+      return { source: sn.source, medium: 'social' };
+    }
+  }
+
+  // Everything else is a referral
+  return { source: hostname || 'referral', medium: 'referral' };
+};
 
 const getAnalyticsDateRange = (req) => {
   const now = new Date();
@@ -1029,10 +1139,26 @@ app.post('/api/track', async (req, res) => {
   const parsedTimestamp = rawTimestamp ? new Date(rawTimestamp) : null;
   const createdAt = parsedTimestamp && !Number.isNaN(parsedTimestamp.getTime()) ? parsedTimestamp : new Date();
 
+  // Source / UTM fields — prefer explicitly sent UTM params, fall back to referrer detection
+  const utmSource = typeof body.utm_source === 'string' ? body.utm_source.trim().slice(0, 100) : null;
+  const utmMedium = typeof body.utm_medium === 'string' ? body.utm_medium.trim().slice(0, 100) : null;
+  const utmCampaign = typeof body.utm_campaign === 'string' ? body.utm_campaign.trim().slice(0, 200) : null;
+  const utmContent = typeof body.utm_content === 'string' ? body.utm_content.trim().slice(0, 200) : null;
+  const utmTerm = typeof body.utm_term === 'string' ? body.utm_term.trim().slice(0, 200) : null;
+
+  let source = utmSource;
+  let medium = utmMedium;
+
+  if (!source) {
+    const detected = detectSourceFromReferrer(referrer);
+    source = detected.source;
+    medium = detected.medium;
+  }
+
   pool.query(
-    `INSERT INTO events (event_name, label, page_url, session_id, referrer, device_type, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [eventName, label, pageUrl, sessionId, referrer, deviceType, createdAt]
+    `INSERT INTO events (event_name, label, page_url, session_id, referrer, device_type, source, medium, utm_source, utm_medium, utm_campaign, utm_content, utm_term, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+    [eventName, label, pageUrl, sessionId, referrer, deviceType, source, medium, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, createdAt]
   ).catch((error) => {
     if (process.env.NODE_ENV !== 'production') {
       console.error('track insert failed', error);
@@ -1127,6 +1253,78 @@ app.get('/admin/analytics/business-kpis', requireAdminAuth, async (req, res) => 
     });
   } catch (err) {
     console.error('admin analytics business-kpis error', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/business-kpis-compare', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const previousRange = getPreviousAnalyticsDateRange(from, to);
+
+  const buildQuery = (fromIso, toIso) => pool.query(
+    `WITH in_range AS (
+       SELECT event_name, page_url, session_id, created_at
+       FROM events
+       WHERE created_at >= $1
+         AND created_at <= $2
+         AND event_name NOT LIKE 'debug_%'
+     ),
+     base AS (
+       SELECT
+         COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_visitors,
+         COUNT(*) FILTER (WHERE event_name = 'whatsapp_click')::int AS whatsapp_leads,
+         COUNT(*) FILTER (WHERE event_name IN ('gallery_image_open', 'video_gallery_click'))::int AS portfolio_engagement,
+         COUNT(*) FILTER (WHERE event_name IN ('booking_click', 'checkout_start', 'checkout_form_start', 'package_click'))::int AS booking_intent,
+         COUNT(DISTINCT NULLIF(session_id, '')) FILTER (WHERE event_name <> 'page_view')::int AS engaged_sessions
+       FROM in_range
+     ),
+     returning_sessions AS (
+       SELECT COUNT(*)::int AS returning_visitors
+       FROM (
+         SELECT session_id
+         FROM in_range
+         WHERE session_id IS NOT NULL AND session_id <> ''
+         GROUP BY session_id
+         HAVING COUNT(DISTINCT DATE(created_at)) > 1
+       ) r
+     )
+     SELECT
+       b.unique_visitors,
+       b.whatsapp_leads,
+       b.portfolio_engagement,
+       b.booking_intent,
+       b.engaged_sessions,
+       r.returning_visitors
+     FROM base b
+     CROSS JOIN returning_sessions r`,
+    [fromIso, toIso]
+  );
+
+  const toSnapshot = (row = {}) => {
+    const uniqueVisitors = Number(row.unique_visitors || 0);
+    const engagedSessions = Number(row.engaged_sessions || 0);
+    return {
+      unique_visitors: uniqueVisitors,
+      whatsapp_leads: Number(row.whatsapp_leads || 0),
+      portfolio_engagement: Number(row.portfolio_engagement || 0),
+      booking_intent: Number(row.booking_intent || 0),
+      returning_visitors: Number(row.returning_visitors || 0),
+      conversion_rate: uniqueVisitors > 0 ? Number(((engagedSessions / uniqueVisitors) * 100).toFixed(2)) : 0,
+    };
+  };
+
+  try {
+    const [currentResult, previousResult] = await Promise.all([
+      buildQuery(from.toISOString(), to.toISOString()),
+      buildQuery(previousRange.from.toISOString(), previousRange.to.toISOString()),
+    ]);
+
+    res.json({
+      current: toSnapshot(currentResult.rows[0]),
+      previous: toSnapshot(previousResult.rows[0]),
+    });
+  } catch (err) {
+    console.error('admin analytics business-kpis-compare error', err);
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
@@ -1307,25 +1505,35 @@ app.get('/admin/analytics/visits-timeseries', requireAdminAuth, async (req, res)
   const granularityRaw = typeof req.query.granularity === 'string' ? req.query.granularity.trim().toLowerCase() : 'day';
   const granularity = ['day', 'week', 'month', 'year'].includes(granularityRaw) ? granularityRaw : 'day';
 
-  const labelFormatByGranularity = {
-    day: 'YYYY-MM-DD',
-    week: 'IYYY-"W"IW',
-    month: 'YYYY-MM',
-    year: 'YYYY',
+  const bucketSqlByGranularity = {
+    day: "DATE(created_at)",
+    week: "DATE_TRUNC('week', created_at)",
+    month: "DATE_TRUNC('month', created_at)",
+    year: "DATE_TRUNC('year', created_at)",
   };
+
+  const labelSqlByGranularity = {
+    day: "TO_CHAR(DATE(created_at), 'YYYY-MM-DD')",
+    week: "TO_CHAR(DATE_TRUNC('week', created_at), 'IYYY-\"W\"IW')",
+    month: "TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM')",
+    year: "TO_CHAR(DATE_TRUNC('year', created_at), 'YYYY')",
+  };
+
+  const bucketSql = bucketSqlByGranularity[granularity];
+  const labelSql = labelSqlByGranularity[granularity];
 
   try {
     const result = await pool.query(
       `SELECT
-         date_trunc('${granularity}', created_at) AS bucket_start,
-         to_char(date_trunc('${granularity}', created_at), '${labelFormatByGranularity[granularity]}') AS bucket,
+         ${bucketSql} AS bucket_start,
+         ${labelSql} AS bucket,
          COUNT(*)::int AS visits
        FROM events
        WHERE created_at >= $1
          AND created_at <= $2
          AND event_name = 'page_view'
-       GROUP BY bucket_start
-       ORDER BY bucket_start ASC`,
+       GROUP BY 1, 2
+       ORDER BY 1 ASC`,
       [from.toISOString(), to.toISOString()]
     );
 
@@ -1488,15 +1696,15 @@ app.get('/admin/analytics/click-trend', requireAdminAuth, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+      `SELECT TO_CHAR(DATE(created_at), 'YYYY-MM-DD') AS day,
               COUNT(*)::int AS clicks
        FROM events
        WHERE created_at >= $1
          AND created_at <= $2
          AND event_name <> 'page_view'
          AND event_name NOT LIKE 'debug_%'
-       GROUP BY date_trunc('day', created_at)
-       ORDER BY date_trunc('day', created_at) ASC`,
+       GROUP BY DATE(created_at)
+       ORDER BY DATE(created_at) ASC`,
       [from.toISOString(), to.toISOString()]
     );
 
@@ -1589,6 +1797,690 @@ app.get('/admin/analytics/recent', requireAdminAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
+
+// ---------------------------------------------------------------------------
+// New: Traffic Sources breakdown
+// ---------------------------------------------------------------------------
+
+app.get('/admin/analytics/sources', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  try {
+    const result = await pool.query(
+      `WITH in_range AS (
+         SELECT session_id, source, medium, event_name
+         FROM events
+         WHERE created_at >= $1
+           AND created_at <= $2
+           AND event_name NOT LIKE 'debug_%'
+       )
+       SELECT
+         COALESCE(NULLIF(source, ''), 'direct') AS source,
+         COALESCE(NULLIF(medium, ''), 'none') AS medium,
+         COUNT(DISTINCT NULLIF(session_id, ''))::int AS visitors,
+         COUNT(*) FILTER (WHERE event_name = 'page_view')::int AS page_views,
+         COUNT(*) FILTER (WHERE event_name = 'whatsapp_click')::int AS whatsapp_clicks,
+         COUNT(DISTINCT session_id) FILTER (WHERE event_name = 'whatsapp_click')::int AS whatsapp_sessions
+       FROM in_range
+       GROUP BY source, medium
+       ORDER BY visitors DESC`,
+      [from.toISOString(), to.toISOString()]
+    );
+    res.json(Array.isArray(result.rows) ? result.rows : []);
+  } catch (err) {
+    console.error('admin analytics sources error', err);
+    res.status(500).json({ error: 'Failed to fetch source analytics' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// New: Content analytics (blog + portfolio pages)
+// ---------------------------------------------------------------------------
+
+app.get('/admin/analytics/content', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const limitRaw = Number(req.query.limit || 20);
+  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.floor(limitRaw))) : 20;
+
+  try {
+    const [blogResult, portfolioResult] = await Promise.all([
+      // Blog post analytics
+      pool.query(
+        `SELECT
+           COALESCE(NULLIF(page_url, ''), '/') AS page,
+           COUNT(*)::int AS views,
+           COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_visitors,
+           COUNT(*) FILTER (WHERE source IN ('google', 'bing', 'yahoo', 'duckduckgo') OR medium = 'organic')::int AS organic_visits
+         FROM events
+         WHERE created_at >= $1
+           AND created_at <= $2
+           AND event_name = 'page_view'
+           AND page_url LIKE '/blog/%'
+         GROUP BY page
+         ORDER BY views DESC
+         LIMIT $3`,
+        [from.toISOString(), to.toISOString(), limit]
+      ),
+      // Portfolio/gallery analytics
+      pool.query(
+        `SELECT
+           COALESCE(NULLIF(page_url, ''), '/') AS page,
+           COUNT(*)::int AS views,
+           COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_visitors
+         FROM events
+         WHERE created_at >= $1
+           AND created_at <= $2
+           AND event_name = 'page_view'
+           AND (page_url LIKE '/portfolio%' OR page_url LIKE '/gallery%')
+         GROUP BY page
+         ORDER BY views DESC
+         LIMIT $3`,
+        [from.toISOString(), to.toISOString(), limit]
+      ),
+    ]);
+
+    res.json({
+      blog: Array.isArray(blogResult.rows) ? blogResult.rows : [],
+      portfolio: Array.isArray(portfolioResult.rows) ? portfolioResult.rows : [],
+    });
+  } catch (err) {
+    console.error('admin analytics content error', err);
+    res.status(500).json({ error: 'Failed to fetch content analytics' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// New: Package analytics (pricing page + package click events)
+// ---------------------------------------------------------------------------
+
+app.get('/admin/analytics/packages', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  try {
+    const [pricingViews, packageClicks, whatsappFromPricing] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(DISTINCT NULLIF(session_id, ''))::int AS pricing_visitors
+         FROM events
+         WHERE created_at >= $1 AND created_at <= $2
+           AND event_name = 'page_view'
+           AND page_url LIKE '/pricing%'`,
+        [from.toISOString(), to.toISOString()]
+      ),
+      pool.query(
+        `SELECT
+           COALESCE(NULLIF(label, ''), '(unknown)') AS package_name,
+           COUNT(*)::int AS clicks,
+           COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_sessions
+         FROM events
+         WHERE created_at >= $1 AND created_at <= $2
+           AND event_name IN ('package_click', 'pricing_package_click')
+         GROUP BY package_name
+         ORDER BY clicks DESC`,
+        [from.toISOString(), to.toISOString()]
+      ),
+      pool.query(
+        `SELECT COUNT(DISTINCT NULLIF(session_id, ''))::int AS whatsapp_from_pricing
+         FROM events
+         WHERE created_at >= $1 AND created_at <= $2
+           AND event_name = 'whatsapp_click'
+           AND (page_url LIKE '/pricing%' OR label LIKE '%pricing%' OR label LIKE '%package%')`,
+        [from.toISOString(), to.toISOString()]
+      ),
+    ]);
+
+    res.json({
+      pricing_visitors: Number(pricingViews.rows[0]?.pricing_visitors || 0),
+      whatsapp_from_pricing: Number(whatsappFromPricing.rows[0]?.whatsapp_from_pricing || 0),
+      package_clicks: Array.isArray(packageClicks.rows) ? packageClicks.rows : [],
+    });
+  } catch (err) {
+    console.error('admin analytics packages error', err);
+    res.status(500).json({ error: 'Failed to fetch package analytics' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Google Search Console integration
+// ---------------------------------------------------------------------------
+
+const GSC_SITE_URL = process.env.GOOGLE_SEARCH_CONSOLE_SITE_URL || '';
+const GSC_CLIENT_EMAIL = process.env.GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL || '';
+const GSC_PRIVATE_KEY = (process.env.GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+
+const isGscConfigured = () =>
+  Boolean(GSC_SITE_URL && GSC_CLIENT_EMAIL && GSC_PRIVATE_KEY);
+
+// Minimal JWT signer for Google service account (RS256) using Node built-ins
+const signGoogleJwt = async (clientEmail, privateKeyPem) => {
+  const https = require('https');
+  const now = Math.floor(Date.now() / 1000);
+  const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({
+    iss: clientEmail,
+    scope: 'https://www.googleapis.com/auth/webmasters.readonly',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600,
+    iat: now,
+  })).toString('base64url');
+
+  const signingInput = `${header}.${payload}`;
+
+  // Use Node crypto for RS256 signing
+  const nodeCrypto = require('crypto');
+  const sign = nodeCrypto.createSign('RSA-SHA256');
+  sign.update(signingInput);
+  const signature = sign.sign(privateKeyPem, 'base64url');
+  return `${signingInput}.${signature}`;
+};
+
+const getGscAccessToken = async () => {
+  const https = require('https');
+  const assertion = await signGoogleJwt(GSC_CLIENT_EMAIL, GSC_PRIVATE_KEY);
+
+  return new Promise((resolve, reject) => {
+    const body = new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion,
+    }).toString();
+
+    const req = https.request({
+      hostname: 'oauth2.googleapis.com',
+      path: '/token',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.access_token) resolve(parsed.access_token);
+          else reject(new Error(parsed.error_description || 'Token fetch failed'));
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+};
+
+const fetchGscSearchAnalytics = async (accessToken, siteUrl, startDate, endDate, dimensions, rowLimit = 25000) => {
+  const https = require('https');
+  const encodedSite = encodeURIComponent(siteUrl);
+  const body = JSON.stringify({
+    startDate,
+    endDate,
+    dimensions,
+    rowLimit,
+    startRow: 0,
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'www.googleapis.com',
+      path: `/webmasters/v3/sites/${encodedSite}/searchAnalytics/query`,
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) reject(new Error(parsed.error.message || 'GSC API error'));
+          else resolve(parsed.rows || []);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+};
+
+// GSC Status endpoint
+app.get('/admin/analytics/seo/status', requireAdminAuth, async (req, res) => {
+  const configured = isGscConfigured();
+
+  let lastSync = null;
+  let totalRows = 0;
+  try {
+    if (configured) {
+      const syncLog = await pool.query(
+        `SELECT * FROM search_console_sync_log ORDER BY synced_at DESC LIMIT 1`
+      );
+      if (syncLog.rows.length > 0) lastSync = syncLog.rows[0];
+      const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM search_console_data`);
+      totalRows = Number(countResult.rows[0]?.total || 0);
+    }
+  } catch {}
+
+  res.json({
+    configured,
+    site_url: configured ? GSC_SITE_URL : null,
+    last_sync: lastSync,
+    total_rows: totalRows,
+  });
+});
+
+// GSC Sync trigger endpoint
+app.post('/admin/analytics/seo/sync', requireAdminAuth, async (req, res) => {
+  if (!isGscConfigured()) {
+    return res.status(400).json({ error: 'Google Search Console is not configured. Set GOOGLE_SEARCH_CONSOLE_* environment variables.' });
+  }
+
+  const daysRaw = Number(req.query.days || 90);
+  const days = Math.max(1, Math.min(500, daysRaw));
+  const endDate = new Date().toISOString().slice(0, 10);
+  const startDateObj = new Date();
+  startDateObj.setDate(startDateObj.getDate() - days);
+  const startDate = startDateObj.toISOString().slice(0, 10);
+
+  // Fire off sync asynchronously and respond immediately
+  res.json({ ok: true, message: `GSC sync started for ${days} days (${startDate} to ${endDate})` });
+
+  // Async sync
+  (async () => {
+    let rowsUpserted = 0;
+    let errorMessage = null;
+    try {
+      const token = await getGscAccessToken();
+      const rows = await fetchGscSearchAnalytics(token, GSC_SITE_URL, startDate, endDate, ['date', 'query', 'page'], 25000);
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const row of rows) {
+          const [date, query, page] = row.keys;
+          await client.query(
+            `INSERT INTO search_console_data (date, query, page, country, device, clicks, impressions, ctr, position, synced_at)
+             VALUES ($1, $2, $3, 'all', 'all', $4, $5, $6, $7, NOW())
+             ON CONFLICT (date, query, page, country, device)
+             DO UPDATE SET clicks=$4, impressions=$5, ctr=$6, position=$7, synced_at=NOW()`,
+            [date, query, page, row.clicks || 0, row.impressions || 0, row.ctr || 0, row.position || 0]
+          );
+          rowsUpserted++;
+        }
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+
+      await pool.query(
+        `INSERT INTO search_console_sync_log (status, rows_upserted, date_from, date_to) VALUES ('success', $1, $2, $3)`,
+        [rowsUpserted, startDate, endDate]
+      );
+      console.log(`GSC sync complete: ${rowsUpserted} rows upserted`);
+    } catch (err) {
+      errorMessage = err.message || 'Unknown error';
+      console.error('GSC sync error:', errorMessage);
+      try {
+        await pool.query(
+          `INSERT INTO search_console_sync_log (status, rows_upserted, date_from, date_to, error_message) VALUES ('error', 0, $1, $2, $3)`,
+          [startDate, endDate, errorMessage]
+        );
+      } catch {}
+    }
+  })();
+});
+
+// GSC Overview KPIs
+app.get('/admin/analytics/seo/overview', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const previousRange = getPreviousAnalyticsDateRange(from, to);
+
+  if (!isGscConfigured()) {
+    return res.json({ configured: false, current: null, previous: null });
+  }
+
+  try {
+    const [current, previous] = await Promise.all([
+      pool.query(
+        `SELECT
+           COALESCE(SUM(clicks), 0)::int AS clicks,
+           COALESCE(SUM(impressions), 0)::int AS impressions,
+           CASE WHEN SUM(impressions) > 0 THEN ROUND((SUM(clicks)::numeric / SUM(impressions)) * 100, 2) ELSE 0 END AS ctr,
+           CASE WHEN SUM(impressions) > 0 THEN ROUND(SUM(position * impressions)::numeric / SUM(impressions), 2) ELSE 0 END AS avg_position
+         FROM search_console_data
+         WHERE date >= $1 AND date <= $2`,
+        [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10)]
+      ),
+      pool.query(
+        `SELECT
+           COALESCE(SUM(clicks), 0)::int AS clicks,
+           COALESCE(SUM(impressions), 0)::int AS impressions,
+           CASE WHEN SUM(impressions) > 0 THEN ROUND((SUM(clicks)::numeric / SUM(impressions)) * 100, 2) ELSE 0 END AS ctr,
+           CASE WHEN SUM(impressions) > 0 THEN ROUND(SUM(position * impressions)::numeric / SUM(impressions), 2) ELSE 0 END AS avg_position
+         FROM search_console_data
+         WHERE date >= $1 AND date <= $2`,
+        [previousRange.from.toISOString().slice(0, 10), previousRange.to.toISOString().slice(0, 10)]
+      ),
+    ]);
+
+    res.json({
+      configured: true,
+      current: current.rows[0],
+      previous: previous.rows[0],
+    });
+  } catch (err) {
+    console.error('admin analytics seo/overview error', err);
+    res.status(500).json({ error: 'Failed to fetch GSC overview' });
+  }
+});
+
+// GSC Timeseries
+app.get('/admin/analytics/seo/timeseries', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+
+  if (!isGscConfigured()) {
+    return res.json({ configured: false, rows: [] });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         date::text AS date,
+         SUM(clicks)::int AS clicks,
+         SUM(impressions)::int AS impressions,
+         CASE WHEN SUM(impressions) > 0 THEN ROUND((SUM(clicks)::numeric / SUM(impressions)) * 100, 4) ELSE 0 END AS ctr,
+         CASE WHEN SUM(impressions) > 0 THEN ROUND(SUM(position * impressions)::numeric / SUM(impressions), 2) ELSE 0 END AS avg_position
+       FROM search_console_data
+       WHERE date >= $1 AND date <= $2
+       GROUP BY date
+       ORDER BY date ASC`,
+      [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10)]
+    );
+    res.json({ configured: true, rows: result.rows });
+  } catch (err) {
+    console.error('admin analytics seo/timeseries error', err);
+    res.status(500).json({ error: 'Failed to fetch GSC timeseries' });
+  }
+});
+
+// GSC Top Queries
+app.get('/admin/analytics/seo/queries', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const limitRaw = Number(req.query.limit || 50);
+  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(500, Math.floor(limitRaw))) : 50;
+  const sortField = ['clicks', 'impressions', 'ctr', 'position'].includes(req.query.sort) ? req.query.sort : 'impressions';
+  const sortDir = sortField === 'position' ? 'ASC' : 'DESC';
+  const filterRaw = typeof req.query.filter === 'string' ? req.query.filter.trim().toLowerCase() : '';
+
+  if (!isGscConfigured()) {
+    return res.json({ configured: false, rows: [] });
+  }
+
+  try {
+    const params = [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10)];
+    let filterClause = '';
+    if (filterRaw) {
+      params.push(`%${filterRaw}%`);
+      filterClause = `AND LOWER(query) LIKE $${params.length}`;
+    }
+    params.push(limit);
+
+    const result = await pool.query(
+      `SELECT
+         query,
+         SUM(clicks)::int AS clicks,
+         SUM(impressions)::int AS impressions,
+         CASE WHEN SUM(impressions) > 0 THEN ROUND((SUM(clicks)::numeric / SUM(impressions)) * 100, 2) ELSE 0 END AS ctr,
+         ROUND(SUM(position * impressions)::numeric / NULLIF(SUM(impressions), 0), 2) AS avg_position
+       FROM search_console_data
+       WHERE date >= $1 AND date <= $2
+       ${filterClause}
+       GROUP BY query
+       ORDER BY ${sortField === 'ctr' ? 'ctr' : sortField === 'position' ? 'avg_position' : sortField} ${sortDir}
+       LIMIT $${params.length}`,
+      params
+    );
+    res.json({ configured: true, rows: result.rows });
+  } catch (err) {
+    console.error('admin analytics seo/queries error', err);
+    res.status(500).json({ error: 'Failed to fetch GSC queries' });
+  }
+});
+
+// GSC Query to Top Page mapping
+app.get('/admin/analytics/seo/query-pages', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const limitRaw = Number(req.query.limit || 100);
+  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(500, Math.floor(limitRaw))) : 100;
+
+  if (!isGscConfigured()) {
+    return res.json({ configured: false, rows: [] });
+  }
+
+  try {
+    const result = await pool.query(
+      `WITH qp AS (
+         SELECT
+           query,
+           page,
+           SUM(clicks)::int AS clicks,
+           SUM(impressions)::int AS impressions,
+           ROW_NUMBER() OVER (
+             PARTITION BY query
+             ORDER BY SUM(impressions) DESC, SUM(clicks) DESC, page ASC
+           ) AS rn
+         FROM search_console_data
+         WHERE date >= $1 AND date <= $2
+         GROUP BY query, page
+       )
+       SELECT
+         query,
+         page,
+         clicks,
+         impressions
+       FROM qp
+       WHERE rn = 1
+       ORDER BY impressions DESC, clicks DESC
+       LIMIT $3`,
+      [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10), limit]
+    );
+
+    res.json({ configured: true, rows: result.rows });
+  } catch (err) {
+    console.error('admin analytics seo/query-pages error', err);
+    res.status(500).json({ error: 'Failed to fetch query page mapping' });
+  }
+});
+
+// GSC Top Landing Pages (merged with website event data)
+app.get('/admin/analytics/seo/landing-pages', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const limitRaw = Number(req.query.limit || 20);
+  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.floor(limitRaw))) : 20;
+
+  if (!isGscConfigured()) {
+    return res.json({ configured: false, rows: [] });
+  }
+
+  try {
+    const siteBase = GSC_SITE_URL.replace(/\/$/, '');
+
+    const [gscPages, eventPages, whatsappPages] = await Promise.all([
+      pool.query(
+        `SELECT
+           page,
+           SUM(clicks)::int AS organic_clicks,
+           SUM(impressions)::int AS impressions,
+           CASE WHEN SUM(impressions) > 0 THEN ROUND((SUM(clicks)::numeric / SUM(impressions)) * 100, 2) ELSE 0 END AS ctr,
+           ROUND(SUM(position * impressions)::numeric / NULLIF(SUM(impressions), 0), 2) AS avg_position
+         FROM search_console_data
+         WHERE date >= $1 AND date <= $2
+         GROUP BY page
+         ORDER BY impressions DESC
+         LIMIT $3`,
+        [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10), limit]
+      ),
+      pool.query(
+        `SELECT
+           COALESCE(NULLIF(page_url, ''), '/') AS page,
+           COUNT(DISTINCT NULLIF(session_id, ''))::int AS website_visitors
+         FROM events
+         WHERE created_at >= $1 AND created_at <= $2 AND event_name = 'page_view'
+         GROUP BY page_url`,
+        [from.toISOString(), to.toISOString()]
+      ),
+      pool.query(
+        `SELECT
+           COALESCE(NULLIF(page_url, ''), '/') AS page,
+           COUNT(*)::int AS whatsapp_clicks
+         FROM events
+         WHERE created_at >= $1 AND created_at <= $2 AND event_name = 'whatsapp_click'
+         GROUP BY page_url`,
+        [from.toISOString(), to.toISOString()]
+      ),
+    ]);
+
+    // Build lookup maps for website events
+    const visitorMap = {};
+    eventPages.rows.forEach(r => { visitorMap[r.page] = Number(r.website_visitors || 0); });
+    const waMap = {};
+    whatsappPages.rows.forEach(r => { waMap[r.page] = Number(r.whatsapp_clicks || 0); });
+
+    const merged = gscPages.rows.map(r => {
+      const path = r.page.replace(siteBase, '') || '/';
+      return {
+        ...r,
+        path,
+        website_visitors: visitorMap[path] || 0,
+        whatsapp_clicks: waMap[path] || 0,
+      };
+    });
+
+    res.json({ configured: true, rows: merged });
+  } catch (err) {
+    console.error('admin analytics seo/landing-pages error', err);
+    res.status(500).json({ error: 'Failed to fetch landing pages' });
+  }
+});
+
+// GSC SEO Opportunities (deterministic, no AI)
+app.get('/admin/analytics/seo/opportunities', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+
+  if (!isGscConfigured()) {
+    return res.json({ configured: false, opportunities: [] });
+  }
+
+  // Branded query detection: queries containing fiesta/fiesta house
+  const isBranded = (query) => /\bfiesta\b/i.test(query);
+
+  // Commercial query detection
+  const isCommercial = (query) =>
+    /\b(maternity\s+photo|pregnancy\s+photo|maternity\s+shoot|pregnancy\s+shoot|maternity\s+photographer|maternity\s+session|maternity\s+portrait|newborn\s+photo|baby\s+shower)\b/i.test(query);
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         query,
+         SUM(clicks)::int AS clicks,
+         SUM(impressions)::int AS impressions,
+         CASE WHEN SUM(impressions) > 0 THEN ROUND((SUM(clicks)::numeric / SUM(impressions)) * 100, 2) ELSE 0 END AS ctr,
+         ROUND(SUM(position * impressions)::numeric / NULLIF(SUM(impressions), 0), 2) AS avg_position
+       FROM search_console_data
+       WHERE date >= $1 AND date <= $2 AND impressions >= 3
+       GROUP BY query
+       ORDER BY impressions DESC
+       LIMIT 500`,
+      [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10)]
+    );
+
+    const opportunities = [];
+
+    for (const row of result.rows) {
+      const { query, clicks, impressions, ctr, avg_position } = row;
+      const pos = Number(avg_position);
+      const ctrNum = Number(ctr);
+      const branded = isBranded(query);
+      const commercial = isCommercial(query);
+
+      // Type 1: High impressions, very low CTR (position < 15 but near-zero CTR)
+      if (impressions >= 10 && clicks === 0 && pos <= 20) {
+        opportunities.push({
+          type: 'low_ctr',
+          priority: pos <= 10 ? 'high' : 'medium',
+          query,
+          clicks,
+          impressions,
+          ctr: ctrNum,
+          position: pos,
+          branded,
+          commercial,
+          reason: `${impressions} impressions but 0 clicks at position ${pos.toFixed(1)}.`,
+          action: 'Rewrite the page title and meta description to be more compelling. Make it specific and benefit-driven.',
+        });
+        continue;
+      }
+
+      // Type 2: Page-one opportunity (position 8–20, decent impressions)
+      if (pos >= 8 && pos <= 20 && impressions >= 5) {
+        const priority = pos <= 12 ? 'high' : 'medium';
+        opportunities.push({
+          type: 'page_one_opportunity',
+          priority,
+          query,
+          clicks,
+          impressions,
+          ctr: ctrNum,
+          position: pos,
+          branded,
+          commercial,
+          reason: `Currently ranking position ${pos.toFixed(1)} — just off page one.`,
+          action: 'Improve content depth, add more relevant headings, and build internal links to this page.',
+        });
+        continue;
+      }
+
+      // Type 3: Strong ranking — protect and improve CTR
+      if (pos < 8 && impressions >= 10 && ctrNum < 3) {
+        opportunities.push({
+          type: 'strong_ranking_low_ctr',
+          priority: 'medium',
+          query,
+          clicks,
+          impressions,
+          ctr: ctrNum,
+          position: pos,
+          branded,
+          commercial,
+          reason: `Ranking well at position ${pos.toFixed(1)} but CTR is only ${ctrNum.toFixed(1)}%.`,
+          action: 'Improve title tag and add structured data (FAQ or Article schema) to get rich results.',
+        });
+      }
+    }
+
+    // Sort: high priority first, then by impressions
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    opportunities.sort((a, b) => {
+      const pdiff = (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
+      if (pdiff !== 0) return pdiff;
+      return b.impressions - a.impressions;
+    });
+
+    res.json({ configured: true, opportunities: opportunities.slice(0, 50) });
+  } catch (err) {
+    console.error('admin analytics seo/opportunities error', err);
+    res.status(500).json({ error: 'Failed to generate SEO opportunities' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 
 app.post('/auth/logout', authRefreshLimiter, requireCsrfToken, async (req, res) => {
   const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];

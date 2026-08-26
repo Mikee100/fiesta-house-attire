@@ -881,6 +881,305 @@ export const fetchAnalyticsRecentEvents = async (
   };
 };
 
+export interface AnalyticsSourceRow {
+  source: string;
+  medium: string;
+  visitors: number;
+  page_views: number;
+  whatsapp_clicks: number;
+  whatsapp_sessions: number;
+}
+
+export interface AnalyticsContentRow {
+  page: string;
+  views: number;
+  unique_visitors: number;
+  organic_visits?: number;
+}
+
+export interface AnalyticsContentResponse {
+  blog: AnalyticsContentRow[];
+  portfolio: AnalyticsContentRow[];
+}
+
+export interface AnalyticsPackageClickRow {
+  package_name: string;
+  clicks: number;
+  unique_sessions: number;
+}
+
+export interface AnalyticsPackagesResponse {
+  pricing_visitors: number;
+  whatsapp_from_pricing: number;
+  package_clicks: AnalyticsPackageClickRow[];
+}
+
+export interface AnalyticsBusinessKpisCompare {
+  current: AnalyticsBusinessKpis;
+  previous: AnalyticsBusinessKpis;
+}
+
+export interface SeoStatusResponse {
+  configured: boolean;
+  site_url: string | null;
+  last_sync: {
+    id: string;
+    synced_at: string;
+    status: string;
+    rows_upserted: number;
+    date_from: string | null;
+    date_to: string | null;
+    error_message: string | null;
+  } | null;
+  total_rows: number;
+}
+
+export interface SeoOverviewSnapshot {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  avg_position: number;
+}
+
+export interface SeoOverviewResponse {
+  configured: boolean;
+  current: SeoOverviewSnapshot | null;
+  previous: SeoOverviewSnapshot | null;
+}
+
+export interface SeoTimeseriesRow {
+  date: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  avg_position: number;
+}
+
+export interface SeoTimeseriesResponse {
+  configured: boolean;
+  rows: SeoTimeseriesRow[];
+}
+
+export interface SeoQueryRow {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  avg_position: number;
+}
+
+export interface SeoQueriesResponse {
+  configured: boolean;
+  rows: SeoQueryRow[];
+}
+
+export interface SeoQueryPageRow {
+  query: string;
+  page: string;
+  clicks: number;
+  impressions: number;
+}
+
+export interface SeoQueryPagesResponse {
+  configured: boolean;
+  rows: SeoQueryPageRow[];
+}
+
+export interface SeoLandingPageRow {
+  page: string;
+  path: string;
+  organic_clicks: number;
+  impressions: number;
+  ctr: number;
+  avg_position: number;
+  website_visitors: number;
+  whatsapp_clicks: number;
+}
+
+export interface SeoLandingPagesResponse {
+  configured: boolean;
+  rows: SeoLandingPageRow[];
+}
+
+export interface SeoOpportunityRow {
+  type: 'low_ctr' | 'page_one_opportunity' | 'strong_ranking_low_ctr';
+  priority: 'high' | 'medium' | 'low';
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  branded: boolean;
+  commercial: boolean;
+  reason: string;
+  action: string;
+}
+
+export interface SeoOpportunitiesResponse {
+  configured: boolean;
+  opportunities: SeoOpportunityRow[];
+}
+
+export const fetchAnalyticsSources = async (from: string, to: string): Promise<AnalyticsSourceRow[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/sources?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsContent = async (from: string, to: string, limit = 20): Promise<AnalyticsContentResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/content?${range}&limit=${limit}`);
+  const data = await res.json();
+  return {
+    blog: Array.isArray(data?.blog) ? data.blog : [],
+    portfolio: Array.isArray(data?.portfolio) ? data.portfolio : [],
+  };
+};
+
+export const fetchAnalyticsPackages = async (from: string, to: string): Promise<AnalyticsPackagesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/packages?${range}`);
+  const data = await res.json();
+  return {
+    pricing_visitors: Number(data?.pricing_visitors || 0),
+    whatsapp_from_pricing: Number(data?.whatsapp_from_pricing || 0),
+    package_clicks: Array.isArray(data?.package_clicks) ? data.package_clicks : [],
+  };
+};
+
+export const fetchAnalyticsBusinessKpisCompare = async (from: string, to: string): Promise<AnalyticsBusinessKpisCompare> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/business-kpis-compare?${range}`);
+  const data = await res.json();
+
+  const toSnapshot = (value: unknown): AnalyticsBusinessKpis => {
+    const row = (value || {}) as Partial<AnalyticsBusinessKpis>;
+    return {
+      unique_visitors: Number(row.unique_visitors || 0),
+      whatsapp_leads: Number(row.whatsapp_leads || 0),
+      portfolio_engagement: Number(row.portfolio_engagement || 0),
+      booking_intent: Number(row.booking_intent || 0),
+      returning_visitors: Number(row.returning_visitors || 0),
+      conversion_rate: Number(row.conversion_rate || 0),
+    };
+  };
+
+  return {
+    current: toSnapshot(data?.current),
+    previous: toSnapshot(data?.previous),
+  };
+};
+
+export const fetchSeoStatus = async (): Promise<SeoStatusResponse> => {
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/status`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    site_url: typeof data?.site_url === 'string' ? data.site_url : null,
+    last_sync: data?.last_sync || null,
+    total_rows: Number(data?.total_rows || 0),
+  };
+};
+
+export const triggerSeoSync = async (days = 90): Promise<{ ok?: boolean; message?: string; error?: string }> => {
+  const safeDays = Math.max(1, Math.min(500, Math.floor(Number(days) || 90)));
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/sync?days=${safeDays}`, {
+    method: 'POST',
+  });
+  return await res.json();
+};
+
+export const fetchSeoOverview = async (from: string, to: string): Promise<SeoOverviewResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/overview?${range}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    current: data?.current
+      ? {
+          clicks: Number(data.current.clicks || 0),
+          impressions: Number(data.current.impressions || 0),
+          ctr: Number(data.current.ctr || 0),
+          avg_position: Number(data.current.avg_position || 0),
+        }
+      : null,
+    previous: data?.previous
+      ? {
+          clicks: Number(data.previous.clicks || 0),
+          impressions: Number(data.previous.impressions || 0),
+          ctr: Number(data.previous.ctr || 0),
+          avg_position: Number(data.previous.avg_position || 0),
+        }
+      : null,
+  };
+};
+
+export const fetchSeoTimeseries = async (from: string, to: string): Promise<SeoTimeseriesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/timeseries?${range}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export const fetchSeoQueries = async (
+  from: string,
+  to: string,
+  options?: { limit?: number; sort?: 'clicks' | 'impressions' | 'ctr' | 'position'; filter?: string }
+): Promise<SeoQueriesResponse> => {
+  const search = new URLSearchParams({
+    from,
+    to,
+    limit: String(Math.max(1, Math.min(500, Math.floor(options?.limit || 50)))),
+    sort: options?.sort || 'impressions',
+  });
+
+  if (options?.filter) {
+    search.set('filter', options.filter);
+  }
+
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/queries?${search.toString()}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export const fetchSeoQueryPages = async (from: string, to: string, limit = 100): Promise<SeoQueryPagesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const safeLimit = Math.max(1, Math.min(500, Math.floor(limit)));
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/query-pages?${range}&limit=${safeLimit}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export const fetchSeoLandingPages = async (from: string, to: string, limit = 20): Promise<SeoLandingPagesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/landing-pages?${range}&limit=${Math.max(1, Math.min(100, Math.floor(limit)))}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export const fetchSeoOpportunities = async (from: string, to: string): Promise<SeoOpportunitiesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/opportunities?${range}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    opportunities: Array.isArray(data?.opportunities) ? data.opportunities : [],
+  };
+};
+
 // --- Videos ---
 
 export interface VideoItem {
