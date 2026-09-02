@@ -109,13 +109,37 @@ const MaternityGowns = () => {
 
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 11vw, 9rem)", backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center", marginBottom: "8rem" }}>
+          <div style={{ maxWidth: "840px", margin: "0 auto", textAlign: "center", marginBottom: "4rem" }}>
              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Fiesta Atelier</span>
-             <h1 className="display" style={{ fontSize: "clamp(3.5rem, 8vw, 6rem)", marginTop: "1.5rem", lineHeight: "1.1" }}>Our Maternity Gowns</h1>
-             <p style={{ fontSize: "1.3rem", opacity: 0.7, lineHeight: "1.8", marginTop: "2.5rem" }}>
-                Elevate your maternity story with our exclusive collection of high-end designer gowns. From flowing silks to intricate laces, our atelier is curated to make every expectant mother feel like a masterpiece.
+             <h1 className="display" style={{ fontSize: "clamp(3.2rem, 7vw, 5.5rem)", marginTop: "1rem", lineHeight: "1.1" }}>Explore Maternity Gowns & Looks</h1>
+             <p style={{ fontSize: "1.2rem", opacity: 0.8, lineHeight: "1.8", marginTop: "1.8rem" }}>
+                These gowns and styling looks are curated exclusively for your photography experience at Fiesta House. Expectant mothers select the looks they want to be photographed in from our private in-house wardrobe.
              </p>
-             <div style={{ width: "80px", height: "1px", backgroundColor: "var(--magenta)", margin: "3rem auto" }}></div>
+             
+             {/* Atelier Photography Wardrobe Callout */}
+             <div style={{
+               background: "#FBF6F3",
+               border: "1px solid var(--sky-blue-tint)",
+               borderRadius: "16px",
+               padding: "1.5rem 2rem",
+               margin: "2.5rem auto 1.5rem",
+               textAlign: "center",
+               maxWidth: "720px",
+             }}>
+               <p style={{ fontSize: "0.95rem", color: "var(--dark)", lineHeight: "1.6", margin: 0 }}>
+                 <strong>Photoshoot Wardrobe Inclusion:</strong> You do not need to buy or rent gowns separately. Full access to our atelier of over 80 designer gowns, silks, and robes is included in your maternity photography package.
+               </p>
+               <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+                 <Link to="/what-to-wear-maternity-photoshoot" style={{ fontSize: "0.85rem", color: "var(--magenta)", fontWeight: 600, borderBottom: "1px solid var(--magenta)" }}>
+                   Read Our What to Wear Guide →
+                 </Link>
+                 <Link to="/contact" style={{ fontSize: "0.85rem", color: "var(--sky-blue)", fontWeight: 600, borderBottom: "1px solid var(--sky-blue)" }}>
+                   Reserve Your Session →
+                 </Link>
+               </div>
+             </div>
+
+             <div style={{ width: "80px", height: "1px", backgroundColor: "var(--magenta)", margin: "2rem auto" }}></div>
           </div>
 
           <div className="masonry">

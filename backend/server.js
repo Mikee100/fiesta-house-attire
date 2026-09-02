@@ -4366,6 +4366,13 @@ const IMAGE_SITEMAP_FALLBACK_IMAGE = `${SITEMAP_SITE_URL}/og-image.jpg`;
 
 const STATIC_ROUTES = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },
+  { path: '/maternity-photoshoot', priority: '0.9', changefreq: 'weekly' },
+  { path: '/planning-guide', priority: '0.9', changefreq: 'weekly' },
+  { path: '/when-to-do-maternity-photos', priority: '0.9', changefreq: 'weekly' },
+  { path: '/what-to-wear-maternity-photoshoot', priority: '0.9', changefreq: 'weekly' },
+  { path: '/maternity-photoshoot-ideas', priority: '0.8', changefreq: 'weekly' },
+  { path: '/family-maternity-photoshoot', priority: '0.8', changefreq: 'weekly' },
+  { path: '/faq', priority: '0.9', changefreq: 'weekly' },
   { path: '/portfolio', priority: '0.8', changefreq: 'weekly' },
   { path: '/maternity-gowns', priority: '0.8', changefreq: 'weekly' },
   { path: '/pricing', priority: '0.8', changefreq: 'monthly' },
@@ -4381,6 +4388,9 @@ const STATIC_ROUTES = [
 // These are hardcoded public URLs that exist in Supabase storage.
 const STATIC_IMAGE_SEEDS = [
   { page: '/', url: `${SITEMAP_SITE_URL}/og-image.jpg` },
+  { page: '/maternity-photoshoot', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg' },
+  { page: '/what-to-wear-maternity-photoshoot', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg' },
+  { page: '/family-maternity-photoshoot', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg' },
   { page: '/maternity-gowns', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg' },
   { page: '/', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg' },
   { page: '/', url: 'https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg' },

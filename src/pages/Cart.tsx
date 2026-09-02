@@ -47,8 +47,8 @@ const Cart = () => {
               <div>
                 <h2 className="display h2-mobile" style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>Your cart is empty</h2>
                 <p style={{ color: "var(--muted-foreground)", marginBottom: "2rem" }}>It looks like you haven't added any packages to your cart yet.</p>
-                <Link to="/shop" className="btn btn-primary" style={{ borderRadius: "100px" }}>
-                  Browse Shop
+                <Link to="/pricing" className="btn btn-primary" style={{ borderRadius: "100px" }}>
+                  Browse Packages
                 </Link>
               </div>
             </div>
@@ -98,8 +98,8 @@ const Cart = () => {
                   </div>
                 ))}
                 
-                <Link to="/shop" className="flex items-center gap-2 text-[var(--magenta)] font-bold mt-4 hover:gap-3 transition-all">
-                  <ArrowLeft size={18} /> Continue Shopping
+                <Link to="/pricing" className="flex items-center gap-2 text-[var(--magenta)] font-bold mt-4 hover:gap-3 transition-all">
+                  <ArrowLeft size={18} /> Continue Browsing Packages
                 </Link>
               </div>
 
