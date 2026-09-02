@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import SEO from "@/components/site/SEO";
 import { 
@@ -7,9 +8,10 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion";
-import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck } from "lucide-react";
+import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
+import { useCart } from "@/context/CartContext";
 
 const faqs = [
   {
@@ -22,7 +24,7 @@ const faqs = [
   },
   {
     question: "How do I book a session?",
-    answer: "Booking is simple! Select your preferred package and click the 'Book via WhatsApp' button to chat with us. A deposit is required to secure your date."
+    answer: "Booking is simple! Select your preferred package and click 'Add to Cart'. You can review your selection and continue to checkout from your cart. A deposit is required to secure your date."
   },
   {
     question: "How long does it take to receive the images?",
@@ -35,9 +37,20 @@ const faqs = [
 ];
 
 const Pricing = () => {
+  const { addToCart } = useCart();
   const [packages, setPackages] = useState<api.ShopPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
   const [packagesSource, setPackagesSource] = useState<api.ShopPackagesSource>('live');
+
+  const handleAddToCart = (pkg: api.ShopPackage) => {
+    addToCart({
+      id: pkg.id,
+      name: pkg.name,
+      price: Number(pkg.price || 0),
+      description: pkg.description,
+    });
+    toast.success(`${pkg.name} added to cart`);
+  };
 
   useEffect(() => {
     const loadPackages = async () => {
@@ -87,7 +100,7 @@ const Pricing = () => {
           </div>
 
           {/* Pricing Grid */}
-          <div style={{ 
+          <div id="packages" style={{ 
             display: "grid", 
             gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
             gap: "1.5rem" 
@@ -164,7 +177,7 @@ const Pricing = () => {
                       <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.6rem", color: "var(--dark)" }}>{pkg.name}</h3>
                       <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "1rem" }}>
                         <span style={{ fontSize: "1rem", fontWeight: "600", color: accentColor }}>Ksh</span>
-                        <span style={{ fontSize: "2.2rem", fontWeight: "300", color: "var(--dark)" }}>{Number(pkg.price || 0).toLocaleString()}</span>
+                        <span style={{ fontSize: "2.2rem", fontWeight: "300", color: "var(--dark)" }}>{Number(pkg.price || 0).toLocaleString("en-KE")}</span>
                       </div>
                       {pkg.description && (
                         <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", lineHeight: "1.5" }}>{pkg.description}</p>
@@ -214,8 +227,9 @@ const Pricing = () => {
                       )}
                     </div>
 
-                    <a
-                      href={`https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20book%20the%20${pkg.name}%20package.`}
+                    <button
+                      type="button"
+                      onClick={() => handleAddToCart(pkg)}
                       data-track={`package_click:${pkg.name}`}
                       className="btn"
                       style={{
@@ -223,14 +237,17 @@ const Pricing = () => {
                         backgroundColor: pkg.popular ? accentColor : "var(--dark)",
                         color: "white",
                         borderRadius: "12px",
-                        padding: "1.5rem",
+                        padding: "1.05rem 1.2rem",
                         fontWeight: "600",
                         display: "flex",
-                        gap: "0.8rem"
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.75rem"
                       }}
                     >
-                      Book via WhatsApp
-                    </a>
+                      <ShoppingCart size={18} />
+                      <span>Add to Cart</span>
+                    </button>
                   </div>
                 );
               })
@@ -324,6 +341,24 @@ const Pricing = () => {
                 </AccordionItem>
               ))}
             </Accordion>
+
+            <div style={{ textAlign: "center", marginTop: "3rem" }}>
+              <Link
+                to="/faq"
+                style={{
+                  display: "inline-block",
+                  padding: "0.85rem 2.2rem",
+                  border: "1px solid var(--magenta)",
+                  borderRadius: "100px",
+                  color: "var(--magenta)",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  textDecoration: "none",
+                }}
+              >
+                View Full Maternity Photoshoot FAQ Hub →
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -348,13 +383,13 @@ const Pricing = () => {
                <p style={{ maxWidth: "700px", margin: "0 auto 4rem", fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8 }}>
                  Surprise an expectant mother with a gift that lasts a lifetime. Our luxury photoshoot vouchers are the most cherished gifts at baby showers across Nairobi.
                </p>
-               <a 
-                 href="https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Maternity,%20I'd%20like%20to%20enquire%20about%20a%20gift%20voucher." 
+               <Link 
+                 to="/shop" 
                  className="btn" 
                  style={{ backgroundColor: "white", color: "var(--dark)", padding: "1.5rem 4rem", fontWeight: "700", borderRadius: "100px" }}
                >
-                 Purchase a Gift Voucher
-               </a>
+                 View Gift Vouchers
+               </Link>
             </div>
           </div>
         </div>

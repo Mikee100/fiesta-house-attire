@@ -17,7 +17,7 @@ const Checkout = () => {
   });
 
   if (cart.length === 0) {
-    navigate('/shop');
+    navigate('/pricing');
     return null;
   }
 

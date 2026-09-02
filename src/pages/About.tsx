@@ -404,10 +404,10 @@ export default function About() {
           </div>
           <div className="about-fade" ref={ref} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             {[
-              <>Fiesta House Maternity was born from a simple belief: <strong>every expecting mother deserves to feel like the most beautiful woman in the world.</strong> We are a Nairobi-based luxury maternity photography studio dedicated to creating portraits that are as timeless as the love you carry.</>,
-              <>Our studio is a sanctuary - a calm, elegantly styled space where you can arrive, exhale, and be celebrated. We handle everything: the wardrobe, the lighting, the posing, the atmosphere. Your only job is to show up and feel.</>,
-              <>We work with a <strong>curated wardrobe of flowing gowns, silks, and wraps</strong> sourced specifically for maternity photography. Every piece is chosen to flatter the beauty of a pregnant body, not conceal it.</>,
-              <>Whether you are 28 weeks or 36 weeks, a first-time mother or adding to your family - <strong>this session is yours.</strong> We photograph women of every background, body type, and story with equal care and reverence.</>,
+              <>Fiesta House Maternity (operating as <strong>Fiesta House Attire</strong>) was born from a simple belief: <strong>every expecting mother deserves to feel like the most beautiful woman in the world.</strong> We are a Nairobi-based luxury maternity photography studio dedicated to creating portraits that are as timeless as the love you carry.</>,
+              <>Our studio at Diamond Plaza II in Parklands is a private sanctuary—a calm, climate-controlled space where you can arrive, exhale, and be celebrated. We handle everything: the bespoke physical sets, the couture gowns, professional hair and makeup, and gentle posing. Your only job is to show up and glow.</>,
+              <>The gowns in our atelier are <strong>complimentary photoshoot looks</strong> curated specifically for maternity photography. We do not operate as an off-the-rack dress store; instead, we provide a private wardrobe of over 80 designer gowns and trailing silks for you to select and wear during your session.</>,
+              <>Whether you are 28 weeks or 36 weeks, celebrating solo or bringing your husband and older children—<strong>this experience is yours.</strong> We photograph mothers with deep respect, gentle pacing, and authentic artistry.</>,
             ].map((text, i) => (
               <p key={i} style={{ fontSize: "0.95rem", lineHeight: 1.9, color: "var(--muted, #7A7873)", fontWeight: 300 }}>
                 {text}

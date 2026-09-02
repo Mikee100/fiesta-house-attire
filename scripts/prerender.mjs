@@ -1,16 +1,31 @@
-import http from "node:http";
+/**
+ * Prerender script — replaces Puppeteer with Vite SSR + react-dom/server.
+ *
+ * How it works:
+ * 1. `vite build` (already run) produces the client bundle in dist/
+ * 2. `vite build --ssr` (run here) compiles entry-server.tsx to dist/server/entry-server.js
+ * 3. For each static route, we call render(url) from the server bundle
+ * 4. We inject the returned HTML + head tags into the index.html shell
+ * 5. We write the final HTML to dist/<route>/index.html
+ *
+ * This works on Vercel, Netlify, Railway, and any platform — no Chrome needed.
+ */
+
+import { build } from "vite";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import puppeteer from "puppeteer";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
+const clientHtmlPath = path.join(distDir, "index.html");
+const clientHtmlTemplatePath = path.join(distDir, ".index-template.html");
 const siteUrl = (process.env.VITE_SITE_URL || "https://www.fiestahousematernity.com").replace(/\/$/, "");
+const buildDate = new Date().toISOString().slice(0, 10);
 
-const prerenderRoutes = [
+// ─── Static routes to prerender ──────────────────────────────────────────────
+const STATIC_ROUTES = [
   "/",
   "/about",
   "/portfolio",
@@ -22,95 +37,18 @@ const prerenderRoutes = [
   "/maternity-gowns",
   "/videos",
   "/shop",
+  "/maternity-photoshoot",
+  "/planning-guide",
+  "/when-to-do-maternity-photos",
+  "/what-to-wear-maternity-photoshoot",
+  "/maternity-photoshoot-ideas",
+  "/family-maternity-photoshoot",
+  "/faq",
 ];
 
-const rawApiUrl = process.env.PRERENDER_API_URL || process.env.VITE_API_URL || "http://localhost:5000";
-const buildDate = new Date().toISOString().slice(0, 10);
-const writeStaticSitemaps = String(process.env.PRERENDER_WRITE_STATIC_SITEMAPS || "").toLowerCase() === "true";
-
-const contentTypes = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".gif": "image/gif",
-  ".svg": "image/svg+xml",
-  ".webp": "image/webp",
-  ".ico": "image/x-icon",
-  ".txt": "text/plain; charset=utf-8",
-  ".xml": "application/xml; charset=utf-8",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-};
-
+// ─── Utilities ────────────────────────────────────────────────────────────────
 async function exists(filePath) {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function getSafePathname(url = "/") {
-  const pathname = decodeURIComponent(url.split("?")[0]).replace(/\\+/g, "/");
-  return pathname.startsWith("/") ? pathname : `/${pathname}`;
-}
-
-async function serveFile(filePath, res) {
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = contentTypes[ext] || "application/octet-stream";
-  const data = await fs.readFile(filePath);
-  res.writeHead(200, { "Content-Type": contentType });
-  res.end(data);
-}
-
-function createStaticServer() {
-  return http.createServer(async (req, res) => {
-    const pathname = getSafePathname(req.url || "/");
-    const normalized = path.normalize(path.join(distDir, pathname));
-
-    if (!normalized.startsWith(distDir)) {
-      res.writeHead(400);
-      res.end("Bad Request");
-      return;
-    }
-
-    try {
-      const directFile = normalized;
-      const indexFile = path.join(normalized, "index.html");
-
-      if (await exists(directFile)) {
-        const stat = await fs.stat(directFile);
-        if (stat.isFile()) {
-          await serveFile(directFile, res);
-          return;
-        }
-      }
-
-      if (await exists(indexFile)) {
-        await serveFile(indexFile, res);
-        return;
-      }
-
-      await serveFile(path.join(distDir, "index.html"), res);
-    } catch {
-      res.writeHead(500);
-      res.end("Internal Server Error");
-    }
-  });
-}
-
-async function writeRouteHtml(route, html) {
-  const outputFile = route === "/"
-    ? path.join(distDir, "index.html")
-    : path.join(distDir, route.replace(/^\/+/, ""), "index.html");
-
-  await fs.mkdir(path.dirname(outputFile), { recursive: true });
-  await fs.writeFile(outputFile, `${html}\n`, "utf8");
+  try { await fs.access(filePath); return true; } catch { return false; }
 }
 
 function escapeXml(value) {
@@ -118,7 +56,7 @@ function escapeXml(value) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
 
@@ -132,311 +70,252 @@ function toAbsoluteUrl(url) {
 
 function getRoutePriority(route) {
   if (route === "/") return "1.0";
+  const highPriority = ["/maternity-photoshoot", "/planning-guide", "/when-to-do-maternity-photos", "/what-to-wear-maternity-photoshoot", "/family-maternity-photoshoot", "/maternity-photoshoot-ideas", "/faq"];
+  if (highPriority.includes(route)) return "0.9";
   if (["/portfolio", "/pricing", "/blog", "/maternity-gowns", "/videos"].includes(route)) return "0.8";
   if (["/about", "/contact", "/experience", "/shop"].includes(route)) return "0.7";
-  if (route.startsWith("/portfolio/") || route.startsWith("/blog/")) return "0.7";
+  if (route.startsWith("/portfolio/") || route.startsWith("/blog/")) return "0.8";
   return "0.6";
+}
+
+function removeStaticSeoFallbacks(html) {
+  return html
+    .replace(/\s*<title>[^<]*<\/title>/i, "")
+    .replace(/\s*<meta\s+name=["'](?:description|keywords|robots|googlebot|theme-color|twitter:[^"']+)["'][^>]*>/gi, "")
+    .replace(/\s*<meta\s+property=["']og:[^"']+["'][^>]*>/gi, "")
+    .replace(/\s*<link\s+rel=["']canonical["'][^>]*>/gi, "");
 }
 
 function collectPortfolioImageUrls(portfolio) {
   const urls = new Set();
   const cover = toAbsoluteUrl(portfolio?.cover_image_url);
   if (cover) urls.add(cover);
-
   if (Array.isArray(portfolio?.images)) {
     for (const item of portfolio.images) {
-      if (typeof item === "string") {
-        const absolute = toAbsoluteUrl(item);
-        if (absolute) urls.add(absolute);
-        continue;
-      }
-
-      const candidate = toAbsoluteUrl(item?.url);
+      const candidate = toAbsoluteUrl(typeof item === "string" ? item : item?.url);
       if (candidate) urls.add(candidate);
     }
   }
-
   return [...urls];
-}
-
-function normalizeRoute(route) {
-  if (!route || typeof route !== "string") return null;
-  const trimmed = route.trim();
-  if (!trimmed.startsWith("/")) return null;
-  if (trimmed === "/") return "/";
-  return trimmed.replace(/\/$/, "");
-}
-
-function resolveApiBaseUrl() {
-  if (!rawApiUrl || typeof rawApiUrl !== "string") return null;
-  const trimmed = rawApiUrl.trim().replace(/\/$/, "");
-  if (!trimmed) return null;
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
-  }
-
-  if (trimmed.startsWith("/")) {
-    return `${siteUrl}${trimmed}`;
-  }
-
-  return null;
 }
 
 async function fetchJson(url) {
   const response = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} for ${url}`);
-  }
+  if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
   return response.json();
 }
 
-async function fetchPublishedBlogPosts(apiBaseUrl) {
-  const firstPage = await fetchJson(`${apiBaseUrl}/blog-posts?page=1&limit=100`);
-  const initialPosts = Array.isArray(firstPage?.posts) ? firstPage.posts : [];
-  const totalPages = Number.isFinite(firstPage?.totalPages) ? firstPage.totalPages : 1;
-
-  if (totalPages <= 1) return initialPosts;
-
-  const pages = [];
-  for (let page = 2; page <= totalPages; page += 1) {
-    pages.push(fetchJson(`${apiBaseUrl}/blog-posts?page=${page}&limit=100`));
+async function getClientHtmlShell() {
+  if (await exists(clientHtmlTemplatePath)) {
+    return fs.readFile(clientHtmlTemplatePath, "utf-8");
   }
 
-  const results = await Promise.allSettled(pages);
-  for (const result of results) {
-    if (result.status !== "fulfilled") continue;
-    const posts = Array.isArray(result.value?.posts) ? result.value.posts : [];
-    initialPosts.push(...posts);
+  const html = await fs.readFile(clientHtmlPath, "utf-8");
+  if (!html.includes('<div id="root"></div>')) {
+    throw new Error("dist/index.html has already been prerendered. Run `vite build` before rerunning prerender.");
   }
 
-  return initialPosts;
+  await fs.writeFile(clientHtmlTemplatePath, html, "utf-8");
+  return html;
 }
 
-async function discoverDynamicRoutes() {
-  const discovered = new Set();
-  const imageEntries = [];
-  const apiBaseUrl = resolveApiBaseUrl();
+// ─── Step 1: Build the SSR bundle ─────────────────────────────────────────────
+async function buildSsrBundle() {
+  console.log("[prerender] building SSR bundle...");
+  await build({
+    root: projectRoot,
+    build: {
+      ssr: true,
+      rollupOptions: {
+        input: path.join(projectRoot, "src/entry-server.tsx"),
+        output: { format: "esm" },
+      },
+      outDir: path.join(distDir, "server"),
+      emptyOutDir: true,
+    },
+    // Suppress Vite's default output during SSR build
+    logLevel: "warn",
+  });
+  console.log("[prerender] SSR bundle built.");
+}
 
-  if (!apiBaseUrl) {
-    console.warn(`[prerender] dynamic route discovery skipped: invalid API URL '${rawApiUrl}'`);
+// ─── Step 2: Discover dynamic routes (blog posts, portfolio slugs) ────────────
+async function discoverDynamicRoutes() {
+  const rawApiUrl = process.env.PRERENDER_API_URL || process.env.VITE_API_URL || "";
+  if (!rawApiUrl) {
+    console.warn("[prerender] VITE_API_URL not set, skipping dynamic route discovery");
     return { routes: [], imageEntries: [] };
   }
 
+  const apiBase = rawApiUrl.replace(/\/$/, "");
+  const discovered = new Set();
+  const imageEntries = [];
+
   try {
-    const portfolios = await fetchJson(`${apiBaseUrl}/portfolios`);
+    const portfolios = await fetchJson(`${apiBase}/portfolios`);
     if (Array.isArray(portfolios)) {
       for (const item of portfolios) {
         const slug = typeof item?.slug === "string" ? item.slug : null;
         if (!slug) continue;
-
         const route = `/portfolio/${encodeURIComponent(slug)}`;
         discovered.add(route);
-
-        const imageUrls = collectPortfolioImageUrls(item);
-        if (imageUrls.length > 0) {
-          imageEntries.push({
-            route,
-            title: item?.title || "Portfolio gallery",
-            images: imageUrls,
-          });
-        }
+        const images = collectPortfolioImageUrls(item);
+        if (images.length) imageEntries.push({ route, title: item?.title || "Portfolio", images });
       }
     }
-  } catch (error) {
-    console.warn(`[prerender] portfolio discovery skipped: ${error.message}`);
+  } catch (err) {
+    console.warn(`[prerender] portfolio discovery failed: ${err.message}`);
   }
 
   try {
-    const posts = await fetchPublishedBlogPosts(apiBaseUrl);
-    if (Array.isArray(posts)) {
-      for (const item of posts) {
-        const slug = typeof item?.slug === "string" ? item.slug : null;
-        if (!slug) continue;
-
-        const route = `/blog/${encodeURIComponent(slug)}`;
-        discovered.add(route);
-
-        const coverImage = toAbsoluteUrl(item?.cover_image_url);
-        if (coverImage) {
-          imageEntries.push({
-            route,
-            title: item?.title || "Blog post",
-            images: [coverImage],
-          });
-        }
-      }
+    const firstPage = await fetchJson(`${apiBase}/blog-posts?page=1&limit=100`);
+    const posts = Array.isArray(firstPage?.posts) ? firstPage.posts : [];
+    for (const item of posts) {
+      const slug = typeof item?.slug === "string" ? item.slug : null;
+      if (!slug) continue;
+      const route = `/blog/${encodeURIComponent(slug)}`;
+      discovered.add(route);
+      const coverImage = toAbsoluteUrl(item?.cover_image_url);
+      if (coverImage) imageEntries.push({ route, title: item?.title || "Blog post", images: [coverImage] });
     }
-  } catch (error) {
-    console.warn(`[prerender] blog discovery skipped: ${error.message}`);
+  } catch (err) {
+    console.warn(`[prerender] blog discovery failed: ${err.message}`);
   }
 
-  return {
-    routes: [...discovered].map(normalizeRoute).filter(Boolean),
-    imageEntries,
-  };
+  return { routes: [...discovered], imageEntries };
 }
 
-async function generateSitemaps(routes, imageEntries) {
-  const orderedRoutes = [...new Set(routes)].sort((a, b) => {
+// ─── Step 3: Prerender HTML for each route ────────────────────────────────────
+async function prerenderRoutes(allRoutes) {
+  const serverEntry = path.join(distDir, "server", "entry-server.js");
+  if (!(await exists(serverEntry))) {
+    throw new Error(`SSR bundle not found at ${serverEntry}. Did the SSR build succeed?`);
+  }
+
+  // Import the compiled server bundle
+  const { render } = await import(`file:///${serverEntry.replace(/\\/g, "/")}`);
+
+  // Read the client HTML shell (produced by `vite build`)
+  const indexHtml = await getClientHtmlShell();
+
+  console.log(`[prerender] rendering ${allRoutes.length} routes...`);
+  let successCount = 0;
+
+  for (const route of allRoutes) {
+    try {
+      const { html: appHtml, head } = await render(route);
+
+      // Inject rendered HTML and head tags into the shell
+      let pageHtml = indexHtml;
+      if (head) {
+        pageHtml = removeStaticSeoFallbacks(pageHtml);
+        pageHtml = pageHtml.replace("</head>", `${head}\n</head>`);
+      }
+      pageHtml = pageHtml.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+
+      // Write to dist/<route>/index.html
+      const outputFile = route === "/"
+        ? path.join(distDir, "index.html")
+        : path.join(distDir, route.replace(/^\/+/, ""), "index.html");
+
+      await fs.mkdir(path.dirname(outputFile), { recursive: true });
+      await fs.writeFile(outputFile, pageHtml, "utf-8");
+      successCount++;
+      console.log(`[prerender] ✓ ${route}`);
+    } catch (err) {
+      console.warn(`[prerender] ✗ ${route}: ${err.message}`);
+    }
+  }
+
+  console.log(`[prerender] ${successCount}/${allRoutes.length} routes rendered.`);
+}
+
+// ─── Step 4: Write static sitemaps ────────────────────────────────────────────
+async function generateSitemaps(allRoutes, imageEntries) {
+  const orderedRoutes = [...new Set(allRoutes)].sort((a, b) => {
     if (a === "/") return -1;
     if (b === "/") return 1;
     return a.localeCompare(b);
   });
 
-  const sitemapUrls = orderedRoutes
-    .map((route) => {
-      const absolute = `${siteUrl}${route}`;
-      return [
-        "  <url>",
-        `    <loc>${escapeXml(absolute)}</loc>`,
-        `    <lastmod>${buildDate}</lastmod>`,
-        `    <priority>${getRoutePriority(route)}</priority>`,
-        "  </url>",
-      ].join("\n");
-    })
-    .join("\n");
+  // sitemap.xml
+  const sitemapUrls = orderedRoutes.map((route) => {
+    const loc = `${siteUrl}${route === "/" ? "/" : route}`;
+    return [
+      "  <url>",
+      `    <loc>${escapeXml(loc)}</loc>`,
+      `    <lastmod>${buildDate}</lastmod>`,
+      `    <priority>${getRoutePriority(route)}</priority>`,
+      "  </url>",
+    ].join("\n");
+  }).join("\n");
 
   const sitemapXml = [
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
-    "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">",
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     sitemapUrls,
     "</urlset>",
     "",
   ].join("\n");
 
-  const imageUrls = imageEntries
-    .filter((entry) => entry.images?.length)
-    .map((entry) => {
-      const pageUrl = `${siteUrl}${entry.route}`;
-      const imageNodes = entry.images
-        .map((imageUrl) => {
-          const lines = [
-            "    <image:image>",
-            `      <image:loc>${escapeXml(imageUrl)}</image:loc>`,
-          ];
-          if (entry.title) {
-            lines.push(`      <image:title>${escapeXml(entry.title)}</image:title>`);
-          }
-          lines.push("    </image:image>");
-          return lines.join("\n");
-        })
-        .join("\n");
+  await fs.writeFile(path.join(distDir, "sitemap.xml"), sitemapXml, "utf-8");
+  console.log(`[prerender] wrote sitemap.xml (${orderedRoutes.length} urls)`);
 
-      return [
-        "  <url>",
-        `    <loc>${escapeXml(pageUrl)}</loc>`,
-        imageNodes,
-        "  </url>",
-      ].join("\n");
-    })
-    .join("\n");
+  // image-sitemap.xml
+  const imageUrlBlocks = imageEntries
+    .filter((e) => e.images?.length)
+    .map((e) => {
+      const pageUrl = `${siteUrl}${e.route}`;
+      const imageTags = e.images.map((u) =>
+        ["    <image:image>", `      <image:loc>${escapeXml(u)}</image:loc>`, `      <image:title>${escapeXml(e.title)}</image:title>`, "    </image:image>"].join("\n")
+      ).join("\n");
+      return ["  <url>", `    <loc>${escapeXml(pageUrl)}</loc>`, imageTags, "  </url>"].join("\n");
+    }).join("\n");
 
   const imageSitemapXml = [
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
-    "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\">",
-    imageUrls,
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
+    imageUrlBlocks,
     "</urlset>",
     "",
   ].join("\n");
 
-  await fs.writeFile(path.join(distDir, "sitemap.xml"), sitemapXml, "utf8");
-  await fs.writeFile(path.join(distDir, "image-sitemap.xml"), imageSitemapXml, "utf8");
-  console.log(`[prerender] wrote sitemap.xml (${orderedRoutes.length} urls)`);
+  await fs.writeFile(path.join(distDir, "image-sitemap.xml"), imageSitemapXml, "utf-8");
   console.log(`[prerender] wrote image-sitemap.xml (${imageEntries.length} pages)`);
 }
 
-async function prerenderRoutesToHtml(baseUrl, routes) {
-  if (process.env.PRERENDER_SKIP_BROWSER === "true") {
-    console.warn("[prerender] browser prerender skipped via PRERENDER_SKIP_BROWSER=true");
-    return false;
-  }
-
-  let browser;
-  try {
-    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      ...(executablePath ? { executablePath } : {}),
-    });
-  } catch (error) {
-    console.warn(`[prerender] browser launch failed, skipping HTML prerender: ${error.message}`);
-    return false;
-  }
-
-  try {
-    console.log(`[prerender] route count: ${routes.length}`);
-
-    for (const route of routes) {
-      const page = await browser.newPage();
-      page.setDefaultNavigationTimeout(30000);
-
-      try {
-        await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
-
-        // Give Helmet one additional frame to flush head tags.
-        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(true))));
-
-        const html = await page.content();
-        await writeRouteHtml(route, html);
-        console.log(`[prerender] wrote ${route}`);
-      } catch (error) {
-        console.warn(`[prerender] skipped ${route}: ${error.message}`);
-      } finally {
-        await page.close();
-      }
-    }
-
-    return true;
-  } finally {
-    await browser.close();
-  }
-}
-
+// ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
-  const distExists = await exists(path.join(distDir, "index.html"));
-  if (!distExists) {
+  if (!(await exists(clientHtmlPath))) {
     throw new Error("dist/index.html not found. Run `vite build` before prerendering.");
   }
 
-  const server = createStaticServer();
+  // Build the SSR bundle (no browser needed)
+  await buildSsrBundle();
 
-  await new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => resolve(true));
-  });
+  // Discover blog + portfolio dynamic routes
+  const { routes: dynamicRoutes, imageEntries } = await discoverDynamicRoutes();
 
-  const address = server.address();
-  if (!address || typeof address === "string") {
-    server.close();
-    throw new Error("Could not determine prerender server address.");
-  }
+  // Combine static + dynamic routes (deduped)
+  const allRoutes = [...new Set([...STATIC_ROUTES, ...dynamicRoutes])];
 
-  const baseUrl = `http://127.0.0.1:${address.port}`;
+  // Render each route to static HTML
+  await prerenderRoutes(allRoutes);
 
+  // Write sitemaps
+  await generateSitemaps(allRoutes, imageEntries);
+
+  // Clean up the temporary server bundle
   try {
-    const dynamicData = await discoverDynamicRoutes();
-    const routeSet = new Set([...prerenderRoutes, ...dynamicData.routes].map(normalizeRoute).filter(Boolean));
-    const allRoutes = [...routeSet];
-
-    const prerendered = await prerenderRoutesToHtml(baseUrl, allRoutes);
-    if (!prerendered) {
-      console.warn("[prerender] continuing without HTML snapshots");
-    }
-    if (writeStaticSitemaps) {
-      await generateSitemaps(allRoutes, dynamicData.imageEntries);
-      console.log("[prerender] static sitemaps generated (PRERENDER_WRITE_STATIC_SITEMAPS=true)");
-    } else {
-      console.log("[prerender] static sitemap generation skipped (dynamic backend sitemap is the source of truth)");
-    }
-    console.log("[prerender] complete");
-  } finally {
-    server.close();
+    await fs.rm(path.join(distDir, "server"), { recursive: true, force: true });
+  } catch {
+    // Non-fatal if cleanup fails
   }
+
+  console.log("[prerender] complete ✓");
 }
 
-main().catch((error) => {
-  console.error("[prerender] failed", error);
+main().catch((err) => {
+  console.error("[prerender] failed:", err);
   process.exitCode = 1;
 });

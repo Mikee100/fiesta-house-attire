@@ -345,6 +345,9 @@ a {
   .nav-links {
     display: none !important;
   }
+  .nav-actions {
+    display: none !important;
+  }
   .nav-hamburger {
     display: flex !important;
   }

@@ -1,96 +1,34 @@
-import { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ScrollToTop from "./components/ScrollToTop";
 import { CartProvider } from "./context/CartContext";
-import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 import AdminSessionWatcher from "./components/admin/AdminSessionWatcher";
-import LuxuryRouteLoader from "./components/site/LuxuryRouteLoader";
 import TrackingClient from "./components/site/TrackingClient";
-
-const Index = lazy(() => import("./pages/Index.tsx"));
-const Portfolio = lazy(() => import("./pages/Portfolio.tsx"));
-const PortfolioCategory = lazy(() => import("./pages/PortfolioCategory.tsx"));
-const Experience = lazy(() => import("./pages/Experience.tsx"));
-const Pricing = lazy(() => import("./pages/Pricing.tsx"));
-const Contact = lazy(() => import("./pages/Contact.tsx"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy.tsx"));
-const About = lazy(() => import("./pages/About.tsx"));
-const Blog = lazy(() => import("./pages/Blog.tsx"));
-const BlogPostPage = lazy(() => import("./pages/BlogPost.tsx"));
-const Admin = lazy(() => import("./pages/Admin.tsx"));
-const AdminPortfolio = lazy(() => import("./pages/AdminPortfolio.tsx"));
-const AdminFolders = lazy(() => import("./pages/AdminFolders.tsx"));
-const AdminAssets = lazy(() => import("./pages/AdminAssets.tsx"));
-const AdminBlog = lazy(() => import("./pages/AdminBlog.tsx"));
-const AdminBlogEditor = lazy(() => import("./pages/AdminBlogEditor.tsx"));
-const AdminVideos = lazy(() => import("./pages/AdminVideos.tsx"));
-const AdminPricing = lazy(() => import("./pages/AdminPricing.tsx"));
-const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics.tsx"));
-const AdminAnalyticsDeepDive = lazy(() => import("./pages/AdminAnalyticsDeepDive.tsx"));
-const AdminLogin = lazy(() => import("./pages/AdminLogin.tsx"));
-const GalleryPage = lazy(() => import("./pages/GalleryPage.tsx"));
-const MaternityGowns = lazy(() => import("./pages/MaternityGowns.tsx"));
-const Videos = lazy(() => import("./pages/Videos.tsx"));
-const NotFound = lazy(() => import("./pages/NotFound.tsx"));
-const Shop = lazy(() => import("./pages/Shop.tsx"));
-const Cart = lazy(() => import("./pages/Cart.tsx"));
-const Checkout = lazy(() => import("./pages/Checkout.tsx"));
+import AppRoutes from "./AppRoutes";
 
 const queryClient = new QueryClient();
 
-const RouteFallback = () => <LuxuryRouteLoader />;
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <CartProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <TrackingClient />
-          <AdminSessionWatcher />
-          <Suspense fallback={<RouteFallback />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/portfolio/:id" element={<PortfolioCategory />} />
-              <Route path="/experience" element={<Experience />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogPostPage />} />
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin" element={<ProtectedAdminRoute><Admin /></ProtectedAdminRoute>} />
-              <Route path="/admin/portfolio/:id" element={<ProtectedAdminRoute><AdminPortfolio /></ProtectedAdminRoute>} />
-              <Route path="/admin/folders" element={<ProtectedAdminRoute><AdminFolders /></ProtectedAdminRoute>} />
-              <Route path="/admin/assets" element={<ProtectedAdminRoute><AdminAssets /></ProtectedAdminRoute>} />
-              <Route path="/admin/videos" element={<ProtectedAdminRoute><AdminVideos /></ProtectedAdminRoute>} />
-              <Route path="/admin/pricing" element={<ProtectedAdminRoute><AdminPricing /></ProtectedAdminRoute>} />
-              <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminAnalytics /></ProtectedAdminRoute>} />
-              <Route path="/admin/analytics/deep-dive" element={<ProtectedAdminRoute><AdminAnalyticsDeepDive /></ProtectedAdminRoute>} />
-              <Route path="/admin/blog" element={<ProtectedAdminRoute><AdminBlog /></ProtectedAdminRoute>} />
-              <Route path="/admin/blog/new" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
-              <Route path="/admin/blog/:id/edit" element={<ProtectedAdminRoute><AdminBlogEditor /></ProtectedAdminRoute>} />
-              <Route path="/gallery/:gallerySlug" element={<GalleryPage />} />
-              <Route path="/maternity-gowns" element={<MaternityGowns />} />
-              <Route path="/videos" element={<Videos />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
-    </CartProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <TrackingClient />
+            <AdminSessionWatcher />
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
