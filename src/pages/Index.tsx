@@ -56,9 +56,14 @@ const MAX_HERO_RENDERED = 10;
 const FALLBACK_HERO_IMAGES = [
   "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg",
   "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg",
-  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg"
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155014969_IMGL5839.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155058834_IMG_1131-1024x1536.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155064810_HI7A5986-460x460.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1785868050861_IMG_5861-scaled.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777835381314_IMGL29262.jpg"
 ];
-const HERO_DESKTOP_FOCAL_POINTS = ["center 18%", "center 22%", "center 16%", "center 20%"];
+const HERO_DESKTOP_FOCAL_POINTS = ["center 18%", "center 22%", "center 16%", "center 20%", "center 24%", "center 22%", "center center", "center 18%"];
 
 const getPortfolioCoverImage = (portfolio: Portfolio): string | null => {
   if (portfolio.cover_image_url) return portfolio.cover_image_url;
@@ -249,7 +254,7 @@ const Index = () => {
             </CarouselContent>
           </Carousel>
 
-          <div className="absolute inset-0 flex flex-col justify-end pb-14 sm:pb-16 md:justify-center md:pb-0 items-center text-center z-10 pointer-events-none px-4">
+          <div className="absolute inset-0 flex flex-col justify-center items-center text-center z-10 pointer-events-none px-4 py-24 sm:py-28 md:py-0">
             <div className="fade-in" style={{ color: "white", pointerEvents: "auto", maxWidth: "860px" }}>
               <span style={{
                 fontSize: "clamp(0.72rem, 1.8vw, 0.88rem)",
