@@ -1,12 +1,14 @@
-# Fiesta House Attire — AI Query Testing Suite & Visibility Protocol
+# Fiesta House Maternity — AI Visibility Testing Suite & Audit Protocol
 
-This document establishes the official AI visibility testing framework, query test set, evaluation rubric, and measurement dashboard specified in the **Fiesta House Attire AI Discovery, Customer Intent & Maternity Photoshoot Content Implementation Brief**.
+This document establishes the official AI visibility testing framework, query test set, evaluation rubric, and measurement dashboard for **Fiesta House Maternity**. It is an internal audit protocol for checking how AI search tools understand and cite the brand across maternity photoshoot, styling, planning, and booking-intent queries.
+
+Use this file once per month, and again two weeks after major content, SEO, or route changes. Record results in a dated audit log so content updates are based on observed gaps rather than guesses.
 
 ---
 
 ## 1. Objectives & Principles
 
-1. **Entity Grounding**: Ensure AI engines (ChatGPT Search, Google Gemini & AI Overviews, Bing Copilot, Perplexity) correctly recognize **Fiesta House Attire / Fiesta House Maternity** as a **luxury maternity photography and styling sanctuary** in Nairobi, not a generic gown retailer.
+1. **Entity Grounding**: Ensure AI engines (ChatGPT Search, Google Gemini & AI Overviews, Bing Copilot, Perplexity) correctly recognize **Fiesta House Maternity** as a **luxury maternity photography and styling sanctuary** in Nairobi, not a generic gown retailer.
 2. **Contextual Accuracy**: Verify that models accurately represent key business facts:
    - Physical sanctuary at Diamond Plaza II, 4th Floor, Parklands, Nairobi.
    - Curated couture atelier with 80+ maternity gowns provided as part of the session.
@@ -17,7 +19,16 @@ This document establishes the official AI visibility testing framework, query te
 
 ---
 
-## 2. The Master AI Query Test Set
+## 2. Ownership & Monthly Use
+
+- **Owner**: Marketing / SEO lead, with support from the website maintainer when content gaps require site changes.
+- **Cadence**: Run the test set monthly. Re-test two weeks after publishing major guide, FAQ, package, or homepage updates.
+- **Where to record results**: Add each audit under `AI Visibility Audit Log` in this file, or move dated logs into a future `/docs/ai-visibility/` folder if the history becomes long.
+- **Decision rule**: Update the website only when repeated answers reveal a real customer-information gap. Do not keyword-stuff, hide text, or add prompt-injection style copy.
+
+---
+
+## 3. The Master AI Query Test Set
 
 Run these test queries periodically across fresh browser sessions or incognito windows.
 
@@ -33,7 +44,7 @@ Run these test queries periodically across fresh browser sessions or incognito w
 
 ---
 
-## 3. Testing Procedure & Audit Workflow
+## 4. Testing Procedure & Audit Workflow
 
 Execute tests every 30 days (or 2 weeks after major content index updates):
 
@@ -51,7 +62,7 @@ Execute tests every 30 days (or 2 weeks after major content index updates):
 
 ---
 
-## 4. Monthly Audit Recording Template
+## 5. Monthly Audit Recording Template
 
 ```markdown
 ### AI Visibility Audit Log — [YYYY-MM-DD]
@@ -67,23 +78,23 @@ Execute tests every 30 days (or 2 weeks after major content index updates):
 
 ---
 
-## 5. Key Measurement Dashboard (10 Core KPIs)
+## 6. Key Measurement Dashboard (10 Core KPIs)
 
 Track these 10 metrics monthly via Google Search Console, Google Analytics 4, and direct studio CRM data:
 
 | Metric | Source | Strategic Objective | Target / Healthy Trend |
 |---|---|---|---|
-| **1. Organic Impressions** | Search Console | Measure growing topical relevance across pregnancy search queries. | +20% MoM |
-| **2. Organic Clicks** | Search Console | Confirm organic search snippets capture expectant mothers. | +15% MoM |
-| **3. Non-Brand Queries** | Search Console | Visibility for queries like *"maternity photoshoot nairobi"* rather than just *"fiesta house"*. | >65% of total search traffic |
-| **4. Maternity-Intent Queries** | Search Console | Clicks from cluster queries (timing, dresses, posing, family). | Top 3 positions for primary clusters |
-| **5. Local Nairobi Queries** | Search Console / GMB | Local pack impressions in Nairobi County & Parklands. | >85% local relevance |
-| **6. Booking CTA Clicks** | GA4 Events | Number of visitors clicking *"Book Your Maternity Shoot"* or *"Book Now"*. | >5% conversion rate from landing |
+| **1. Organic Impressions** | Search Console | Measure growing topical relevance across pregnancy search queries. | Positive monthly trend; review quarterly for growth |
+| **2. Organic Clicks** | Search Console | Confirm organic search snippets capture expectant mothers. | Positive monthly trend; review CTR changes by page |
+| **3. Non-Brand Queries** | Search Console | Visibility for queries like *"maternity photoshoot nairobi"* rather than just *"fiesta house"*. | Increasing share of total search traffic |
+| **4. Maternity-Intent Queries** | Search Console | Clicks from cluster queries (timing, dresses, posing, family). | Improve average position and impressions for priority clusters |
+| **5. Local Nairobi Queries** | Search Console / GMB | Local pack impressions in Nairobi County & Parklands. | Strong Nairobi and Parklands relevance |
+| **6. Booking CTA Clicks** | GA4 Events | Number of visitors clicking *"Book Your Maternity Shoot"*, *"Book Now"*, or package checkout actions. | Stable or improving conversion from landing pages |
 | **7. WhatsApp Inquiries** | GA4 (`whatsapp_click`) | High-intent expectant mothers initiating direct chats. | Steady upward trajectory |
-| **8. AI Query Mention Rate** | Manual Audit | Percentage of Master Test Prompts where Fiesta House is recommended. | >75% across top 3 AI engines |
-| **9. AI Citation Coverage** | Search Footnotes | Verification that deep guides (`/planning-guide`, `/faq`) are grounded sources. | Cited in at least 3 categories |
+| **8. AI Query Mention Rate** | Manual Audit | Percentage of Master Test Prompts where Fiesta House is recommended. | Improving trend across top AI engines |
+| **9. AI Citation Coverage** | Search Footnotes | Verification that deep guides (`/planning-guide`, `/faq`) are grounded sources. | Broader citation coverage across guide categories |
 | **10. Page Engagement Time** | GA4 | Confirmation that guides provide genuine utility and answer intent. | >1 min 45s average on guide hubs |
 
 ---
 
-*Document Version 1.0 — Implemented August 2026 for Fiesta House Attire*
+*Document Version 1.1 — Updated September 2026 for Fiesta House Maternity*
