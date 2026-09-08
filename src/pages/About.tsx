@@ -99,9 +99,9 @@ export default function About() {
 
   return (
     <Layout
-      title="About Fiesta House | Luxury Maternity Photography Nairobi"
-      description="Learn about Fiesta House Attire, Nairobi's maternity studio where motherhood meets intentional artistry."
-      keywords="about fiesta house, maternity photography nairobi, pregnancy photoshoot studio kenya"
+      title="About Fiesta House Maternity | Our Story, Team & Philosophy"
+      description="Discover the story of Fiesta House Maternity: Nairobi's premier luxury maternity photography sanctuary founded to honor motherhood through intentional fine art, couture gowns, and an all-female team."
+      keywords="about fiesta house maternity, fiesta house story, nairobi maternity sanctuary, all-female maternity photography team, fiesta house philosophy"
     >
       <script type="application/ld+json">
         {JSON.stringify({

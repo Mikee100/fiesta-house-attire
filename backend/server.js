@@ -4373,6 +4373,7 @@ const STATIC_ROUTES = [
   { path: '/maternity-photoshoot-ideas', priority: '0.8', changefreq: 'weekly' },
   { path: '/family-maternity-photoshoot', priority: '0.8', changefreq: 'weekly' },
   { path: '/faq', priority: '0.9', changefreq: 'weekly' },
+  { path: '/reviews', priority: '0.8', changefreq: 'weekly' },
   { path: '/portfolio', priority: '0.8', changefreq: 'weekly' },
   { path: '/maternity-gowns', priority: '0.8', changefreq: 'weekly' },
   { path: '/pricing', priority: '0.8', changefreq: 'monthly' },
