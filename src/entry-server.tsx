@@ -13,6 +13,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { CartProvider } from "./context/CartContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import ScrollToTop from "./components/ScrollToTop";
+import AdminSessionWatcher from "./components/admin/AdminSessionWatcher";
+import TrackingClient from "./components/site/TrackingClient";
 import AppRoutes from "./AppRoutes";
 
 export async function render(url: string): Promise<{ html: string; head: string }> {
@@ -32,7 +37,12 @@ export async function render(url: string): Promise<{ html: string; head: string 
       <QueryClientProvider client={queryClient}>
         <CartProvider>
           <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <StaticRouter location={url}>
+              <ScrollToTop />
+              <TrackingClient />
+              <AdminSessionWatcher />
               <Suspense fallback={null}>
                 <AppRoutes />
               </Suspense>
