@@ -132,18 +132,11 @@ const Index = () => {
             "@context": "https://schema.org",
             "@type": "PhotographyBusiness",
             "name": "Fiesta House Maternity",
-            "alternateName": ["Fiesta House", "Fiesta House Attire", "Fiesta House Maternity Studio"],
+            "alternateName": "Fiesta House",
             "parentOrganization": {
               "@type": "Organization",
               "name": "Fiesta House",
               "url": "https://www.fiestahousematernity.com"
-            },
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.9",
-              "reviewCount": "1169",
-              "bestRating": "5",
-              "worstRating": "1"
             },
             "description": "Nairobi's premier luxury maternity photography studio offering exclusive designer gowns, professional makeup, and editorial portraits at Diamond Plaza II, Parklands.",
             "image": [
