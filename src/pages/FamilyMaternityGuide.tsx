@@ -81,15 +81,15 @@ const FAQS = [
 export default function FamilyMaternityGuide() {
   return (
     <Layout
-      title="Maternity Photoshoots With Partner & Family | Fiesta House Nairobi"
-      description="Plan the perfect couples and family maternity photoshoot in Nairobi. Styling advice for husbands and siblings, stress-free session flow, and intimate posing tips."
+      title="Family Maternity Photoshoot in Nairobi | Fiesta House Guide"
+      description="Plan your partner and family maternity photoshoot in Nairobi at Fiesta House. Wardrobe tips for husbands and siblings, stress-free session flow, and package options."
       keywords="family maternity photoshoot nairobi, couples maternity photoshoot kenya, maternity shoot with husband, maternity photos with siblings, pregnancy shoot with family"
     >
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Article",
-          "headline": "Maternity Photoshoots With Your Partner & Family: The Complete Guide",
+          "headline": "Family Maternity Photoshoot in Nairobi: Partner & Sibling Guide",
           "description": "How to coordinate family outfits, manage toddlers, and create stress-free maternity portraits with your spouse and children.",
           "author": {
             "@type": "Organization",
@@ -125,11 +125,20 @@ export default function FamilyMaternityGuide() {
             Couples & Family Maternity Photography
           </span>
           <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl text-[#2B2320] leading-tight mb-6">
-            Maternity Photoshoots With Your Partner & Family
+            Family Maternity Photoshoot in Nairobi: Partner & Sibling Guide
           </h1>
           <p className="text-base sm:text-lg text-[#2B2320]/80 leading-relaxed font-light max-w-2xl mx-auto">
             Welcoming a baby is a shared family journey. Discover how we create heartwarming, unforced portraits with your husband, partner, and children at our Nairobi studio.
           </p>
+          <div className="mt-6">
+            <Link
+              to="/portfolio/family-maternity-photoshoot-ideas"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#660032] hover:text-[#99004d] bg-white px-5 py-2.5 rounded-full border border-[#F1E4EC] shadow-xs transition-all hover:shadow-sm"
+            >
+              <Sparkles className="w-4 h-4 text-[#C98A2C]" />
+              <span>Looking for visual poses? Browse Family Maternity Shoot Ideas & Gallery →</span>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -143,8 +152,11 @@ export default function FamilyMaternityGuide() {
             <p className="text-base text-[#2B2320]/85 leading-relaxed mb-4">
               <strong>Yes, absolutely!</strong> At Fiesta House, we warmly encourage partners and older siblings to be part of the session. We do not believe a mother should have to choose between stunning solo goddess portraits and heartfelt family memories.
             </p>
-            <p className="text-base text-[#2B2320]/85 leading-relaxed">
+            <p className="text-base text-[#2B2320]/85 leading-relaxed mb-4">
               We carefully structure the session sequence so Mom gets dedicated time for solo editorial shots, followed by relaxed, loving couple and family portraits without overwhelming little ones.
+            </p>
+            <p className="text-sm text-[#2B2320]/75">
+              💡 <em>Want to see actual poses and set setups? Check out our <Link to="/portfolio/family-maternity-photoshoot-ideas" className="underline font-medium text-[#660032]">Family Maternity Photoshoot Ideas gallery</Link> for visual inspiration.</em>
             </p>
           </div>
         </div>

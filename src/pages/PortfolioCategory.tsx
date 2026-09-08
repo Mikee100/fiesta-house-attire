@@ -102,8 +102,9 @@ const PortfolioCategory = () => {
 
   return (
     <Layout 
-      title={portfolio.title}
-      description={`View the ${portfolio.title} collection at Fiesta House Maternity. Luxury maternity photography in Nairobi featuring our signature aesthetics.`}
+      title={`${portfolio.title} Ideas & Poses | Fiesta House Maternity`}
+      description={`Explore visual inspiration, concepts, and poses for ${portfolio.title} at Fiesta House Maternity in Nairobi. Over 80 designer gowns, professional makeup, and guided posing.`}
+      keywords={`${portfolio.title.toLowerCase()} ideas, ${portfolio.title.toLowerCase()} poses, maternity photoshoot inspiration nairobi, pregnancy photography poses kenya`}
       ogImage={portfolio.images[0]}
     >
       <script type="application/ld+json">
@@ -260,7 +261,103 @@ const PortfolioCategory = () => {
             </Dialog>
           </div>
 
-          {/* ...call-to-action section removed for minimalism... */}
+          {/* Contextual Service Bridge */}
+          <div
+            style={{
+              marginTop: "4rem",
+              paddingTop: "3rem",
+              borderTop: "1px solid var(--sky-blue-tint)",
+              textAlign: "center",
+              maxWidth: "680px",
+              marginLeft: "auto",
+              marginRight: "auto"
+            }}
+          >
+            <span
+              style={{
+                color: "var(--magenta)",
+                textTransform: "uppercase",
+                letterSpacing: "0.2em",
+                fontSize: "0.8rem",
+                fontWeight: "600",
+                display: "block",
+                marginBottom: "0.5rem"
+              }}
+            >
+              Inspired by these {portfolio.title} Ideas?
+            </span>
+            <h3
+              className="display"
+              style={{
+                fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
+                color: "var(--dark)",
+                marginBottom: "1rem"
+              }}
+            >
+              Bring This Vision to Life at Our Nairobi Sanctuary
+            </h3>
+            <p
+              style={{
+                fontSize: "1rem",
+                lineHeight: "1.7",
+                color: "rgba(43, 35, 32, 0.8)",
+                marginBottom: "2rem"
+              }}
+            >
+              {(portfolio.slug || id || "").toLowerCase().includes("family")
+                ? "Love these family maternity photoshoot ideas? Explore our complete Family Maternity Photoshoot Guide for partner and toddler prep, or view package rates."
+                : `Our all-female Nairobi studio team handles every detail—from our private atelier of 80+ couture gowns to calm, guided posing on this exact set.`}
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "1rem",
+                justifyContent: "center",
+                flexWrap: "wrap"
+              }}
+            >
+              {(portfolio.slug || id || "").toLowerCase().includes("family") && (
+                <Link
+                  to="/family-maternity-photoshoot"
+                  className="btn btn-magenta"
+                  style={{
+                    padding: "0.75rem 1.8rem",
+                    borderRadius: "100px",
+                    fontWeight: "600",
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  Family Session Guide & Details →
+                </Link>
+              )}
+              <Link
+                to="/pricing"
+                className="btn btn-outline"
+                style={{
+                  borderColor: "var(--magenta)",
+                  color: "var(--magenta)",
+                  padding: "0.75rem 1.8rem",
+                  borderRadius: "100px",
+                  fontWeight: "600",
+                  fontSize: "0.9rem"
+                }}
+              >
+                View Packages & Rates
+              </Link>
+              <Link
+                to="/contact"
+                className="btn btn-magenta"
+                style={{
+                  padding: "0.75rem 1.8rem",
+                  borderRadius: "100px",
+                  fontWeight: "600",
+                  fontSize: "0.9rem"
+                }}
+              >
+                Book Your Shoot
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </Layout>
