@@ -44,6 +44,7 @@ const STATIC_ROUTES = [
   "/maternity-photoshoot-ideas",
   "/family-maternity-photoshoot",
   "/faq",
+  "/reviews",
 ];
 
 // ─── Utilities ────────────────────────────────────────────────────────────────

@@ -64,6 +64,10 @@ const COLOR_GUIDELINES = [
 
 const FAQS = [
   {
+    q: "What is the best photoshoot dress for pregnant women?",
+    a: "The two most flattering photoshoot dresses for pregnant women are: (1) Fitted mermaid and bodycon stretch gowns that hug and sculpt the baby bump contour, and (2) Flowing chiffon and trailing silk gowns that billow dramatically in studio wind machines. At Fiesta House Maternity in Nairobi, both styles are provided complimentary as part of your shoot experience.",
+  },
+  {
     q: "Do I need to buy my own maternity dress for the photoshoot?",
     a: "No! You do not need to buy or rent a gown separately. Fiesta House maintains an exclusive in-house couture atelier of over 80 designer maternity gowns, trailing silks, and robes. Access to these looks is complimentary with your session package.",
   },
@@ -88,16 +92,16 @@ const FAQS = [
 export default function WhatToWearGuide() {
   return (
     <Layout
-      title="What to Wear for a Maternity Photoshoot | Fiesta House Nairobi"
-      description="The definitive styling guide for maternity photoshoot outfits. Discover dress silhouettes, best colors, undergarment tips, and explore Fiesta House's in-house couture atelier."
-      keywords="what to wear maternity photoshoot, maternity photoshoot dresses, best colors for pregnancy photos, maternity gowns nairobi, pregnancy photoshoot styling"
+      title="Best Photoshoot Dresses for Pregnant Women: What to Wear | Fiesta House"
+      description="The definitive styling guide on photoshoot dresses for pregnant women. Discover flattering silhouettes, colors, and why Fiesta House provides 80+ complimentary couture gowns."
+      keywords="photoshoot dress for pregnant women, what to wear maternity photoshoot, best maternity photoshoot dresses, pregnancy photoshoot gowns nairobi, maternity styling kenya"
     >
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Article",
-          "headline": "What to Wear for a Maternity Photoshoot: The Complete Styling Guide",
-          "description": "Comprehensive guidance on maternity gown silhouettes, color psychology, and styling for professional studio portraits.",
+          "headline": "Best Photoshoot Dresses for Pregnant Women: What to Wear for a Maternity Shoot",
+          "description": "Comprehensive styling guide on photoshoot dresses for pregnant women, maternity gown silhouettes, color choices, and studio wardrobe planning.",
           "author": {
             "@type": "Organization",
             "name": "Fiesta House Attire"
@@ -132,10 +136,10 @@ export default function WhatToWearGuide() {
             Maternity Styling & Wardrobe Guide
           </span>
           <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl text-[#2B2320] leading-tight mb-6">
-            What to Wear for Your Maternity Photoshoot
+            Best Photoshoot Dresses for Pregnant Women: What to Wear for Your Shoot
           </h1>
           <p className="text-base sm:text-lg text-[#2B2320]/80 leading-relaxed font-light max-w-2xl mx-auto">
-            Your wardrobe transforms pregnancy portraits from ordinary snapshots into timeless editorial art. Discover how to choose flattering silhouettes, colors, and textures.
+            From sculpting bodycon jersey to flying trailing silks, discover what dresses photograph best for pregnant women—and why Fiesta House clients never need to buy a gown separately.
           </p>
         </div>
       </header>

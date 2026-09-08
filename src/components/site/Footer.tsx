@@ -133,6 +133,7 @@ const Footer = () => {
                 { to: "/maternity-photoshoot", label: "Nairobi Studio Experience" },
                 { to: "/maternity-gowns", label: "Curated Atelier Gowns" },
                 { to: "/portfolio", label: "Portfolio Galleries" },
+                { to: "/reviews", label: "Client Reviews & Stories" },
                 { to: "/pricing", label: "Packages & Rates" },
                 { to: "/about", label: "About Fiesta House" },
                 { to: "/contact", label: "Book Your Shoot" },
