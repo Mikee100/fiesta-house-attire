@@ -123,16 +123,28 @@ const Index = () => {
   return (
     <>
       <Layout
-        title="Luxury Maternity Photography Nairobi | Fiesta House Maternity"
-        description="Nairobi's premier luxury maternity studio. Designer gowns, professional makeup, and editorial photography at Diamond Plaza, Parklands."
-        keywords="luxury maternity photography nairobi, best maternity photographer kenya, maternity gowns nairobi, pregnancy photoshoot nairobi, baby bump photoshoot nairobi"
+        title="Fiesta House Maternity – Maternity Photoshoots in Nairobi"
+        description="Fiesta House Maternity is Nairobi's premier luxury maternity photoshoot studio by Fiesta House at Diamond Plaza II, Parklands. Over 80 designer gowns, professional makeup, bespoke studio sets, and gentle all-female posing."
+        keywords="fiesta house maternity, fiesta house maternity reviews, fiesta house, maternity photoshoot nairobi, maternity photography nairobi, fiesta house nairobi, luxury pregnancy photoshoot kenya"
       >
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "PhotographyBusiness",
             "name": "Fiesta House Maternity",
-            "alternateName": "Fiesta House Attire",
+            "alternateName": ["Fiesta House", "Fiesta House Attire", "Fiesta House Maternity Studio"],
+            "parentOrganization": {
+              "@type": "Organization",
+              "name": "Fiesta House",
+              "url": "https://www.fiestahousematernity.com"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.9",
+              "reviewCount": "1169",
+              "bestRating": "5",
+              "worstRating": "1"
+            },
             "description": "Nairobi's premier luxury maternity photography studio offering exclusive designer gowns, professional makeup, and editorial portraits at Diamond Plaza II, Parklands.",
             "image": [
               "https://www.fiestahousematernity.com/og-image.jpg",
@@ -270,13 +282,13 @@ const Index = () => {
               </span>
 
               <h1 className="display h1-mobile" style={{
-                fontSize: "clamp(2.35rem, 5.8vw, 5rem)",
+                fontSize: "clamp(2.1rem, 5.2vw, 4.6rem)",
                 fontWeight: 300,
-                lineHeight: 1.06,
+                lineHeight: 1.08,
                 marginBottom: "1rem",
                 textShadow: "0 2px 14px rgba(0,0,0,0.7)"
               }}>
-                We Create Maternity Photography Experiences
+                Maternity Photoshoots in Nairobi – Fiesta House Maternity
               </h1>
 
               <p className="hidden sm:block" style={{
@@ -335,16 +347,16 @@ const Index = () => {
         <section className="section-padding" style={{ background: "#FBF6F3" }}>
           <div className="container" style={{ maxWidth: 840, margin: "0 auto" }}>
             <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600", display: "block", textAlign: "center", marginBottom: "0.5rem" }}>
-              Nairobi Maternity Studio
+              Fiesta House Maternity • Nairobi Sanctuary
             </span>
             <h2 style={{ color: "var(--dark)", fontSize: "clamp(1.8rem, 3.2vw, 2.6rem)", fontWeight: 400, marginBottom: 16, textAlign: "center", fontFamily: "'Cormorant Garamond', serif" }}>
               Where Motherhood Meets Fine Art
             </h2>
             <p style={{ fontSize: "1.05rem", color: "rgba(43, 35, 32, 0.8)", marginBottom: 16, textAlign: "center", lineHeight: "1.75" }}>
-              Fiesta House is not a typical photoshoot studio. It is a private, fully curated maternity sanctuary designed exclusively for expectant mothers who refuse to be ordinary. We transform pregnancy into art through our iconic, one-of-a-kind studio sets—from the cinematic Boat Set to the regal Master Staircase, immersive Flower Gardens, elegant Swings, and grand Chandeliers.
+              Fiesta House Maternity is Nairobi's premier luxury maternity photography studio by Fiesta House. Located at Diamond Plaza II in Parklands, we provide expectant mothers with a private, fully curated sanctuary designed exclusively for pregnant women who refuse to be ordinary. We transform pregnancy into fine art through iconic, permanent studio sets—including our cinematic Boat Set, regal Master Staircase, immersive Flower Gardens, Celestial Swing, and grand Chandeliers.
             </p>
             <p style={{ fontSize: "1.05rem", color: "rgba(43, 35, 32, 0.8)", marginBottom: 0, textAlign: "center", lineHeight: "1.75" }}>
-              Every detail is intentional. Over 80 designer gowns and trailing silks, professional makeup artistry, and calm all-women guided posing ensure you feel safe, supported, and celebrated at Diamond Plaza II, Parklands.
+              Every detail is seamlessly included. With an in-house couture atelier of over 80 designer gowns and trailing silks, professional makeup artistry, and a calm all-women team trained in gentle maternity posing, you will feel safe, pampered, and celebrated every minute of your shoot.
             </p>
           </div>
         </section>
@@ -892,30 +904,91 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Testimonials */}
+        {/* Client Reviews & Testimonials */}
         <section className="section-padding" style={{ backgroundColor: "#FBF6F3" }}>
           <div className="container">
-            <div className="grid grid-2 mobile-gap-12" style={{ gap: "6rem" }}>
+            <div className="text-center" style={{ maxWidth: "700px", margin: "0 auto 3rem" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", color: "#F59E0B", marginBottom: "0.75rem", fontSize: "1.2rem" }}>
+                <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                <span style={{ color: "var(--plum)", fontSize: "0.88rem", fontWeight: "700", letterSpacing: "0.03em", marginLeft: "0.3rem" }}>
+                  4.9 Rating • 1,169+ Google Reviews
+                </span>
+              </div>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600", display: "block", marginBottom: "0.5rem" }}>
+                Verified Client Stories
+              </span>
+              <h2 className="display" style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)", color: "var(--dark)" }}>
+                What Expectant Mothers Say
+              </h2>
+            </div>
+
+            <div className="grid grid-3 mobile-gap-8" style={{ gap: "2rem" }}>
               {[
                 {
-                  text: "I have never felt more beautiful in my life. The gowns, the makeup, the way they made me feel - it was the most special day of my pregnancy.",
-                  author: "Wanjiru K."
+                  text: "I received baby girl treatment, felt like I was outside Kenya for a minute, in those countries where Expectant mothers are valued and cherished. Staff are amazing, from Faith, to Indiana to Beverly to Amazing the talented photographer. I'm a happy Client!",
+                  author: "Lydia Opiyo",
+                  tag: "Baby Girl Treatment • Google Review"
                 },
                 {
-                  text: "Worth every shilling. The team handled everything. I just walked in, and three hours later I had photos I'll treasure forever.",
-                  author: "Amina O."
+                  text: "Very helpful staff. Indiana the make up artist was exceptional! Beverly my stylist was incredible! And words cannot describe Amazing the photographer… she was just as her name describes. Am blessed!",
+                  author: "Hellen Okochil",
+                  tag: "MUA & Styling Team • Google Review"
+                },
+                {
+                  text: "It was a great experience having our maternity shoot done by Fiesta House Maternity. The team is well organized, from front office to makeup artists, stylists, photographer and team. A special pause and reflection moment before welcoming a newborn.",
+                  author: "Alvin Gachie",
+                  tag: "Local Guide • Couple Session"
                 }
               ].map((t, i) => (
-                <div key={i} style={{ fontStyle: "italic", position: "relative", padding: "2rem" }}>
-                  <span style={{ position: "absolute", top: 0, left: 0, fontSize: "4rem", color: "rgba(102, 0, 50, 0.2)", zIndex: 0 }}>"</span>
-                  <p style={{ fontSize: "1.8rem", lineHeight: "1.4", marginBottom: "1.5rem", fontFamily: "var(--font-display)", position: "relative", zIndex: 1, color: "var(--magenta)" }}>
-                    {t.text}
-                  </p>
-                  <cite style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: "600", color: "var(--sky-blue)" }}>
-                    - {t.author}
-                  </cite>
+                <div
+                  key={i}
+                  style={{
+                    backgroundColor: "#FFFFFF",
+                    padding: "2.2rem 1.8rem",
+                    borderRadius: "4px",
+                    border: "1px solid rgba(102, 0, 50, 0.08)",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between"
+                  }}
+                >
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#F59E0B", fontSize: "0.95rem", marginBottom: "1rem" }}>
+                      <span>★★★★★</span>
+                      <span style={{ fontSize: "0.72rem", color: "var(--plum)", fontWeight: "700", marginLeft: "0.3rem" }}>
+                        Verified Google Review
+                      </span>
+                    </div>
+                    <p style={{ fontSize: "1rem", lineHeight: "1.7", color: "rgba(43, 35, 32, 0.85)", fontStyle: "italic", marginBottom: "1.5rem" }}>
+                      "{t.text}"
+                    </p>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: "700", color: "var(--plum)", fontSize: "0.95rem" }}>{t.author}</div>
+                    <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--sky-blue)", marginTop: "0.2rem" }}>
+                      {t.tag}
+                    </div>
+                  </div>
                 </div>
               ))}
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: "3rem" }}>
+              <Link
+                to="/reviews"
+                className="btn btn-outline"
+                style={{
+                  borderColor: "var(--magenta)",
+                  color: "var(--magenta)",
+                  fontWeight: "600",
+                  padding: "0.75rem 2rem",
+                  fontSize: "0.92rem",
+                  borderRadius: "100px"
+                }}
+              >
+                Read All 5-Star Reviews & Client Stories →
+              </Link>
             </div>
           </div>
         </section>

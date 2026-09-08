@@ -8,8 +8,9 @@ const mainNavLinks = [
   { to: "/", label: "Home", exact: true },
   { to: "/maternity-gowns", label: "Gowns" },
   { to: "/portfolio", label: "Portfolio" },
-  { to: "/blog", label: "Blogs" },
+  { to: "/reviews", label: "Reviews" },
   { to: "/pricing", label: "Packages" },
+  { to: "/blog", label: "Blogs" },
 ];
 
 const mobileMenuSections = [
@@ -21,6 +22,7 @@ const mobileMenuSections = [
     title: "Plan Your Shoot",
     links: [
       { to: "/maternity-photoshoot", label: "Experience" },
+      { to: "/reviews", label: "Client Reviews" },
       { to: "/planning-guide", label: "Planning Guide" },
       { to: "/when-to-do-maternity-photos", label: "When to Shoot" },
       { to: "/what-to-wear-maternity-photoshoot", label: "What to Wear" },

@@ -30,6 +30,7 @@ import WhatToWearGuide from "./pages/WhatToWearGuide.tsx";
 import IdeasAndStylesGuide from "./pages/IdeasAndStylesGuide.tsx";
 import FamilyMaternityGuide from "./pages/FamilyMaternityGuide.tsx";
 import FAQHub from "./pages/FAQHub.tsx";
+import Reviews from "./pages/Reviews.tsx";
 
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const AdminPortfolio = lazy(() => import("./pages/AdminPortfolio.tsx"));
@@ -84,6 +85,7 @@ const AppRoutes = () => (
       <Route path="/maternity-photoshoot-ideas" element={<IdeasAndStylesGuide />} />
       <Route path="/family-maternity-photoshoot" element={<FamilyMaternityGuide />} />
       <Route path="/faq" element={<FAQHub />} />
+      <Route path="/reviews" element={<Reviews />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </Suspense>
