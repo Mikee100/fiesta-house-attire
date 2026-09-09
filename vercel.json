@@ -39,12 +39,6 @@
     { "source": "/author/:path*", "destination": "/blog", "permanent": true },
     { "source": "/feed", "destination": "/blog", "permanent": true }
   ],
-  "experimentalServices": {
-    "frontend": {
-      "routePrefix": "/",
-      "framework": "vite"
-    }
-  },
   "headers": [
     {
       "source": "/assets/(.*)",
