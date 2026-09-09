@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/backend/:path*", "destination": "/api/backend?path=:path*" },
+    { "source": "/admin/:path*", "destination": "/index.html" },
     { "source": "/sitemap.xml", "destination": "/backend/sitemap.xml" },
     { "source": "/image-sitemap.xml", "destination": "/backend/image-sitemap.xml" },
     { "source": "/robots.txt", "destination": "/backend/robots.txt" }
