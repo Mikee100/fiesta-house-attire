@@ -10,6 +10,7 @@ const normalizeApiBaseUrl = (rawValue: string | undefined, localHost: boolean): 
 
   normalized = normalized.replace(/\/+$/, "");
   normalized = normalized.replace(/\/api$/i, "");
+  normalized = normalized.replace(/\/_\/backend$/i, "/backend");
 
   if (/^\/?_\/backend$/i.test(normalized)) {
     return "/backend";
