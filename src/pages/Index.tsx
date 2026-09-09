@@ -127,8 +127,9 @@ const Index = () => {
         description="Fiesta House Maternity is Nairobi's premier luxury maternity photoshoot studio by Fiesta House at Diamond Plaza II, Parklands. Over 80 designer gowns, professional makeup, bespoke studio sets, and gentle all-female posing."
         keywords="fiesta house maternity, fiesta house maternity reviews, fiesta house, maternity photoshoot nairobi, maternity photography nairobi, fiesta house nairobi, luxury pregnancy photoshoot kenya"
       >
-        <script type="application/ld+json">
-          {JSON.stringify({
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "PhotographyBusiness",
             "name": "Fiesta House Maternity",
@@ -197,10 +198,11 @@ const Index = () => {
               "Maternity Gowns",
               "Baby Bump Photography"
             ]
-          })}
-        </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
+          }) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
             "name": "Fiesta House Maternity",
@@ -215,8 +217,8 @@ const Index = () => {
               },
               "query-input": "required name=search_term_string"
             }
-          })}
-        </script>
+          }) }}
+        />
 
         {/* Hero Section */}
         <section className="hero" style={{
