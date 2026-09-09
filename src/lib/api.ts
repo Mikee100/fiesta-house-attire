@@ -12,6 +12,11 @@ const normalizeApiBaseUrl = (rawValue: string | undefined, localHost: boolean): 
 
   normalized = normalized.replace(/\/+$/, '');
   normalized = normalized.replace(/\/api$/i, '');
+  normalized = normalized.replace(/\/_\/backend$/i, '/backend');
+
+  if (/^\/?_\/backend$/i.test(normalized)) {
+    return '/backend';
+  }
 
   return normalized || fallback;
 };
@@ -21,6 +26,20 @@ const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL, isLocalHost);
 const logApiError = (...args: unknown[]) => {
   if (import.meta.env.DEV) {
     console.error(...args);
+  }
+};
+
+const readJsonOrNull = async <T>(res: Response): Promise<T | null> => {
+  const contentType = res.headers.get('content-type') || '';
+  if (!res.ok || !contentType.toLowerCase().includes('application/json')) {
+    return null;
+  }
+
+  try {
+    return await res.json() as T;
+  } catch (err) {
+    logApiError(err);
+    return null;
   }
 };
 
@@ -183,7 +202,7 @@ export const fetchFolders = async (): Promise<FolderRecord[]> => {
 
 export const fetchPublicFolders = async (): Promise<FolderRecord[]> => {
   const res = await fetch(`${API_URL}/public/folders`, { cache: 'no-store' });
-  const data = await res.json();
+  const data = await readJsonOrNull<FolderRecord[]>(res);
   return Array.isArray(data) ? data : [];
 };
 
@@ -219,7 +238,7 @@ export const fetchPublicAssets = async (folderId?: string, page: number = 1, lim
   if (folderId) url += `&folder_id=${folderId}`;
 
   const res = await fetch(url, { cache: 'no-store' });
-  return await res.json();
+  return await readJsonOrNull<PaginatedAssets>(res) || { assets: [], totalPages: 1 };
 };
 
 export const fetchPublicGalleryAssetsBySlug = async (gallerySlug: string, page: number = 1, limit: number = 100): Promise<PublicGalleryAssetsResponse> => {
@@ -371,7 +390,7 @@ export const fetchBlogPost = async (slug: string): Promise<BlogPost | null> => {
 
 export const fetchRecentBlogPosts = async () => {
   const res = await fetch(`${API_URL}/blog-posts-recent`);
-  const data = await res.json();
+  const data = await readJsonOrNull<BlogPost[]>(res);
   return Array.isArray(data) ? data : [];
 };
 
