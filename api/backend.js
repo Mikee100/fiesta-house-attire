@@ -1,6 +1,11 @@
-import app from "../backend/server.js";
+let appPromise;
 
-export default function handler(req, res) {
+const getApp = () => {
+  appPromise ||= import("../backend/server.js").then((mod) => mod.default || mod);
+  return appPromise;
+};
+
+export default async function handler(req, res) {
   const rawPath = req.query.path;
   const pathParts = Array.isArray(rawPath)
     ? rawPath.flatMap((item) => item.split("/").filter(Boolean))
@@ -22,5 +27,6 @@ export default function handler(req, res) {
   const search = searchParams.toString();
   req.url = search ? `${pathname}?${search}` : pathname;
 
+  const app = await getApp();
   return app(req, res);
 }
