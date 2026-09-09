@@ -1,9 +1,9 @@
 {
   "rewrites": [
-    { "source": "/backend/:path*", "destination": "/_/backend/:path*" },
-    { "source": "/sitemap.xml", "destination": "/_/backend/sitemap.xml" },
-    { "source": "/image-sitemap.xml", "destination": "/_/backend/image-sitemap.xml" },
-    { "source": "/robots.txt", "destination": "/_/backend/robots.txt" }
+    { "source": "/backend/:path*", "destination": "/api/backend/:path*" },
+    { "source": "/sitemap.xml", "destination": "/backend/sitemap.xml" },
+    { "source": "/image-sitemap.xml", "destination": "/backend/image-sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/backend/robots.txt" }
   ],
   "redirects": [
     { "source": "/exclusive-maternity-photography-in-kenya-with-fiesta-house-attire", "destination": "/portfolio", "permanent": true },
@@ -43,10 +43,6 @@
     "frontend": {
       "routePrefix": "/",
       "framework": "vite"
-    },
-    "backend": {
-      "entrypoint": "backend",
-      "routePrefix": "/_/backend"
     }
   },
   "headers": [
