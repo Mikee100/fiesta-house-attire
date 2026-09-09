@@ -90,10 +90,10 @@ const pool = new Pool({
 });
 
 // Supabase Storage Client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+const hasSupabaseStorageConfig = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY);
+const supabase = hasSupabaseStorageConfig
+  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+  : null;
 
 const MAX_UPLOAD_SIZE_BYTES = Number(process.env.MAX_UPLOAD_SIZE_BYTES || 10 * 1024 * 1024);
 const ALLOWED_UPLOAD_MIME_TYPES = new Set([
@@ -3116,6 +3116,7 @@ app.post('/upload', requireAdminAuth, uploadLimiter, (req, res, next) => {
   });
 }, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  if (!supabase) return res.status(500).json({ error: 'Supabase storage is not configured' });
 
   try {
     const safeOriginalName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
