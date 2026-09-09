@@ -1,10 +1,11 @@
-import app from "../../backend/server.js";
+import app from "../backend/server.js";
 
 export default function handler(req, res) {
-  const pathParts = Array.isArray(req.query.path)
-    ? req.query.path
-    : typeof req.query.path === "string"
-      ? req.query.path.split("/").filter(Boolean)
+  const rawPath = req.query.path;
+  const pathParts = Array.isArray(rawPath)
+    ? rawPath.flatMap((item) => item.split("/").filter(Boolean))
+    : typeof rawPath === "string"
+      ? rawPath.split("/").filter(Boolean)
       : [];
   const pathname = `/${pathParts.map(encodeURIComponent).join("/")}`;
   const searchParams = new URLSearchParams();
