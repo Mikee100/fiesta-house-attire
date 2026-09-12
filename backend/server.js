@@ -555,81 +555,81 @@ const initShopDb = async () => {
     // This fixes old databases that were seeded with only a subset of packages.
     const initialPackages = [
       {
-        name: "Standard Package",
-        price: 10000,
-        duration: "1 hr 30 min",
-        images_count: "6 edited soft copy images",
-        outfits_count: "2 gowns & styling",
-        color: "#6EC1E4",
-        features: ["Professional makeup", "Full gown access", "Studio session"],
-        popular: false,
-          description: "A streamlined premium session for timeless, elegant portraits of your maternity journey."
-      },
-      {
-        name: "Economy Package",
+        name: "The Bloom",
         price: 15000,
-        duration: "2 hrs",
-        images_count: "12 edited soft copy images",
-        outfits_count: "3 gowns & styling",
-        color: "#B84FA0",
-        features: ["Professional makeup", "Full gown access", "Studio session"],
-        popular: false,
-        description: "Our most balanced package, offering more time and a wider variety of looks."
-      },
-      {
-        name: "Executive Package",
-        price: 20000,
-        duration: "2 hrs 30 min",
-        images_count: "15 edited soft copy images",
-        outfits_count: "4 gowns & styling",
+        duration: "1.5 hours studio time",
+        images_count: "6 final edited photos",
+        outfits_count: "2 studio outfits + styling",
         color: "#6EC1E4",
-        features: ["Professional makeup", "Full gown access", "1 A3 Mount included", "Studio session"],
+        features: ["Professional makeup"],
         popular: false,
-        description: "Level up with more outfits and a stunning A3 mount for your wall."
+        description: "An intimate introduction to Fiesta House. Ninety minutes with our team, two studio outfits, and six photos edited to gallery finish."
       },
       {
-        name: "Gold Package",
-        price: 30000,
-        duration: "2 hrs 30 min",
-        images_count: "20 edited soft copy images",
-        outfits_count: "4 gowns & styling",
+        name: "The Muse",
+        price: 25000,
+        duration: "2 hours studio time",
+        images_count: "12 final edited photos",
+        outfits_count: "3 studio outfits + styling",
         color: "#B84FA0",
-        features: ["Professional makeup", "8x8\" hardpage photobook", "Full gown access", "Studio session"],
-        popular: true,
-        description: "Capture your story in a high-quality photobook that will last generations."
+        features: ["Professional makeup"],
+        popular: false,
+        description: "A refined session with more time, more wardrobe, and twelve photos edited to gallery finish. Two hours in our hands, three outfits from our private collection."
       },
       {
-        name: "Platinum Package",
+        name: "The Icon",
         price: 35000,
-        duration: "2 hrs 30 min",
-        images_count: "25 edited soft copy images",
-        outfits_count: "4 gowns & styling",
+        duration: "2.5 hours studio time",
+        images_count: "15 final edited photos",
+        outfits_count: "4 studio outfits + styling",
         color: "#6EC1E4",
-        features: ["Professional makeup", "Customized Balloon Backdrop", "1 A3 mount included", "Full gown access"],
-        popular: true,
-        description: "Luxury meets artistry with a customized backdrop tailored to your style."
+        features: ["Professional makeup", "1 A3 fine art mount"],
+        popular: false,
+        description: "A fuller experience for the woman ready to move deeper into the house. Two and a half hours, four outfits, fifteen photos finished to editorial standard, and a fine art A3 mount to take home."
       },
       {
-        name: "VIP Package",
+        name: "The Legend",
         price: 45000,
-        duration: "3 hrs 30 min",
-        images_count: "25 edited soft copy images",
-        outfits_count: "4 gowns & styling",
+        duration: "2.5 hours studio time",
+        images_count: "15 final edited photos",
+        outfits_count: "4 studio outfits + styling",
         color: "#B84FA0",
-        features: ["Professional makeup", "Customized Balloon Backdrop", "8x8\" hardpage photobook", "Extended session"],
+        features: ["Professional makeup", "1 styled wig", "8x8 hardcover photobook"],
         popular: false,
-        description: "The ultimate luxury experience with every detail curated for perfection."
+        description: "A defining Edition for the woman ready to hold this season in her hands. Two and a half hours, four studio outfits, fifteen photos finished to editorial standard, a styled wig, and an 8x8 hardcover photobook."
       },
       {
-        name: "VVIP Package",
-        price: 50000,
-        duration: "3 hrs 30 min",
-        images_count: "30 edited soft copy images",
-        outfits_count: "5 gowns & styling",
+        name: "The Queen",
+        price: 55000,
+        duration: "3 hours studio time",
+        images_count: "20 final edited photos",
+        outfits_count: "4 studio outfits + styling",
         color: "#6EC1E4",
-        features: ["Professional makeup", "Styled Wig included", "Customized Balloon Backdrop", "8x8\" photobook + A3 mount"],
+        features: ["Professional makeup", "Custom balloon backdrop with flowers", "1 styled wig", "1 A3 fine art mount"],
         popular: false,
-        description: "Our most exclusive offering. Absolute luxury, more outfits, and premium styling."
+        description: "Three hours, four outfits, a custom balloon backdrop with flowers designed around your story, a styled wig, and a fine art A3 mount for your home."
+      },
+      {
+        name: "The Empress",
+        price: 70000,
+        duration: "3.5 hours studio time",
+        images_count: "25 final edited photos",
+        outfits_count: "4 studio outfits + styling",
+        color: "#B84FA0",
+        features: ["Professional makeup", "Signature Fiesta House Power Suit included", "2 styled wigs", "Custom balloon backdrop with flowers", "8x8 hardcover photobook", "1 A3 fine art mount"],
+        popular: true,
+        description: "Our signature Edition. Three and a half hours in our hands, with four studio outfits including the signature Fiesta House Power Suit, two styled wigs, a custom balloon backdrop with flowers, and an 8x8 hardcover photobook."
+      },
+      {
+        name: "The Goddess",
+        price: 120000,
+        duration: "5 hours studio time",
+        images_count: "30 final edited photos",
+        outfits_count: "5 studio outfits + styling",
+        color: "#6EC1E4",
+        features: ["Professional makeup", "Signature Fiesta House Power Suit included", "2 styled wigs", "Custom balloon backdrop with flowers OR Goddess Sculpture Set", "1 professionally produced Reel", "8x8 hardcover photobook", "1 A2 fine art mount"],
+        popular: false,
+        description: "Our flagship Edition. Five hours in our house, with five studio outfits including the signature Fiesta House Power Suit, two styled wigs, and your choice of a custom balloon backdrop with flowers or the Goddess Sculpture Set."
       }
     ];
 
@@ -679,6 +679,10 @@ const initShopDb = async () => {
         );
       }
     }
+    await pool.query(
+      `UPDATE shop_packages SET is_active = false WHERE name NOT IN (${initialPackages.map((_, index) => `$${index + 1}`).join(', ')})`,
+      initialPackages.map((p) => p.name)
+    );
     console.log("✓ Shop database initialized");
   } catch (err) {
     console.error("Shop DB Init Error:", err);

@@ -1,17 +1,20 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
 import { trackEvent } from "@/lib/tracking";
 
 const Contact = () => {
+  const [searchParams] = useSearchParams();
+  const selectedPackage = searchParams.get("package") || "The Bloom";
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
     email: "",
     preferred_date: "",
-    package_interest: "Standard (10k)",
+    package_interest: selectedPackage,
     message: "",
   });
 
@@ -38,7 +41,7 @@ const Contact = () => {
         phone: "",
         email: "",
         preferred_date: "",
-        package_interest: "Standard (10k)",
+        package_interest: "The Bloom",
         message: "",
       });
     } catch (error) {
@@ -260,13 +263,14 @@ const Contact = () => {
                         fontSize: "1rem",
                       }}
                     >
-                      <option>Standard (10k)</option>
-                      <option>Economy (15k)</option>
-                      <option>Executive (20k)</option>
-                      <option>Gold (30k)</option>
-                      <option>Platinum (35k)</option>
-                      <option>VIP (45k)</option>
-                      <option>VVIP (50k)</option>
+                      <option>The Bloom</option>
+                      <option>The Muse</option>
+                      <option>The Icon</option>
+                      <option>The Legend</option>
+                      <option>The Queen</option>
+                      <option>The Empress</option>
+                      <option>The Goddess</option>
+                      <option>Bespoke Experience</option>
                     </select>
                   </div>
                 </div>

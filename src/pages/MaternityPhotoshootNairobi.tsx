@@ -99,7 +99,7 @@ export default function MaternityPhotoshootNairobi() {
             "alternateName": "Fiesta House Maternity",
             "image": FEATURED_IMAGES.hero,
             "telephone": "+254720111928",
-            "priceRange": "KES 15,000 – KES 80,000",
+            "priceRange": "KES 15,000 – KES 120,000",
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",

@@ -8,10 +8,20 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion";
-import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck, ShoppingCart } from "lucide-react";
+import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck, ShoppingCart, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
 import { useCart } from "@/context/CartContext";
+
+const packagePositioning: Record<string, string> = {
+  "The Bloom": "For the mother in her becoming.",
+  "The Muse": "For the mother stepping into her glow.",
+  "The Icon": "For the mother who knows she is unforgettable.",
+  "The Legend": "For the mother writing her own story.",
+  "The Queen": "For the mother of her own kingdom.",
+  "The Empress": "For the mother claiming her throne.",
+  "The Goddess": "For the mother who is the moment.",
+};
 
 const faqs = [
   {
@@ -24,7 +34,7 @@ const faqs = [
   },
   {
     question: "How do I book a session?",
-    answer: "Booking is simple! Select your preferred package and click 'Add to Cart'. You can review your selection and continue to checkout from your cart. A deposit is required to secure your date."
+    answer: "Choose the Edition that feels right for you and enquire with our team. We will confirm availability, answer your questions, and guide you through securing your session date."
   },
   {
     question: "How long does it take to receive the images?",
@@ -72,9 +82,9 @@ const Pricing = () => {
 
   return (
     <Layout
-      title="Pricing & Packages | Luxury Maternity Photoshoot Nairobi"
-      description="Explore luxury maternity photoshoot pricing in Nairobi. 7 exclusive packages including designer gowns, professional makeup, and stunning studio photography at Fiesta House Maternity."
-      keywords="maternity photoshoot nairobi, pregnancy photography pricing, luxury maternity shoot, baby bump photoshoot nairobi, fiesta house maternity pricing"
+      title="Maternity Photoshoot Packages & Pricing Nairobi | Fiesta House Maternity"
+      description="Explore Fiesta House Maternity's 2026 maternity photography Editions, from intimate studio sessions to flagship luxury experiences in Nairobi."
+      keywords="maternity photoshoot packages Nairobi, maternity photography pricing Nairobi, maternity photoshoot price Kenya, luxury maternity photography Nairobi, pregnancy photoshoot packages"
     >
       <script type="application/ld+json">
         {JSON.stringify({
@@ -169,14 +179,17 @@ const Pricing = () => {
                         alignItems: "center",
                         gap: "0.5rem"
                       }}>
-                        <Star size={12} fill="white" /> Popular
+                        <Star size={12} fill="white" /> Most Loved
                       </div>
                     )}
 
                     <div style={{ marginBottom: "1.2rem" }}>
                       <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.6rem", color: "var(--dark)" }}>{pkg.name}</h3>
+                      <p style={{ minHeight: "2.8rem", marginBottom: "1.25rem", fontSize: "0.95rem", fontStyle: "italic", color: "var(--muted-foreground)", lineHeight: "1.45" }}>
+                        {packagePositioning[pkg.name]}
+                      </p>
                       <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "1rem" }}>
-                        <span style={{ fontSize: "1rem", fontWeight: "600", color: accentColor }}>Ksh</span>
+                        <span style={{ fontSize: "1rem", fontWeight: "600", color: accentColor }}>KSh</span>
                         <span style={{ fontSize: "2.2rem", fontWeight: "300", color: "var(--dark)" }}>{Number(pkg.price || 0).toLocaleString("en-KE")}</span>
                       </div>
                       {pkg.description && (
@@ -188,15 +201,15 @@ const Pricing = () => {
                       <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
                         {pkg.duration && (
                           <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: accentColor }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyContent: "center", color: accentColor }}>
                               <Clock size={16} />
                             </div>
-                            <span>{pkg.duration} session</span>
+                            <span>{pkg.duration}</span>
                           </div>
                         )}
                         {pkg.images_count && (
                           <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: accentColor }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyContent: "center", color: accentColor }}>
                               <Image size={16} />
                             </div>
                             <span>{pkg.images_count}</span>
@@ -204,7 +217,7 @@ const Pricing = () => {
                         )}
                         {pkg.outfits_count && (
                           <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: accentColor }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${accentColor}15`, display: "flex", alignItems: "center", justifyContent: "center", color: accentColor }}>
                               <Shirt size={16} />
                             </div>
                             <span>{pkg.outfits_count}</span>
@@ -253,6 +266,68 @@ const Pricing = () => {
               })
             )}
           </div>
+
+          <section style={{ marginTop: "4rem", padding: "clamp(2rem, 5vw, 4rem) 0 0", borderTop: "1px solid rgba(0,0,0,0.12)" }}>
+            <div className="addons-header" style={{ display: "grid", gridTemplateColumns: "minmax(220px, 0.65fr) minmax(280px, 1.35fr)", gap: "2rem 5rem", alignItems: "end" }}>
+              <div>
+                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.75rem", fontWeight: 700 }}>Additional services</span>
+                <h2 className="display" style={{ fontSize: "clamp(2.25rem, 5vw, 3.5rem)", marginTop: "0.5rem", lineHeight: 1 }}>Add-ons</h2>
+              </div>
+              <p style={{ maxWidth: "520px", margin: 0, color: "var(--muted-foreground)", lineHeight: 1.7, fontSize: "1rem" }}>Enhance your Edition with considered details, arranged in advance with our team.</p>
+            </div>
+
+            <div className="addons-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginTop: "2.5rem" }}>
+              {[
+                {
+                  title: "Image & delivery",
+                  items: [
+                    ["Extra edited photo", "KSh 1,000 per photo"],
+                    ["Extra digital art edit", "KSh 3,000 per photo"],
+                    ["Raw files", "Quoted by package tier"],
+                  ],
+                },
+                {
+                  title: "Styling & wardrobe",
+                  items: [
+                    ["Extra outfit beyond package", "KSh 4,000 per outfit"],
+                    ["Extra professional makeup", "KSh 3,500 per session"],
+                    ["Fiesta House Power Suit, where not included", "KSh 10,000"],
+                    ["Fiesta House styled wig hire", "KSh 4,000 per wig - book in advance"],
+                    ["Wig styling only", "KSh 3,000 per wig - book in advance"],
+                  ],
+                },
+                {
+                  title: "Creative production",
+                  items: [
+                    ["Suspending Concept", "KSh 7,000"],
+                    ["Goddess Sculpture Set, where not included", "KSh 15,000"],
+                    ["Professional Reel", "Quoted by package tier - book in advance"],
+                  ],
+                },
+              ].map((group) => (
+                <div className="addon-card" key={group.title} style={{ padding: "1.5rem", background: "white", border: "1px solid rgba(0,0,0,0.08)", borderTop: "3px solid var(--sky-blue)" }}>
+                  <h3 style={{ margin: "0 0 1rem", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--dark)" }}>{group.title}</h3>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {group.items.map(([name, price]) => (
+                      <div key={name} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", alignItems: "start", padding: "0.95rem 0", borderTop: "1px solid rgba(0,0,0,0.07)", fontSize: "0.9rem", lineHeight: 1.45 }}>
+                        <span>{name}</span>
+                        <strong style={{ maxWidth: "155px", textAlign: "right", fontWeight: 600, color: "var(--magenta)" }}>{price}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bespoke-panel" style={{ marginTop: "1rem", padding: "clamp(1.5rem, 4vw, 2.5rem)", background: "var(--dark)", color: "white", display: "grid", gridTemplateColumns: "minmax(220px, 0.8fr) minmax(280px, 1.2fr) auto", gap: "1.5rem 3rem", alignItems: "center" }}>
+              <div>
+                <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.14em", fontSize: "0.72rem", fontWeight: 700 }}>By consultation</span>
+                <h3 className="display" style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", margin: "0.45rem 0 0", color: "white" }}>Bespoke Experiences</h3>
+              </div>
+              <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", lineHeight: 1.65 }}>For the mother whose vision does not fit inside a package, we design custom experiences by consultation. Reach out to our team to begin the conversation.</p>
+              <Link to="/contact?package=Bespoke%20Experience" className="btn" style={{ background: "white", color: "var(--dark)", whiteSpace: "nowrap", padding: "0.9rem 1.2rem" }}>Speak With Our Team <ArrowUpRight size={17} /></Link>
+            </div>
+          </section>
         </div>
       </section>
 
