@@ -301,36 +301,25 @@ export default function Reviews() {
         className="section-padding"
         style={{
           paddingTop: "clamp(7rem, 12vw, 9.5rem)",
-          paddingBottom: "3.5rem",
-          backgroundColor: "#FBF6F3",
-          borderBottom: "1px solid var(--sky-blue-tint)"
+          paddingBottom: "4.5rem",
+          backgroundColor: "#FFFFFF",
+          borderBottom: "1px solid rgba(43, 35, 32, 0.12)"
         }}
       >
-        <div className="container" style={{ maxWidth: "920px", textAlign: "center" }}>
-          {/* Authentic Google Rating Banner */}
+        <div className="container" style={{ maxWidth: "1080px" }}>
           <div
             style={{
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: "0.6rem",
-              backgroundColor: "rgba(102, 0, 50, 0.06)",
-              padding: "0.5rem 1.3rem",
-              borderRadius: "100px",
-              marginBottom: "1.4rem",
-              border: "1px solid rgba(102, 0, 50, 0.14)"
+              justifyContent: "space-between",
+              gap: "2rem",
+              flexWrap: "wrap",
+              marginBottom: "3.5rem",
+              color: "var(--plum)"
             }}
           >
-            <span style={{ color: "#F59E0B", fontSize: "1.2rem", letterSpacing: "2px" }}>★★★★★</span>
-            <span
-              style={{
-                color: "var(--plum)",
-                fontSize: "0.92rem",
-                fontWeight: "700",
-                letterSpacing: "0.02em"
-              }}
-            >
-              4.9 Rating • 1,169+ Verified Google Reviews
-            </span>
+            <span style={{ color: "#F59E0B", fontSize: "1rem", letterSpacing: "2px" }}>★★★★★ <span style={{ color: "var(--plum)", letterSpacing: 0, marginLeft: "0.5rem", fontWeight: 700 }}>4.9 / 5</span></span>
+            <span style={{ fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.14em", color: "rgba(43, 35, 32, 0.6)" }}>Verified Google reviews</span>
           </div>
 
           <span
@@ -341,10 +330,10 @@ export default function Reviews() {
               fontSize: "0.85rem",
               fontWeight: "600",
               display: "block",
-              marginBottom: "0.8rem"
+              marginBottom: "1rem"
             }}
           >
-            Nairobi's Most-Reviewed Maternity Studio
+            Client stories
           </span>
 
           <h1
@@ -353,10 +342,11 @@ export default function Reviews() {
               fontSize: "clamp(2.3rem, 4.5vw, 4rem)",
               color: "var(--dark)",
               lineHeight: 1.12,
-              marginBottom: "1.3rem"
+              marginBottom: "1.1rem",
+              maxWidth: "760px"
             }}
           >
-            Fiesta House Maternity Reviews
+            What it feels like to be cared for
           </h1>
 
           <p
@@ -364,13 +354,12 @@ export default function Reviews() {
               fontSize: "1.15rem",
               lineHeight: "1.75",
               color: "rgba(43, 35, 32, 0.82)",
-              maxWidth: "720px",
-              margin: "0 auto 2.2rem"
+              maxWidth: "650px",
+              margin: "0 0 2.5rem",
+              fontSize: "1.05rem"
             }}
           >
-            Over 1,169 expectant mothers and families have shared their experiences at our
-            Diamond Plaza II sanctuary. Here is what real clients say about our gowns,
-            all-female crew, and luxury photoshoot journey.
+            A selection of words from mothers and families who have spent time in the house. Their experiences speak most clearly to the care, patience, and artistry behind each session.
           </p>
 
           {/* Key Trust Stats Pill Grid */}
@@ -378,9 +367,9 @@ export default function Reviews() {
             style={{
               display: "flex",
               gap: "1.2rem",
-              justifyContent: "center",
+              justifyContent: "flex-start",
               flexWrap: "wrap",
-              fontSize: "0.88rem",
+              fontSize: "0.84rem",
               color: "var(--plum)"
             }}
           >
@@ -405,16 +394,18 @@ export default function Reviews() {
       </section>
 
       {/* Filter Tabs & Testimonials Grid */}
-      <section className="section-padding" style={{ backgroundColor: "#FFFFFF" }}>
+      <section className="section-padding" style={{ backgroundColor: "#FBF6F3" }}>
         <div className="container">
           {/* Category Filter Pills */}
           <div
             style={{
               display: "flex",
-              justifyContent: "center",
+              justifyContent: "flex-start",
               gap: "0.6rem",
               flexWrap: "wrap",
-              marginBottom: "3.5rem"
+              marginBottom: "2.5rem",
+              paddingBottom: "1.25rem",
+              borderBottom: "1px solid rgba(43, 35, 32, 0.12)"
             }}
           >
             {[
@@ -436,9 +427,9 @@ export default function Reviews() {
                   fontWeight: "600",
                   cursor: "pointer",
                   transition: "all 0.25s ease",
-                  backgroundColor: filter === tab.key ? "var(--plum)" : "#FBF6F3",
+                  backgroundColor: filter === tab.key ? "var(--plum)" : "transparent",
                   color: filter === tab.key ? "#FFFFFF" : "var(--plum)",
-                  border: filter === tab.key ? "1px solid var(--plum)" : "1px solid rgba(102, 0, 50, 0.12)"
+                  border: filter === tab.key ? "1px solid var(--plum)" : "1px solid rgba(102, 0, 50, 0.28)"
                 }}
               >
                 {tab.label}
@@ -452,11 +443,11 @@ export default function Reviews() {
               <article
                 key={item.id}
                 style={{
-                  backgroundColor: "#FBF6F3",
-                  borderRadius: "6px",
-                  padding: "2.5rem 2.2rem",
-                  border: "1px solid rgba(102, 0, 50, 0.08)",
-                  boxShadow: "0 6px 24px rgba(0,0,0,0.02)",
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: "0",
+                  padding: "2rem 1.8rem",
+                  border: "1px solid rgba(43, 35, 32, 0.13)",
+                  boxShadow: "none",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between"
@@ -493,8 +484,8 @@ export default function Reviews() {
                     style={{
                       fontSize: "1.05rem",
                       lineHeight: "1.8",
-                      color: "rgba(43, 35, 32, 0.88)",
-                      fontStyle: "italic",
+                      color: "rgba(43, 35, 32, 0.9)",
+                      fontStyle: "normal",
                       marginBottom: "1.8rem"
                     }}
                   >
@@ -518,7 +509,7 @@ export default function Reviews() {
                       style={{
                         fontSize: "1.1rem",
                         fontWeight: "700",
-                        color: "var(--plum)",
+                        color: "var(--dark)",
                         margin: 0
                       }}
                     >
@@ -541,9 +532,8 @@ export default function Reviews() {
                       textTransform: "uppercase",
                       letterSpacing: "0.08em",
                       color: "var(--magenta)",
-                      backgroundColor: "rgba(102, 0, 50, 0.06)",
-                      padding: "0.35rem 0.85rem",
-                      borderRadius: "100px"
+                      padding: "0.25rem 0",
+                      borderTop: "1px solid rgba(102, 0, 50, 0.16)"
                     }}
                   >
                     {item.highlightTag}
