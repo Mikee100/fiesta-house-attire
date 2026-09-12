@@ -248,7 +248,7 @@ export default function Reviews() {
           "alternateName": ["Fiesta House", "Fiesta House Attire", "Fiesta House Maternity Studio"],
           "url": "https://www.fiestahousematernity.com/reviews",
           "telephone": "+254720111928",
-          "priceRange": "KES 15,000 – KES 80,000",
+          "priceRange": "KES 15,000 – KES 120,000",
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",

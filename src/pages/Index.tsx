@@ -150,7 +150,7 @@ const Index = () => {
             "url": "https://www.fiestahousematernity.com",
             "telephone": "+254720111928",
             "email": "info@fiestahouseattire.com",
-            "priceRange": "KES 15,000 – KES 80,000",
+            "priceRange": "KES 15,000 – KES 120,000",
             "currenciesAccepted": "KES",
             "paymentAccepted": "Cash, M-Pesa, Bank Transfer",
             "address": {
