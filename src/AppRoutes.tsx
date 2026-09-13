@@ -11,6 +11,7 @@ import Portfolio from "./pages/Portfolio.tsx";
 import PortfolioCategory from "./pages/PortfolioCategory.tsx";
 import Experience from "./pages/Experience.tsx";
 import Pricing from "./pages/Pricing.tsx";
+import PricingPlans from "./pages/PricingPlans.tsx";
 import Contact from "./pages/Contact.tsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
 import About from "./pages/About.tsx";
@@ -54,6 +55,7 @@ const AppRoutes = () => (
       <Route path="/portfolio/:id" element={<PortfolioCategory />} />
       <Route path="/experience" element={<Experience />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/pricing-plans" element={<PricingPlans />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />

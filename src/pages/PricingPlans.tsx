@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
-import SEO from "@/components/site/SEO";
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
 } from "@/components/ui/accordion";
-import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck, ShoppingCart, ArrowUpRight, Palette } from "lucide-react";
+import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck, ArrowUpRight, Palette, Plane } from "lucide-react";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
-import { useCart } from "@/context/CartContext";
 
 const packagePositioning: Record<string, string> = {
   "The Bloom": "For the mother in her becoming.",
@@ -46,21 +44,10 @@ const faqs = [
   }
 ];
 
-const Pricing = () => {
-  const { addToCart } = useCart();
+const PricingPlans = () => {
   const [packages, setPackages] = useState<api.ShopPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
   const [packagesSource, setPackagesSource] = useState<api.ShopPackagesSource>('live');
-
-  const handleAddToCart = (pkg: api.ShopPackage) => {
-    addToCart({
-      id: pkg.id,
-      name: pkg.name,
-      price: Number(pkg.price || 0),
-      description: pkg.description,
-    });
-    toast.success(`${pkg.name} added to cart`);
-  };
 
   useEffect(() => {
     const loadPackages = async () => {
@@ -82,9 +69,9 @@ const Pricing = () => {
 
   return (
     <Layout
-      title="Gift Vouchers | Maternity Photoshoot Gift Experiences Nairobi | Fiesta House Maternity"
-      description="Give the gift of a luxury maternity photoshoot. Add a Fiesta House Maternity Edition to your cart as a gift voucher for an expectant mother in Nairobi."
-      keywords="maternity photoshoot gift voucher, gift voucher Nairobi maternity, pregnancy photoshoot gift, fiesta house gift voucher"
+      title="Pricing Plans | Maternity Photoshoot Packages Nairobi | Fiesta House Maternity"
+      description="Compare Fiesta House Maternity's 2026 maternity photography pricing plans, from intimate studio sessions to flagship luxury experiences in Nairobi."
+      keywords="pricing plans, maternity photoshoot packages Nairobi, maternity photography pricing Nairobi, maternity photoshoot price Kenya, luxury maternity photography Nairobi, pregnancy photoshoot packages"
     >
       <script type="application/ld+json">
         {JSON.stringify({
@@ -92,7 +79,7 @@ const Pricing = () => {
           "@type": "BreadcrumbList",
           "itemListElement": [
             { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
-            { "@type": "ListItem", "position": 2, "name": "Gift Vouchers", "item": "https://www.fiestahousematernity.com/pricing" }
+            { "@type": "ListItem", "position": 2, "name": "Pricing Plans", "item": "https://www.fiestahousematernity.com/pricing-plans" }
           ]
         })}
       </script>
@@ -101,19 +88,18 @@ const Pricing = () => {
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "4rem" }} className="fade-in">
-            <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Gift An Experience</span>
-            <h1 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", marginTop: "0.8rem", marginBottom: "1rem" }}>Gift Vouchers</h1>
-            <div style={{ width: "120px", height: "4px", backgroundColor: "var(--sky-blue)", margin: "0 auto 2rem" }}></div>
+            <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Your Investment</span>
+            <div style={{ width: "120px", height: "4px", backgroundColor: "var(--sky-blue)", margin: "1rem auto 2rem" }}></div>
             <p style={{ maxWidth: "700px", margin: "0 auto", fontSize: "1.1rem", color: "var(--muted-foreground)" }}>
-              Add any Edition to your cart as a gift voucher for someone you love. Every session is a luxury experience tailored to celebrate motherhood. Prefer to browse first? <Link to="/pricing-plans" style={{ color: "var(--magenta)", fontWeight: 600 }}>View our Pricing Plans</Link>.
+              Compare our Editions and choose the plan that resonates with your vision. Every session is a luxury experience tailored to celebrate your motherhood.
             </p>
           </div>
 
           {/* Pricing Grid */}
-          <div id="packages" style={{ 
-            display: "grid", 
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
-            gap: "1.5rem" 
+          <div id="packages" style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            gap: "1.5rem"
           }}>
             {!loadingPackages && packagesSource !== 'live' && (
               <div style={{ gridColumn: "1 / -1", marginBottom: "0.5rem" }}>
@@ -197,7 +183,7 @@ const Pricing = () => {
                       )}
                     </div>
 
-                    <div style={{ flexGrow: 1, marginBottom: "3rem" }}>
+                    <div style={{ flexGrow: 1 }}>
                       <div style={{
                         backgroundColor: "var(--plum)",
                         borderRadius: "12px",
@@ -248,28 +234,6 @@ const Pricing = () => {
                         )}
                       </div>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleAddToCart(pkg)}
-                      data-track={`package_click:${pkg.name}`}
-                      className="btn"
-                      style={{
-                        width: "100%",
-                        backgroundColor: pkg.popular ? accentColor : "var(--dark)",
-                        color: "white",
-                        borderRadius: "12px",
-                        padding: "1.05rem 1.2rem",
-                        fontWeight: "600",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "0.75rem"
-                      }}
-                    >
-                      <ShoppingCart size={18} />
-                      <span>Add to Cart</span>
-                    </button>
                   </div>
                 );
               })
@@ -336,6 +300,16 @@ const Pricing = () => {
               <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", lineHeight: 1.65 }}>For the mother whose vision does not fit inside a package, we design custom experiences by consultation. Reach out to our team to begin the conversation.</p>
               <Link to="/contact?package=Bespoke%20Experience" className="btn" style={{ background: "white", color: "var(--dark)", whiteSpace: "nowrap", padding: "0.9rem 1.2rem" }}>Speak With Our Team <ArrowUpRight size={17} /></Link>
             </div>
+
+            <div className="travelling-panel" style={{ marginTop: "1.5rem", padding: "clamp(2rem, 5vw, 3rem)", background: "var(--ivory)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "var(--sky-blue-tint)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--magenta)", marginBottom: "1.25rem" }}>
+                <Plane size={26} />
+              </div>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.14em", fontSize: "0.72rem", fontWeight: 700 }}>Available on request</span>
+              <h3 className="display" style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.2rem)", margin: "0.5rem 0 1rem", color: "var(--dark)" }}>For Our Travelling Mothers</h3>
+              <p style={{ margin: "0 0 1.75rem", maxWidth: "560px", color: "var(--muted-foreground)", lineHeight: 1.65 }}>For mothers journeying to us from beyond Nairobi, we curate the full arrival — airport transfers, hotel bookings, and a soft landing arranged by our concierge, so all you carry with you is your presence.</p>
+              <Link to="/contact?package=Travelling%20Mothers" className="btn" style={{ background: "var(--dark)", color: "white", whiteSpace: "nowrap", padding: "0.9rem 1.6rem", borderRadius: "100px" }}>Speak With Our Team <ArrowUpRight size={17} /></Link>
+            </div>
           </section>
         </div>
       </section>
@@ -372,10 +346,10 @@ const Pricing = () => {
             </div>
 
             <div className="fade-in" style={{ display: "flex", alignItems: "center" }}>
-              <div style={{ 
-                backgroundColor: "white", 
-                padding: "3rem", 
-                borderRadius: "32px", 
+              <div style={{
+                backgroundColor: "white",
+                padding: "3rem",
+                borderRadius: "32px",
                 boxShadow: "0 20px 40px rgba(0,0,0,0.05)",
                 width: "100%"
               }}>
@@ -450,9 +424,9 @@ const Pricing = () => {
       {/* Gift Voucher Section */}
       <section className="section-padding">
         <div className="container">
-          <div style={{ 
-            padding: "8rem 4rem", 
-            backgroundColor: "var(--dark)", 
+          <div style={{
+            padding: "8rem 4rem",
+            backgroundColor: "var(--dark)",
             borderRadius: "40px",
             color: "white",
             textAlign: "center",
@@ -461,18 +435,18 @@ const Pricing = () => {
           }}>
             <div style={{ position: "absolute", top: "-50px", right: "-50px", width: "250px", height: "250px", backgroundColor: "var(--sky-blue)", borderRadius: "50%", opacity: 0.1 }}></div>
             <div style={{ position: "absolute", bottom: "-50px", left: "-50px", width: "350px", height: "350px", backgroundColor: "var(--magenta)", borderRadius: "50%", opacity: 0.1 }}></div>
-            
+
             <div style={{ position: "relative", zIndex: 2 }}>
                <h2 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", marginBottom: "2rem" }}>Share the Experience</h2>
                <p style={{ maxWidth: "700px", margin: "0 auto 4rem", fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8 }}>
-                 Surprise an expectant mother with a gift that lasts a lifetime. Our luxury photoshoot vouchers are the most cherished gifts at baby showers across Nairobi.
+                 Surprise an expectant mother with a gift that lasts a lifetime. Purchase any Edition above as a gift voucher for someone you love.
                </p>
-               <Link 
-                 to="/pricing-plans" 
-                 className="btn" 
+               <Link
+                 to="/pricing"
+                 className="btn"
                  style={{ backgroundColor: "white", color: "var(--dark)", padding: "1.5rem 4rem", fontWeight: "700", borderRadius: "100px" }}
                >
-                 Compare Full Pricing Plans
+                 Purchase a Gift Voucher
                </Link>
             </div>
           </div>
@@ -492,5 +466,4 @@ const Pricing = () => {
   );
 };
 
-export default Pricing;
-
+export default PricingPlans;

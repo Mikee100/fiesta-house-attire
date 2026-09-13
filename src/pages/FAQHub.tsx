@@ -37,7 +37,7 @@ const ALL_FAQS: FAQItem[] = [
   {
     category: "discovery",
     q: "What makes Fiesta House different from other Nairobi photography studios?",
-    a: "Unlike studios that use flat paper backdrops and expect you to supply your own clothing, Fiesta House is an all-inclusive maternity sanctuary. We provide immersive physical sets, complimentary access to over 80 designer maternity gowns, professional makeup artistry, and expert female posing guidance tailored for maternal comfort.",
+    a: "Unlike studios that use flat paper backdrops and expect you to supply your own clothing, Fiesta House is an all-inclusive maternity sanctuary. We provide immersive physical sets, complimentary access to over 300 designer maternity gowns, professional makeup artistry, and expert female posing guidance tailored for maternal comfort.",
   },
   {
     category: "discovery",
@@ -81,7 +81,7 @@ const ALL_FAQS: FAQItem[] = [
   {
     category: "styling",
     q: "What should I wear for my maternity photoshoot?",
-    a: "At Fiesta House, you don't have to purchase a gown! Your session includes access to our atelier of over 80 designer gowns, including flying silks, fitted mermaid dresses, ethereal sheer tulles, and romantic lace robes. You can select your favorite looks during your session.",
+    a: "At Fiesta House, you don't have to purchase a gown! Your session includes access to our atelier of over 300 designer gowns, including flying silks, fitted mermaid dresses, ethereal sheer tulles, and romantic lace robes. You can select your favorite looks during your session.",
   },
   {
     category: "styling",

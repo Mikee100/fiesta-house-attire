@@ -127,7 +127,7 @@ const MaternityGowns = () => {
                maxWidth: "720px",
              }}>
                <p style={{ fontSize: "0.95rem", color: "var(--dark)", lineHeight: "1.6", margin: 0 }}>
-                 <strong>Photoshoot Wardrobe Inclusion:</strong> You do not need to buy or rent gowns separately. Full access to our atelier of over 80 designer gowns, silks, and robes is included in your maternity photography package.
+                 <strong>Photoshoot Wardrobe Inclusion:</strong> You do not need to buy or rent gowns separately. Full access to our atelier of over 300 designer gowns, silks, and robes is included in your maternity photography package.
                </p>
                <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
                  <Link to="/what-to-wear-maternity-photoshoot" style={{ fontSize: "0.85rem", color: "var(--magenta)", fontWeight: 600, borderBottom: "1px solid var(--magenta)" }}>

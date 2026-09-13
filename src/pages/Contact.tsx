@@ -79,10 +79,10 @@ const Contact = () => {
             "@type": "PhotographyBusiness",
             "name": "Fiesta House Maternity",
             "telephone": "+254720111928",
-            "email": "info@fiestahouseattire.com",
+            "email": "info@fiestahousematernity.com",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",
+              "streetAddress": "Diamond Plaza II, 4th Parklands Avenue, Parklands",
               "addressLocality": "Nairobi",
               "addressCountry": "KE"
             }
@@ -369,7 +369,7 @@ const Contact = () => {
                   </p>
                   <p>
                     <strong style={{ color: "var(--magenta)" }}>Email:</strong>{" "}
-                    info@fiestahouseattire.com
+                    info@fiestahousematernity.com
                   </p>
                   <p>
                     <strong style={{ color: "var(--sky-blue)" }}>Phone:</strong>{" "}

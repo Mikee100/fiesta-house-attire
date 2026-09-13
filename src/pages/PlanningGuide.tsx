@@ -257,7 +257,7 @@ export default function PlanningGuide() {
               <p className="text-xs text-[#2B2320]/70">Gown styles, colors, and atelier look selections.</p>
             </Link>
             <Link
-              to="/pricing"
+              to="/pricing-plans"
               className="p-6 rounded-2xl bg-[#FBF6F3] border border-[#F1E4EC] hover:border-[#660032] transition-colors"
             >
               <h4 className="font-serif text-lg text-[#2B2320] mb-2">Packages & Rates</h4>

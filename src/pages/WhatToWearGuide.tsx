@@ -69,7 +69,7 @@ const FAQS = [
   },
   {
     q: "Do I need to buy my own maternity dress for the photoshoot?",
-    a: "No! You do not need to buy or rent a gown separately. Fiesta House maintains an exclusive in-house couture atelier of over 80 designer maternity gowns, trailing silks, and robes. Access to these looks is complimentary with your session package.",
+    a: "No! You do not need to buy or rent a gown separately. Fiesta House maintains an exclusive in-house couture atelier of over 300 designer maternity gowns, trailing silks, and robes. Access to these looks is complimentary with your session package.",
   },
   {
     q: "How many outfits can I wear during my session?",
@@ -152,7 +152,7 @@ export default function WhatToWearGuide() {
               <span className="text-xs uppercase tracking-widest font-bold">The Fiesta House Advantage</span>
             </div>
             <h2 className="font-serif text-2xl md:text-3xl text-white mb-3">
-              Complimentary Access to Over 80 Designer Gowns
+              Complimentary Access to Over 300 Designer Gowns
             </h2>
             <p className="text-white/85 text-sm md:text-base leading-relaxed mb-6 font-light">
               Unlike generic photographers who ask you to bring your own clothes, <strong>Fiesta House maintains a private atelier of bespoke maternity gowns</strong> right inside our Nairobi studio. When you book a maternity session with us, gown selection is included. You select the looks you want to be photographed in, tailored to your exact shape by our in-house stylist.
