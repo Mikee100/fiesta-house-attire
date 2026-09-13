@@ -219,6 +219,34 @@ const Footer = () => {
             >
               Studio Moments
             </p>
+            <div
+              style={{
+                marginBottom: "1.4rem",
+                paddingBottom: "1rem",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "0.82rem",
+                  fontWeight: "700",
+                  color: "#FFFFFF",
+                  margin: "0 0 0.45rem",
+                }}
+              >
+                Photography Copyright
+              </h3>
+              <p
+                style={{
+                  fontSize: "0.78rem",
+                  lineHeight: "1.55",
+                  color: "rgba(255, 255, 255, 0.72)",
+                  margin: 0,
+                }}
+              >
+                Fiesta House Attire owns the copyrights to all the images and has exclusive right to use, edit, print, reproduce, and distribute their images, and to prevent others from using them without permission.
+              </p>
+            </div>
             <div className="footer-mini-gallery">
               {loadMiniGallery
                 ? miniGalleryImages.map((src, index) => (
