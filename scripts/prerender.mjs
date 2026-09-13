@@ -22,7 +22,6 @@ const distDir = path.join(projectRoot, "dist");
 const clientHtmlPath = path.join(distDir, "index.html");
 const clientHtmlTemplatePath = path.join(distDir, ".index-template.html");
 const siteUrl = (process.env.VITE_SITE_URL || "https://www.fiestahousematernity.com").replace(/\/$/, "");
-const buildDate = new Date().toISOString().slice(0, 10);
 
 // ─── Static routes to prerender ──────────────────────────────────────────────
 const STATIC_ROUTES = [
@@ -52,31 +51,12 @@ async function exists(filePath) {
   try { await fs.access(filePath); return true; } catch { return false; }
 }
 
-function escapeXml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
 function toAbsoluteUrl(url) {
   if (!url || typeof url !== "string") return null;
   if (/^https?:\/\//i.test(url)) return url;
   if (url.startsWith("//")) return `https:${url}`;
   if (url.startsWith("/")) return `${siteUrl}${url}`;
   return null;
-}
-
-function getRoutePriority(route) {
-  if (route === "/") return "1.0";
-  const highPriority = ["/maternity-photoshoot", "/planning-guide", "/when-to-do-maternity-photos", "/what-to-wear-maternity-photoshoot", "/family-maternity-photoshoot", "/maternity-photoshoot-ideas", "/faq"];
-  if (highPriority.includes(route)) return "0.9";
-  if (["/portfolio", "/pricing", "/blog", "/maternity-gowns", "/videos"].includes(route)) return "0.8";
-  if (["/about", "/contact", "/experience", "/shop"].includes(route)) return "0.7";
-  if (route.startsWith("/portfolio/") || route.startsWith("/blog/")) return "0.8";
-  return "0.6";
 }
 
 function removeStaticSeoFallbacks(html) {
@@ -231,59 +211,8 @@ async function prerenderRoutes(allRoutes) {
   console.log(`[prerender] ${successCount}/${allRoutes.length} routes rendered.`);
 }
 
-// ─── Step 4: Write static sitemaps ────────────────────────────────────────────
-async function generateSitemaps(allRoutes, imageEntries) {
-  const orderedRoutes = [...new Set(allRoutes)].sort((a, b) => {
-    if (a === "/") return -1;
-    if (b === "/") return 1;
-    return a.localeCompare(b);
-  });
-
-  // sitemap.xml
-  const sitemapUrls = orderedRoutes.map((route) => {
-    const loc = `${siteUrl}${route === "/" ? "/" : route}`;
-    return [
-      "  <url>",
-      `    <loc>${escapeXml(loc)}</loc>`,
-      `    <lastmod>${buildDate}</lastmod>`,
-      `    <priority>${getRoutePriority(route)}</priority>`,
-      "  </url>",
-    ].join("\n");
-  }).join("\n");
-
-  const sitemapXml = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    sitemapUrls,
-    "</urlset>",
-    "",
-  ].join("\n");
-
-  await fs.writeFile(path.join(distDir, "sitemap.xml"), sitemapXml, "utf-8");
-  console.log(`[prerender] wrote sitemap.xml (${orderedRoutes.length} urls)`);
-
-  // image-sitemap.xml
-  const imageUrlBlocks = imageEntries
-    .filter((e) => e.images?.length)
-    .map((e) => {
-      const pageUrl = `${siteUrl}${e.route}`;
-      const imageTags = e.images.map((u) =>
-        ["    <image:image>", `      <image:loc>${escapeXml(u)}</image:loc>`, `      <image:title>${escapeXml(e.title)}</image:title>`, "    </image:image>"].join("\n")
-      ).join("\n");
-      return ["  <url>", `    <loc>${escapeXml(pageUrl)}</loc>`, imageTags, "  </url>"].join("\n");
-    }).join("\n");
-
-  const imageSitemapXml = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
-    imageUrlBlocks,
-    "</urlset>",
-    "",
-  ].join("\n");
-
-  await fs.writeFile(path.join(distDir, "image-sitemap.xml"), imageSitemapXml, "utf-8");
-  console.log(`[prerender] wrote image-sitemap.xml (${imageEntries.length} pages)`);
-}
+// ─── Step 4: sitemaps are served live by backend/server.js via vercel.json ────
+// (see rewrites for /sitemap.xml and /image-sitemap.xml)
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
@@ -295,7 +224,7 @@ async function main() {
   await buildSsrBundle();
 
   // Discover blog + portfolio dynamic routes
-  const { routes: dynamicRoutes, imageEntries } = await discoverDynamicRoutes();
+  const { routes: dynamicRoutes } = await discoverDynamicRoutes();
 
   // Combine static + dynamic routes (deduped)
   const allRoutes = [...new Set([...STATIC_ROUTES, ...dynamicRoutes])];
@@ -303,8 +232,13 @@ async function main() {
   // Render each route to static HTML
   await prerenderRoutes(allRoutes);
 
-  // Write sitemaps
-  await generateSitemaps(allRoutes, imageEntries);
+  // NOTE: sitemap.xml / image-sitemap.xml are intentionally NOT written here.
+  // Static files in dist/ take priority over vercel.json rewrites, which would
+  // shadow the live, DB-driven /sitemap.xml and /image-sitemap.xml routes
+  // served by backend/server.js (see vercel.json rewrites). Writing stale
+  // build-time versions here previously caused Search Console to see an
+  // empty image-sitemap.xml because dynamic routes aren't discoverable at
+  // build time.
 
   // Clean up the temporary server bundle
   try {
