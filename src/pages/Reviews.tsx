@@ -265,6 +265,11 @@ export default function Reviews() {
           },
           "review": REAL_REVIEWS.slice(0, 10).map((t) => ({
             "@type": "Review",
+            "itemReviewed": {
+              "@type": "PhotographyBusiness",
+              "name": "Fiesta House Maternity",
+              "url": "https://www.fiestahousematernity.com/"
+            },
             "author": {
               "@type": "Person",
               "name": t.author
