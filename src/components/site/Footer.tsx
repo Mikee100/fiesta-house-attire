@@ -244,7 +244,7 @@ const Footer = () => {
                   margin: 0,
                 }}
               >
-                Fiesta House Attire owns the copyrights to all the images and has exclusive right to use, edit, print, reproduce, and distribute their images, and to prevent others from using them without permission.
+                Fiesta House Maternity owns the copyrights to all the images and has exclusive right to use, edit, print, reproduce, and distribute their images, and to prevent others from using them without permission.
               </p>
             </div>
             <div className="footer-mini-gallery">
