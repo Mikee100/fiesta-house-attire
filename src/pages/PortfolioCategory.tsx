@@ -103,7 +103,7 @@ const PortfolioCategory = () => {
   return (
     <Layout 
       title={`${portfolio.title} Ideas & Poses | Fiesta House Maternity`}
-      description={`Explore visual inspiration, concepts, and poses for ${portfolio.title} at Fiesta House Maternity in Nairobi. Over 80 designer gowns, professional makeup, and guided posing.`}
+      description={`Explore visual inspiration, concepts, and poses for ${portfolio.title} at Fiesta House Maternity in Nairobi. Over 300 designer gowns, professional makeup, and guided posing.`}
       keywords={`${portfolio.title.toLowerCase()} ideas, ${portfolio.title.toLowerCase()} poses, maternity photoshoot inspiration nairobi, pregnancy photography poses kenya`}
       ogImage={portfolio.images[0]}
     >
@@ -331,7 +331,7 @@ const PortfolioCategory = () => {
                 </Link>
               )}
               <Link
-                to="/pricing"
+                to="/pricing-plans"
                 className="btn btn-outline"
                 style={{
                   borderColor: "var(--magenta)",

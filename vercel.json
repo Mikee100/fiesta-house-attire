@@ -8,8 +8,8 @@
   ],
   "redirects": [
     { "source": "/exclusive-maternity-photography-in-kenya-with-fiesta-house-attire", "destination": "/portfolio", "permanent": true },
-    { "source": "/pregnancy-photos-pricing-plans-fiestah-house-attire", "destination": "/pricing", "permanent": true },
-    { "source": "/pricing-plan", "destination": "/pricing", "permanent": true },
+    { "source": "/pregnancy-photos-pricing-plans-fiestah-house-attire", "destination": "/pricing-plans", "permanent": true },
+    { "source": "/pricing-plan", "destination": "/pricing-plans", "permanent": true },
     { "source": "/gowns-for-hire", "destination": "/maternity-gowns", "permanent": true },
     { "source": "/gift-voucher", "destination": "/shop", "permanent": true },
     { "source": "/blog-2", "destination": "/blog", "permanent": true },

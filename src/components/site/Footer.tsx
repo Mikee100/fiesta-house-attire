@@ -133,9 +133,9 @@ const Footer = () => {
                 { to: "/maternity-photoshoot", label: "Nairobi Studio Experience" },
                 { to: "/maternity-gowns", label: "Curated Atelier Gowns" },
                 { to: "/portfolio", label: "Portfolio Galleries" },
-                { to: "/pricing", label: "Packages & Rates" },
+                { to: "/pricing-plans", label: "Packages & Rates" },
                 { to: "/about", label: "About Fiesta House" },
-                { to: "/contact", label: "Book Your Shoot" },
+                { to: "/contact", label: "Contact / Book Your Shoot" },
               ].map((link) => (
                 <Link
                   key={link.to}
@@ -287,7 +287,7 @@ const Footer = () => {
           <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", flexWrap: "wrap" }}>
             <Link to="/reviews" style={{ color: "white", textDecoration: "none" }}>Client Reviews</Link>
             <Link to="/privacy-policy" style={{ color: "white", textDecoration: "none" }}>Privacy Policy</Link>
-            <span>info@fiestahouseattire.com</span>
+            <span>info@fiestahousematernity.com</span>
           </div>
         </div>
       </div>

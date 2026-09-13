@@ -124,7 +124,7 @@ const Index = () => {
     <>
       <Layout
         title="Fiesta House Maternity – Maternity Photoshoots in Nairobi"
-        description="Fiesta House Maternity is Nairobi's premier luxury maternity photoshoot studio by Fiesta House at Diamond Plaza II, Parklands. Over 80 designer gowns, professional makeup, bespoke studio sets, and gentle all-female posing."
+        description="Fiesta House Maternity is Nairobi's premier luxury maternity photoshoot studio by Fiesta House at Diamond Plaza II, Parklands. Over 300 designer gowns, professional makeup, bespoke studio sets, and gentle all-female posing."
         keywords="fiesta house maternity, fiesta house maternity reviews, fiesta house, maternity photoshoot nairobi, maternity photography nairobi, fiesta house nairobi, luxury pregnancy photoshoot kenya"
       >
         <script
@@ -149,13 +149,13 @@ const Index = () => {
             "@id": "https://www.fiestahousematernity.com",
             "url": "https://www.fiestahousematernity.com",
             "telephone": "+254720111928",
-            "email": "info@fiestahouseattire.com",
+            "email": "info@fiestahousematernity.com",
             "priceRange": "KES 15,000 – KES 120,000",
             "currenciesAccepted": "KES",
             "paymentAccepted": "Cash, M-Pesa, Bank Transfer",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",
+              "streetAddress": "Diamond Plaza II, 4th Parklands Avenue, Parklands",
               "addressLocality": "Nairobi",
               "addressRegion": "Nairobi County",
               "addressCountry": "KE"
@@ -342,16 +342,16 @@ const Index = () => {
         <section className="section-padding" style={{ background: "#FBF6F3" }}>
           <div className="container" style={{ maxWidth: 840, margin: "0 auto" }}>
             <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600", display: "block", textAlign: "center", marginBottom: "0.5rem" }}>
-              Fiesta House Maternity • Nairobi Sanctuary
+              Fiesta House Maternity
             </span>
-            <h2 style={{ color: "var(--dark)", fontSize: "clamp(1.8rem, 3.2vw, 2.6rem)", fontWeight: 400, marginBottom: 16, textAlign: "center", fontFamily: "'Cormorant Garamond', serif" }}>
-              Where Motherhood Meets Fine Art
+            <h2 style={{ color: "var(--sky-blue)", fontSize: "clamp(2rem, 3.6vw, 3rem)", fontWeight: 700, marginBottom: 16, textAlign: "center", fontFamily: "'Cormorant Garamond', serif" }}>
+              Where Every Mother Becomes Iconic
             </h2>
             <p style={{ fontSize: "1.05rem", color: "rgba(43, 35, 32, 0.8)", marginBottom: 16, textAlign: "center", lineHeight: "1.75" }}>
-              Fiesta House Maternity is Nairobi's premier luxury maternity photography studio by Fiesta House. Located at Diamond Plaza II in Parklands, we provide expectant mothers with a private, fully curated sanctuary designed exclusively for pregnant women who refuse to be ordinary. We transform pregnancy into fine art through iconic, permanent studio sets—including our cinematic Boat Set, regal Master Staircase, immersive Flower Gardens, Celestial Swing, and grand Chandeliers.
+              Fiesta House Maternity is Africa's reigning luxury maternity house, a private sanctuary in Parklands, Nairobi, built for pregnant women carrying something sacred and refusing to move through it unseen. Spanning over 3,000 square feet, our studio holds more than 20 sets, each one designed from the ground up with the pregnant body in mind — every step, every curve, every pose considered before you ever arrive. Step into our cinematic Boat Set. Ascend the Master Staircase. Disappear into the Flower Gardens, sway on the Celestial Swing, stand beneath chandeliers built for a coronation — because that is exactly what this is.
             </p>
             <p style={{ fontSize: "1.05rem", color: "rgba(43, 35, 32, 0.8)", marginBottom: 0, textAlign: "center", lineHeight: "1.75" }}>
-              Every detail is seamlessly included. With an in-house couture atelier of over 80 designer gowns and trailing silks, professional makeup artistry, and a calm all-women team trained in gentle maternity posing, you will feel safe, pampered, and celebrated every minute of your shoot.
+              You will not lift a finger. Choose from over 300 designer gowns and trailing silks in our couture atelier, fitted by our in-house wardrobe stylists. Our professional makeup artists and hair stylists prepare you for the frame, while our all-women team — gentle hands, practiced eyes — guides you through every pose, every breath, every gesture. This is not a photoshoot. It is the moment you are crowned.
             </p>
           </div>
         </section>
@@ -659,7 +659,7 @@ const Index = () => {
             <div className="grid grid-4" style={{ gap: "3rem" }}>
               {[
                 { step: "01", title: "Consult & Book", desc: "Choose your session package and secure your date with our Parklands studio concierge." },
-                { step: "02", title: "Select Your Looks", desc: "Choose from over 80 designer gowns and trailing silks with personal styling guidance." },
+                { step: "02", title: "Select Your Looks", desc: "Choose from over 300 designer gowns and trailing silks with personal styling guidance." },
                 { step: "03", title: "Pamper & Pose", desc: "Enjoy professional makeup and calm, all-female guided posing on our iconic physical sets." },
                 { step: "04", title: "Cherish Forever", desc: "Receive your curated digital gallery of high-end, cinematically retouched heirlooms." }
               ].map((s, i) => (

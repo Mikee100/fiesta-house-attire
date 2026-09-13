@@ -63,7 +63,7 @@ const FAQS = [
   },
   {
     q: "Is Fiesta House a gown retail shop or a photoshoot studio?",
-    a: "Fiesta House is a dedicated luxury maternity photography and styling studio. The term 'gowns' refers to our curated in-house couture wardrobe of over 80 designer gowns and trailing silks. Expectant mothers select their favorite looks to wear during their photoshoot session. We do not sell off-the-rack clothing.",
+    a: "Fiesta House is a dedicated luxury maternity photography and styling studio. The term 'gowns' refers to our curated in-house couture wardrobe of over 300 designer gowns and trailing silks. Expectant mothers select their favorite looks to wear during their photoshoot session. We do not sell off-the-rack clothing.",
   },
   {
     q: "Do I need modeling experience to take beautiful maternity photos?",
@@ -102,7 +102,7 @@ export default function MaternityPhotoshootNairobi() {
             "priceRange": "KES 15,000 – KES 120,000",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",
+              "streetAddress": "Diamond Plaza II, 4th Parklands Avenue, Parklands",
               "addressLocality": "Nairobi",
               "addressCountry": "KE"
             }
@@ -198,7 +198,7 @@ export default function MaternityPhotoshootNairobi() {
                   </div>
                   <div>
                     <h4 className="font-medium text-[#2B2320] text-sm">Couture Wardrobe</h4>
-                    <p className="text-xs text-[#2B2320]/60">80+ designer gowns</p>
+                    <p className="text-xs text-[#2B2320]/60">300+ designer gowns</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -385,7 +385,7 @@ export default function MaternityPhotoshootNairobi() {
             </Link>
 
             <Link
-              to="/pricing"
+              to="/pricing-plans"
               className="p-6 bg-white rounded-2xl border border-[#F1E4EC] hover:border-[#660032] transition-colors group"
             >
               <Sparkles className="w-6 h-6 text-[#660032] mb-3 group-hover:scale-110 transition-transform" />
@@ -465,7 +465,7 @@ export default function MaternityPhotoshootNairobi() {
               size="lg"
               className="border-white/30 text-white hover:bg-white/10 px-8 py-6 rounded-full text-base"
             >
-              <Link to="/pricing">View Session Rates & Packages</Link>
+              <Link to="/pricing-plans">View Session Rates & Packages</Link>
             </Button>
           </div>
         </div>

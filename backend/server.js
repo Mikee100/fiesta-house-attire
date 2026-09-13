@@ -194,7 +194,7 @@ const contactLimiter = rateLimit({
 const MAX_ANALYTICS_PAGE_SIZE = 200;
 const DEFAULT_ANALYTICS_PAGE_SIZE = 50;
 
-const CONTACT_TEST_RECIPIENT = process.env.CONTACT_TEST_EMAIL || 'info@fiestahouseattire.com';
+const CONTACT_TEST_RECIPIENT = process.env.CONTACT_TEST_EMAIL || 'info@fiestahousematernity.com';
 
 const sanitizePlainText = (value, maxLength = 500) => {
   if (typeof value !== 'string') return null;
@@ -4172,7 +4172,7 @@ app.post('/contact-enquiries', contactLimiter, async (req, res) => {
               <td style="font-size:13px; line-height:1.7; color:${brandColors.slate};">
                 Diamond Plaza, 4th Avenue Parklands, Nairobi County, Kenya
                 <br />
-                <a href="mailto:info@fiestahouseattire.com" style="color:${brandColors.magenta}; text-decoration:none;">info@fiestahouseattire.com</a>
+                <a href="mailto:info@fiestahousematernity.com" style="color:${brandColors.magenta}; text-decoration:none;">info@fiestahousematernity.com</a>
                 &nbsp;|&nbsp;
                 <a href="https://www.fiestahousematernity.com" style="color:${brandColors.magenta}; text-decoration:none;">www.fiestahousematernity.com</a>
               </td>
@@ -4320,7 +4320,7 @@ async function sendOrderEmails(order, items) {
           <p style="font-size: 13px; color: #999; margin-bottom: 5px;">Need help? Contact us via WhatsApp or Email</p>
           <p style="font-size: 14px; font-weight: bold;">
             <a href="https://wa.me/254720111928" style="color: ${brandColors.skyBlue}; text-decoration: none;">WhatsApp</a> | 
-            <a href="mailto:info@fiestahouseattire.com" style="color: ${brandColors.magenta}; text-decoration: none;">info@fiestahouseattire.com</a>
+            <a href="mailto:info@fiestahousematernity.com" style="color: ${brandColors.magenta}; text-decoration: none;">info@fiestahousematernity.com</a>
           </p>
         </div>
       </div>
@@ -4333,7 +4333,7 @@ async function sendOrderEmails(order, items) {
   // Send to Admin
   await transporter.sendMail({
     from: '"Fiesta House Shop Maternity" <' + process.env.SMTP_USER + '>',
-    to: 'info@fiestahouseattire.com', // Admin email
+    to: 'info@fiestahousematernity.com', // Admin email
     subject: `New Shop Order: ${order.customer_name}`,
     html: adminEmailContent
   });
@@ -4382,6 +4382,7 @@ const STATIC_ROUTES = [
   { path: '/portfolio', priority: '0.8', changefreq: 'weekly' },
   { path: '/maternity-gowns', priority: '0.8', changefreq: 'weekly' },
   { path: '/pricing', priority: '0.8', changefreq: 'monthly' },
+  { path: '/pricing-plans', priority: '0.8', changefreq: 'monthly' },
   { path: '/blog', priority: '0.8', changefreq: 'weekly' },
   { path: '/videos', priority: '0.8', changefreq: 'weekly' },
   { path: '/experience', priority: '0.7', changefreq: 'monthly' },

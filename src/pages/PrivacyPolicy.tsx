@@ -64,13 +64,13 @@ const sections = [
     body: [
       "Subject to local law, you may request access, correction, deletion, restriction, objection, or portability of your personal data.",
       "You may also request that we stop using your data for direct marketing or non-essential communications.",
-      "To make a request, contact us at info@fiestahouseattire.com.",
+      "To make a request, contact us at info@fiestahousematernity.com.",
     ],
   },
   {
     title: "9. Data Deletion Requests",
     body: [
-      "If you want us to delete your personal data, email info@fiestahouseattire.com with the subject line \"Data Deletion Request\" and include enough information for us to identify your records.",
+      "If you want us to delete your personal data, email info@fiestahousematernity.com with the subject line \"Data Deletion Request\" and include enough information for us to identify your records.",
       "If you are interacting via Meta products and request deletion through Meta's app settings, we will process the request in line with applicable requirements and our platform obligations.",
       "We will respond within a reasonable period, subject to legal exceptions.",
     ],
@@ -105,7 +105,7 @@ const sections = [
     body: [
       "Fiesta House Maternity",
       "Diamond Plaza II, Nairobi, Kenya",
-      "Email: info@fiestahouseattire.com",
+      "Email: info@fiestahousematernity.com",
       "Phone/WhatsApp: +254 720 111 928",
     ],
   },

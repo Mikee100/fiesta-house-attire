@@ -9,7 +9,8 @@ const mainNavLinks = [
   { to: "/maternity-gowns", label: "Gowns" },
   { to: "/portfolio", label: "Portfolio" },
   { to: "/videos", label: "Videos" },
-  { to: "/pricing", label: "Packages" },
+  { to: "/pricing-plans", label: "Packages" },
+  { to: "/pricing", label: "Gift Vouchers" },
   { to: "/blog", label: "Blogs" },
 ];
 
@@ -29,6 +30,7 @@ const mobileMenuSections = [
       { to: "/maternity-photoshoot-ideas", label: "Ideas & Styles" },
       { to: "/family-maternity-photoshoot", label: "Family Sessions" },
       { to: "/faq", label: "FAQ" },
+      { to: "/contact", label: "Contact" },
     ],
   },
 ];
@@ -119,12 +121,13 @@ const Navbar = () => {
             src={logoLight}
             alt="Fiesta House Maternity"
             style={{
-              height: "44px",
+              height: scrolled ? "52px" : "64px",
               width: "auto",
               objectFit: "contain",
               display: "block",
               border: "none",
               borderRadius: 0,
+              transition: "height 0.3s ease",
             }}
           />
           <span
@@ -146,7 +149,7 @@ const Navbar = () => {
           className="nav-links"
           style={{
             alignItems: "center",
-            gap: "1.45rem",
+            gap: "1.1rem",
             position: "absolute",
             left: "50%",
             transform: "translateX(-50%)",
@@ -168,7 +171,7 @@ const Navbar = () => {
                   paddingBottom: "3px",
                   fontWeight: isActive ? "700" : "600",
                   transition: "all 0.3s ease",
-                  fontSize: "0.9rem",
+                  fontSize: "0.78rem",
                 }}
               >
                 {link.label}

@@ -218,7 +218,7 @@ const REVIEWS_FAQS = [
   },
   {
     q: "Do I really not need to bring my own gowns or hire a makeup artist?",
-    a: "Yes! As clients like Mercy Masila and Hellen Okochil noted, our Diamond Plaza II sanctuary includes everything under one roof: access to our private atelier of 80+ designer gowns, professional makeup, and guided posing so you can just arrive and be pampered."
+    a: "Yes! As clients like Mercy Masila and Hellen Okochil noted, our Diamond Plaza II sanctuary includes everything under one roof: access to our private atelier of 300+ designer gowns, professional makeup, and guided posing so you can just arrive and be pampered."
   },
   {
     q: "How far in advance should I book my photoshoot?",
@@ -251,7 +251,7 @@ export default function Reviews() {
           "priceRange": "KES 15,000 – KES 120,000",
           "address": {
             "@type": "PostalAddress",
-            "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",
+            "streetAddress": "Diamond Plaza II, 4th Parklands Avenue, Parklands",
             "addressLocality": "Nairobi",
             "addressRegion": "Nairobi County",
             "addressCountry": "KE"
@@ -737,7 +737,7 @@ export default function Reviews() {
               Book Your Photoshoot
             </Link>
             <Link
-              to="/pricing"
+              to="/pricing-plans"
               className="btn btn-outline"
               style={{
                 borderColor: "rgba(255, 255, 255, 0.75)",
