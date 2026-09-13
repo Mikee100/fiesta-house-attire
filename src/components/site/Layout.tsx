@@ -1,6 +1,7 @@
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SEO from "./SEO";
+import FloatingReviewsWidget from "./FloatingReviewsWidget";
 import { useLocation } from "react-router-dom";
 
 interface LayoutProps {
@@ -46,6 +47,7 @@ const Layout: React.FC<LayoutProps> = ({
       <Navbar />
       <main>{children}</main>
       <Footer />
+      <FloatingReviewsWidget />
 
       {/* Fixed Social Media Bar */}
       <style>{`
