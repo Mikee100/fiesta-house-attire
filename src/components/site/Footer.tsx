@@ -133,7 +133,6 @@ const Footer = () => {
                 { to: "/maternity-photoshoot", label: "Nairobi Studio Experience" },
                 { to: "/maternity-gowns", label: "Curated Atelier Gowns" },
                 { to: "/portfolio", label: "Portfolio Galleries" },
-                { to: "/reviews", label: "Client Reviews & Stories" },
                 { to: "/pricing", label: "Packages & Rates" },
                 { to: "/about", label: "About Fiesta House" },
                 { to: "/contact", label: "Book Your Shoot" },
@@ -257,7 +256,8 @@ const Footer = () => {
           }}
         >
           <span>© 2026 FIESTA HOUSE MATERNITY · DIAMOND PLAZA II, PARKLANDS, NAIROBI</span>
-          <div style={{ display: "flex", gap: "1.5rem" }}>
+          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", flexWrap: "wrap" }}>
+            <Link to="/reviews" style={{ color: "white", textDecoration: "none" }}>Client Reviews</Link>
             <Link to="/privacy-policy" style={{ color: "white", textDecoration: "none" }}>Privacy Policy</Link>
             <span>info@fiestahouseattire.com</span>
           </div>
