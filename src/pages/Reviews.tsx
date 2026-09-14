@@ -544,7 +544,7 @@ export default function Reviews() {
               Book Your Photoshoot
             </Link>
             <Link
-              to="/pricing-plans"
+              to="/session-packages"
               className="btn btn-outline"
               style={{
                 borderColor: "rgba(255, 255, 255, 0.75)",

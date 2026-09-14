@@ -331,7 +331,7 @@ const PortfolioCategory = () => {
                 </Link>
               )}
               <Link
-                to="/pricing-plans"
+                to="/session-packages"
                 className="btn btn-outline"
                 style={{
                   borderColor: "var(--magenta)",

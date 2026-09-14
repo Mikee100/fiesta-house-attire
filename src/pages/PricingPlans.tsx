@@ -79,7 +79,7 @@ const PricingPlans = () => {
           "@type": "BreadcrumbList",
           "itemListElement": [
             { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
-            { "@type": "ListItem", "position": 2, "name": "Pricing Plans", "item": "https://www.fiestahousematernity.com/pricing-plans" }
+            { "@type": "ListItem", "position": 2, "name": "Pricing Plans", "item": "https://www.fiestahousematernity.com/session-packages" }
           ]
         })}
       </script>
@@ -442,7 +442,7 @@ const PricingPlans = () => {
                  Surprise an expectant mother with a gift that lasts a lifetime. Purchase any Edition above as a gift voucher for someone you love.
                </p>
                <Link
-                 to="/pricing"
+                 to="/gift-vouchers"
                  className="btn"
                  style={{ backgroundColor: "white", color: "var(--dark)", padding: "1.5rem 4rem", fontWeight: "700", borderRadius: "100px" }}
                >

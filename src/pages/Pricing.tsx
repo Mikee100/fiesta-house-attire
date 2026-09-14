@@ -92,7 +92,7 @@ const Pricing = () => {
           "@type": "BreadcrumbList",
           "itemListElement": [
             { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
-            { "@type": "ListItem", "position": 2, "name": "Gift Vouchers", "item": "https://www.fiestahousematernity.com/pricing" }
+            { "@type": "ListItem", "position": 2, "name": "Gift Vouchers", "item": "https://www.fiestahousematernity.com/gift-vouchers" }
           ]
         })}
       </script>
@@ -105,7 +105,7 @@ const Pricing = () => {
             <h1 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", marginTop: "0.8rem", marginBottom: "1rem" }}>Gift Vouchers</h1>
             <div style={{ width: "120px", height: "4px", backgroundColor: "var(--sky-blue)", margin: "0 auto 2rem" }}></div>
             <p style={{ maxWidth: "700px", margin: "0 auto", fontSize: "1.1rem", color: "var(--muted-foreground)" }}>
-              Add any Edition to your cart as a gift voucher for someone you love. Every session is a luxury experience tailored to celebrate motherhood. Prefer to browse first? <Link to="/pricing-plans" style={{ color: "var(--magenta)", fontWeight: 600 }}>View our Pricing Plans</Link>.
+              Add any Edition to your cart as a gift voucher for someone you love. Every session is a luxury experience tailored to celebrate motherhood. Prefer to browse first? <Link to="/session-packages" style={{ color: "var(--magenta)", fontWeight: 600 }}>View our Pricing Plans</Link>.
             </p>
           </div>
 
@@ -468,7 +468,7 @@ const Pricing = () => {
                  Surprise an expectant mother with a gift that lasts a lifetime. Our luxury photoshoot vouchers are the most cherished gifts at baby showers across Nairobi.
                </p>
                <Link 
-                 to="/pricing-plans" 
+                 to="/session-packages" 
                  className="btn" 
                  style={{ backgroundColor: "white", color: "var(--dark)", padding: "1.5rem 4rem", fontWeight: "700", borderRadius: "100px" }}
                >
