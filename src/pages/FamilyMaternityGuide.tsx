@@ -259,7 +259,7 @@ export default function FamilyMaternityGuide() {
               <Link to="/contact">Reserve a Family Session</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 rounded-full px-8 py-6">
-              <Link to="/pricing-plans">View Package Rates</Link>
+              <Link to="/session-packages">View Package Rates</Link>
             </Button>
           </div>
         </div>

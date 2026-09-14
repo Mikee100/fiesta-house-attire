@@ -385,7 +385,7 @@ export default function MaternityPhotoshootNairobi() {
             </Link>
 
             <Link
-              to="/pricing-plans"
+              to="/session-packages"
               className="p-6 bg-white rounded-2xl border border-[#F1E4EC] hover:border-[#660032] transition-colors group"
             >
               <Sparkles className="w-6 h-6 text-[#660032] mb-3 group-hover:scale-110 transition-transform" />
@@ -465,7 +465,7 @@ export default function MaternityPhotoshootNairobi() {
               size="lg"
               className="border-white/30 text-white hover:bg-white/10 px-8 py-6 rounded-full text-base"
             >
-              <Link to="/pricing-plans">View Session Rates & Packages</Link>
+              <Link to="/session-packages">View Session Rates & Packages</Link>
             </Button>
           </div>
         </div>

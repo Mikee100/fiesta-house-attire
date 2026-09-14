@@ -1362,7 +1362,9 @@ app.get('/admin/analytics/funnel', requireAdminAuth, async (req, res) => {
           FROM sessions s
           JOIN in_range e ON e.session_id = s.session_id
           WHERE e.event_name = 'package_click'
-             OR e.page_url LIKE '/pricing%') AS pricing_interest,
+             OR e.page_url LIKE '/pricing%'
+             OR e.page_url LIKE '/session-packages%'
+             OR e.page_url LIKE '/gift-vouchers%') AS pricing_interest,
          (SELECT COUNT(DISTINCT s.session_id)::int
           FROM sessions s
           JOIN in_range e ON e.session_id = s.session_id
@@ -1905,7 +1907,9 @@ app.get('/admin/analytics/packages', requireAdminAuth, async (req, res) => {
          FROM events
          WHERE created_at >= $1 AND created_at <= $2
            AND event_name = 'page_view'
-           AND page_url LIKE '/pricing%'`,
+           AND (page_url LIKE '/pricing%'
+             OR page_url LIKE '/session-packages%'
+             OR page_url LIKE '/gift-vouchers%')`,
         [from.toISOString(), to.toISOString()]
       ),
       pool.query(
@@ -1925,7 +1929,11 @@ app.get('/admin/analytics/packages', requireAdminAuth, async (req, res) => {
          FROM events
          WHERE created_at >= $1 AND created_at <= $2
            AND event_name = 'whatsapp_click'
-           AND (page_url LIKE '/pricing%' OR label LIKE '%pricing%' OR label LIKE '%package%')`,
+           AND (page_url LIKE '/pricing%'
+             OR page_url LIKE '/session-packages%'
+             OR page_url LIKE '/gift-vouchers%'
+             OR label LIKE '%pricing%'
+             OR label LIKE '%package%')`,
         [from.toISOString(), to.toISOString()]
       ),
     ]);
@@ -4381,8 +4389,8 @@ const STATIC_ROUTES = [
   { path: '/reviews', priority: '0.8', changefreq: 'weekly' },
   { path: '/portfolio', priority: '0.8', changefreq: 'weekly' },
   { path: '/maternity-gowns', priority: '0.8', changefreq: 'weekly' },
-  { path: '/pricing', priority: '0.8', changefreq: 'monthly' },
-  { path: '/pricing-plans', priority: '0.8', changefreq: 'monthly' },
+  { path: '/gift-vouchers', priority: '0.8', changefreq: 'monthly' },
+  { path: '/session-packages', priority: '0.8', changefreq: 'monthly' },
   { path: '/blog', priority: '0.8', changefreq: 'weekly' },
   { path: '/videos', priority: '0.8', changefreq: 'weekly' },
   { path: '/experience', priority: '0.7', changefreq: 'monthly' },

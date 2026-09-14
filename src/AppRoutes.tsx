@@ -2,7 +2,7 @@
  * AppRoutes — extracted route tree used by both App.tsx (client) and entry-server.tsx (SSG).
  * Keeping routes in one place avoids duplication between browser and server renders.
  */
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 import LuxuryRouteLoader from "./components/site/LuxuryRouteLoader";
@@ -54,8 +54,10 @@ const AppRoutes = () => (
       <Route path="/portfolio" element={<Portfolio />} />
       <Route path="/portfolio/:id" element={<PortfolioCategory />} />
       <Route path="/experience" element={<Experience />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/pricing-plans" element={<PricingPlans />} />
+      <Route path="/gift-vouchers" element={<Pricing />} />
+      <Route path="/session-packages" element={<PricingPlans />} />
+      <Route path="/pricing" element={<Navigate to="/gift-vouchers" replace />} />
+      <Route path="/pricing-plans" element={<Navigate to="/session-packages" replace />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />

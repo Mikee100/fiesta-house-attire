@@ -17,7 +17,7 @@ const Checkout = () => {
   });
 
   if (cart.length === 0) {
-    navigate('/pricing');
+    navigate('/gift-vouchers');
     return null;
   }
 
