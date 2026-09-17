@@ -594,9 +594,9 @@ const initShopDb = async () => {
         images_count: "15 final edited photos",
         outfits_count: "4 studio outfits + styling",
         color: "#B84FA0",
-        features: ["Professional makeup", "1 styled wig", "8x8 hardcover photobook"],
+        features: ["Professional makeup", "8x8 hardcover photobook"],
         popular: false,
-        description: "A defining Edition for the woman ready to hold this season in her hands. Two and a half hours, four studio outfits, fifteen photos finished to editorial standard, a styled wig, and an 8x8 hardcover photobook."
+        description: "A defining Edition for the woman ready to hold this season in her hands. Two and a half hours, four studio outfits, fifteen photos finished to editorial standard, and an 8x8 hardcover photobook."
       },
       {
         name: "The Queen",
