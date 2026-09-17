@@ -1,5 +1,6 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Layout from "@/components/site/Layout";
 
 const heroImg = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg";
@@ -9,7 +10,7 @@ const expImg2 = "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/publ
 
 const stats = [
   { num: "500", suffix: "+", label: "Sessions Photographed" },
-  { num: "5",   suffix: "â˜…", label: "Client Satisfaction" },
+  { num: "5",   suffix: "+", label: "Client Satisfaction" },
   { num: "6",   suffix: "+", label: "Years in Nairobi" },
 ];
 
@@ -98,10 +99,20 @@ export default function About() {
 
   return (
     <Layout
-      title="About Fiesta House | Luxury Maternity Photography Nairobi"
-      description="Learn about Fiesta House Attire, Nairobi's maternity studio where motherhood meets intentional artistry."
-      keywords="about fiesta house, maternity photography nairobi, pregnancy photoshoot studio kenya"
+      title="About Fiesta House Maternity | Our Story, Team & Philosophy"
+      description="Discover the story of Fiesta House Maternity: Nairobi's premier luxury maternity photography sanctuary founded to honor motherhood through intentional fine art, couture gowns, and an all-female team."
+      keywords="about fiesta house maternity, fiesta house story, nairobi maternity sanctuary, all-female maternity photography team, fiesta house philosophy"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "About", "item": "https://www.fiestahousematernity.com/about" }
+          ]
+        })}
+      </script>
       <style>{`
         .about-fade {
           opacity: 0;
@@ -207,100 +218,89 @@ export default function About() {
         }
       `}</style>
 
-      {/* â”€â”€ HERO â”€â”€ */}
+      {/* ── HERO ── */}
       <section
         style={{
-          paddingTop: "120px",
-          minHeight: "60vh",
+          position: "relative",
+          minHeight: "75vh",
           display: "flex",
           alignItems: "flex-end",
-          position: "relative",
+          padding: "clamp(6rem, 12vw, 10rem) clamp(1.5rem, 5vw, 4rem) clamp(3rem, 6vw, 5rem)",
+          backgroundColor: "#1C1C1A",
           overflow: "hidden",
-          background: "var(--cream, #FAF7F2)",
         }}
       >
         <img
           src={heroImg}
-          alt="Fiesta House maternity portrait"
+          alt="Fiesta House studio atmosphere"
+          fetchPriority="high"
+          loading="eager"
+          decoding="async"
           style={{
             position: "absolute",
             inset: 0,
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            opacity: 0.12,
+            opacity: 0.35,
+            transform: "scale(1.04)",
+            transition: "transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         />
-        {/* watermark */}
-        <span
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: "80px",
-            right: "-2rem",
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: "clamp(8rem, 18vw, 16rem)",
-            fontWeight: 300,
-            color: "rgba(44,44,42,0.04)",
-            lineHeight: 1,
-            userSelect: "none",
-            pointerEvents: "none",
-          }}
-        >
-          ABOUT
-        </span>
-
         <div
           style={{
-            width: "100%",
-            maxWidth: "1100px",
-            margin: "0 auto",
-            padding: "0 clamp(1.5rem, 5vw, 3rem) 5rem",
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(to top, rgba(28,28,26,0.95) 0%, rgba(28,28,26,0.4) 60%, rgba(28,28,26,0.2) 100%)",
           }}
-        >
-          <div className="about-fade" ref={ref}>
-            <div
-              style={{
-                fontSize: "0.68rem",
-                letterSpacing: "0.35em",
-                textTransform: "uppercase",
-                color: "var(--magenta, #660032)",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "1rem",
-              }}
-            >
-              <span style={{ display: "block", width: "2rem", height: "1px", background: "var(--magenta, #660032)" }} />
-              Our Story
-            </div>
-            <h1
-              style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: "clamp(2.8rem, 5.5vw, 5.5rem)",
-                fontWeight: 300,
-                lineHeight: 1.08,
-                marginBottom: "1.5rem",
-              }}
-            >
-              Where{" "}
-              <em style={{ fontStyle: "italic", color: "var(--magenta, #660032)" }}>
-                motherhood
-              </em>
-              <br />
-              meets artistry
-            </h1>
-            <p style={{ fontSize: "0.9rem", lineHeight: 1.8, color: "var(--muted, #7A7873)", maxWidth: "38ch", fontWeight: 300 }}>
-              Nairobi's premier luxury maternity studio - crafting timeless portraits that celebrate the beauty, power, and grace of pregnancy.
-            </p>
-          </div>
+        />
+
+        <div style={{ position: "relative", zIndex: 1, maxWidth: "800px" }}>
+          <p
+            style={{
+              fontSize: "0.72rem",
+              letterSpacing: "0.3em",
+              textTransform: "uppercase",
+              color: "var(--sky-blue, #5B9BD5)",
+              marginBottom: "1rem",
+              fontWeight: 500,
+            }}
+          >
+            The Studio & Story
+          </p>
+          <h1
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: "clamp(2.6rem, 6vw, 5.2rem)",
+              fontWeight: 300,
+              lineHeight: 1.08,
+              color: "#FFFFFF",
+              marginBottom: "1.5rem",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Where motherhood meets fine art.
+          </h1>
+          <p
+            style={{
+              fontSize: "clamp(0.95rem, 1.5vw, 1.15rem)",
+              color: "rgba(255,255,255,0.72)",
+              maxWidth: "560px",
+              lineHeight: 1.8,
+              fontWeight: 300,
+            }}
+          >
+            Fiesta House Maternity is Nairobi's dedicated luxury sanctuary for expecting mothers. We don't just photograph pregnancy - we honour it.
+          </p>
         </div>
       </section>
 
+      {/* ── STATS BAR ── */}
       <section
         style={{
-          background: "#330B25",
-          padding: "2.5rem clamp(1.5rem, 5vw, 3rem)",
+          borderBottom: "1px solid rgba(44,44,42,0.1)",
+          backgroundColor: "#FFFFFF",
+          padding: "2.5rem clamp(1.5rem, 5vw, 4rem)",
         }}
       >
         <div
@@ -308,8 +308,8 @@ export default function About() {
             maxWidth: "1200px",
             margin: "0 auto",
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "1.5rem",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "2rem",
           }}
         >
           {stats.map((s, i) => (
@@ -317,54 +317,40 @@ export default function About() {
               <div
                 style={{
                   fontFamily: "'Cormorant Garamond', serif",
-                  fontSize: "clamp(2.2rem, 6vw, 3.5rem)",
-                  fontWeight: 300,
+                  fontSize: "clamp(2.4rem, 4vw, 3.4rem)",
+                  fontWeight: 400,
+                  color: "var(--magenta, #660032)",
                   lineHeight: 1,
-                  color: "#FFFFFF",
                 }}
               >
                 {s.num}
-                <span style={{ fontSize: "1.5rem", color: "#B09345" }}>{s.suffix}</span>
+                <span style={{ fontSize: "1.8rem", color: "var(--sky-blue, #5B9BD5)" }}>{s.suffix}</span>
               </div>
-              <div
-                style={{
-                  fontSize: "0.68rem",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                  color: "#B09345",
-                  marginTop: "0.5rem",
-                }}
-              >
+              <p style={{ fontSize: "0.78rem", letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--muted, #7A7873)", marginTop: "0.4rem" }}>
                 {s.label}
-              </div>
+              </p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* â”€â”€ PHILOSOPHY â”€â”€ */}
+      {/* ── PHILOSOPHY QUOTE ── */}
       <section
         style={{
-          background: "#2C2C2A",
-          color: "white",
-          padding: "8rem clamp(1.5rem, 5vw, 3rem)",
+          backgroundColor: "var(--magenta, #660032)",
+          color: "#FFFFFF",
+          padding: "clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem)",
           textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
         }}
       >
-        <div
-          className="about-fade"
-          ref={ref}
-          style={{ maxWidth: "900px", margin: "0 auto", position: "relative", zIndex: 1 }}
-        >
-          <p style={{ fontSize: "0.68rem", letterSpacing: "0.35em", textTransform: "uppercase", color: "#C9A96E", marginBottom: "2.5rem" }}>
+        <div style={{ maxWidth: "780px", margin: "0 auto" }}>
+          <p style={{ fontSize: "0.68rem", letterSpacing: "0.35em", textTransform: "uppercase", color: "var(--sky-blue-tint, #D6E8F7)", marginBottom: "2rem" }}>
             Our Philosophy
           </p>
           <blockquote
             style={{
               fontFamily: "'Cormorant Garamond', serif",
-              fontSize: "clamp(1.6rem, 3.5vw, 2.8rem)",
+              fontSize: "clamp(1.5rem, 2.8vw, 2.4rem)",
               fontWeight: 300,
               fontStyle: "italic",
               lineHeight: 1.45,
@@ -376,12 +362,12 @@ export default function About() {
             "Pregnancy is not just a moment in time - it is a transformation. We are here to make sure you never forget how breathtaking it looked."
           </blockquote>
           <p style={{ fontSize: "0.7rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
-            - Fiesta House Attire
+            - Fiesta House Maternity
           </p>
         </div>
       </section>
 
-      {/* â”€â”€ STORY â”€â”€ */}
+      {/* ── STORY ── */}
       <section style={{ padding: "8rem clamp(1.5rem, 5vw, 3rem)", maxWidth: "1200px", margin: "0 auto" }}>
         <div
           style={{
@@ -418,10 +404,10 @@ export default function About() {
           </div>
           <div className="about-fade" ref={ref} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             {[
-              <>Fiesta House Attire was born from a simple belief: <strong>every expecting mother deserves to feel like the most beautiful woman in the world.</strong> We are a Nairobi-based luxury maternity photography studio dedicated to creating portraits that are as timeless as the love you carry.</>,
-              <>Our studio is a sanctuary - a calm, elegantly styled space where you can arrive, exhale, and be celebrated. We handle everything: the wardrobe, the lighting, the posing, the atmosphere. Your only job is to show up and feel.</>,
-              <>We work with a <strong>curated wardrobe of flowing gowns, silks, and wraps</strong> sourced specifically for maternity photography. Every piece is chosen to flatter the beauty of a pregnant body, not conceal it.</>,
-              <>Whether you are 28 weeks or 36 weeks, a first-time mother or adding to your family - <strong>this session is yours.</strong> We photograph women of every background, body type, and story with equal care and reverence.</>,
+              <>Fiesta House Maternity (operating as <strong>Fiesta House Attire</strong>) was born from a simple belief: <strong>every expecting mother deserves to feel like the most beautiful woman in the world.</strong> We are a Nairobi-based luxury maternity photography studio dedicated to creating portraits that are as timeless as the love you carry.</>,
+              <>Our studio at Diamond Plaza II in Parklands is a private sanctuary—a calm, climate-controlled space where you can arrive, exhale, and be celebrated. We handle everything: the bespoke physical sets, the couture gowns, professional hair and makeup, and gentle posing. Your only job is to show up and glow.</>,
+              <>The gowns in our atelier are <strong>complimentary photoshoot looks</strong> curated specifically for maternity photography. We do not operate as an off-the-rack dress store; instead, we provide a private wardrobe of over 300 designer gowns and trailing silks for you to select and wear during your session.</>,
+              <>Whether you are 28 weeks or 36 weeks, celebrating solo or bringing your husband and older children—<strong>this experience is yours.</strong> We photograph mothers with deep respect, gentle pacing, and authentic artistry.</>,
             ].map((text, i) => (
               <p key={i} style={{ fontSize: "0.95rem", lineHeight: 1.9, color: "var(--muted, #7A7873)", fontWeight: 300 }}>
                 {text}
@@ -565,12 +551,13 @@ export default function About() {
 
   {/* Nav arrows */}
   <div style={{ display: "flex", gap: "8px", marginTop: "2rem", justifyContent: "flex-end" }}>
-    {["â†", "â†’"].map((arrow, i) => (
+    {[0, 1].map((i) => (
       <button key={i} onClick={() => setActiveStep(i === 0 ? (activeStep + 3) % 4 : (activeStep + 1) % 4)}
-        style={{ width: "36px", height: "36px", borderRadius: "50%", border: "0.5px solid rgba(44,44,42,0.2)", background: "transparent", cursor: "pointer", fontSize: "16px", color: "var(--muted)", transition: "all 0.2s" }}
+        style={{ width: "36px", height: "36px", borderRadius: "50%", border: "0.5px solid rgba(44,44,42,0.2)", background: "transparent", cursor: "pointer", color: "var(--muted)", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 }}
         onMouseEnter={e => { e.currentTarget.style.background = "var(--magenta)"; e.currentTarget.style.color = "white"; e.currentTarget.style.borderColor = "var(--magenta)"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.borderColor = "rgba(44,44,42,0.2)"; }}
-      >{arrow}</button>
+        aria-label={i === 0 ? "Previous step" : "Next step"}
+      >{i === 0 ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}</button>
     ))}
   </div>
 </section>
@@ -604,6 +591,7 @@ export default function About() {
           </h2>
           <Link
             to="/contact"
+            data-track="booking_click:about_final_cta"
             style={{
               display: "inline-block",
               padding: "1rem 3rem",

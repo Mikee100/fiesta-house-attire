@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import SEO from "@/components/site/SEO";
 import { 
@@ -7,82 +8,20 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion";
-import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck } from "lucide-react";
+import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck, ShoppingCart, ArrowUpRight, Palette } from "lucide-react";
+import { toast } from "sonner";
+import * as api from "@/lib/api";
+import { useCart } from "@/context/CartContext";
 
-const packages = [
-  { 
-    name: "Standard", 
-    price: "10,000", 
-    duration: "1 hr 30 min", 
-    color: "var(--sky-blue)", 
-    images: "6 edited soft copy images",
-    outfits: "2 gowns & styling",
-    features: ["Professional makeup", "Full gown access", "Studio session"],
-    description: "Ideal for a quick, elegant session focused on capturing the essence of your journey."
-  },
-  { 
-    name: "Economy", 
-    price: "15,000", 
-    duration: "2 hrs", 
-    color: "var(--magenta)", 
-    images: "12 edited soft copy images",
-    outfits: "3 gowns & styling",
-    features: ["Professional makeup", "Full gown access", "Studio session"],
-    description: "Our most balanced package, offering more time and a wider variety of looks."
-  },
-  { 
-    name: "Executive", 
-    price: "20,000", 
-    duration: "2 hrs 30 min", 
-    color: "var(--sky-blue)", 
-    images: "15 edited soft copy images",
-    outfits: "4 gowns & styling",
-    features: ["Professional makeup", "Full gown access", "1 A3 Mount included", "Studio session"],
-    description: "Level up with more outfits and a stunning A3 mount for your wall."
-  },
-  { 
-    name: "Gold", 
-    price: "30,000", 
-    duration: "2 hrs 30 min", 
-    color: "var(--magenta)", 
-    images: "20 edited soft copy images",
-    outfits: "4 gowns & styling",
-    popular: true,
-    features: ["Professional makeup", "8×8\" hardpage photobook", "Full gown access", "Studio session"],
-    description: "Capture your story in a high-quality photobook that will last generations."
-  },
-  { 
-    name: "Platinum", 
-    price: "35,000", 
-    duration: "2 hrs 30 min", 
-    color: "var(--sky-blue)", 
-    images: "25 edited soft copy images",
-    outfits: "4 gowns & styling",
-    popular: true,
-    features: ["Professional makeup", "Customized Balloon Backdrop", "1 A3 mount included", "Full gown access"],
-    description: "Luxury meets artistry with a customized backdrop tailored to your style."
-  },
-  { 
-    name: "VIP", 
-    price: "45,000", 
-    duration: "3 hrs 30 min", 
-    color: "var(--magenta)", 
-    images: "25 edited soft copy images",
-    outfits: "4 gowns & styling",
-    features: ["Professional makeup", "Customized Balloon Backdrop", "8×8\" hardpage photobook", "Extended session"],
-    description: "The ultimate luxury experience with every detail curated for perfection."
-  },
-  { 
-    name: "VVIP", 
-    price: "50,000", 
-    duration: "3 hrs 30 min", 
-    color: "var(--sky-blue)", 
-    images: "30 edited soft copy images",
-    outfits: "5 gowns & styling",
-    features: ["Professional makeup", "Styled Wig included", "Customized Balloon Backdrop", "8×8\" photobook + A3 mount"],
-    description: "Our most exclusive offering. Absolute luxury, more outfits, and premium styling."
-  },
-];
+const packagePositioning: Record<string, string> = {
+  "The Bloom": "For the mother in her becoming.",
+  "The Muse": "For the mother stepping into her glow.",
+  "The Icon": "For the mother who knows she is unforgettable.",
+  "The Legend": "For the mother writing her own story.",
+  "The Queen": "For the mother of her own kingdom.",
+  "The Empress": "For the mother claiming her throne.",
+  "The Goddess": "For the mother who is the moment.",
+};
 
 const faqs = [
   {
@@ -95,7 +34,7 @@ const faqs = [
   },
   {
     question: "How do I book a session?",
-    answer: "Booking is simple! Select your preferred package and click the 'Book via WhatsApp' button to chat with us. A deposit is required to secure your date."
+    answer: "Choose the Edition that feels right for you and enquire with our team. We will confirm availability, answer your questions, and guide you through securing your session date."
   },
   {
     question: "How long does it take to receive the images?",
@@ -108,132 +47,296 @@ const faqs = [
 ];
 
 const Pricing = () => {
+  const { addToCart } = useCart();
+  const [packages, setPackages] = useState<api.ShopPackage[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
+  const [packagesSource, setPackagesSource] = useState<api.ShopPackagesSource>('live');
+
+  const handleAddToCart = (pkg: api.ShopPackage) => {
+    addToCart({
+      id: pkg.id,
+      name: pkg.name,
+      price: Number(pkg.price || 0),
+      description: pkg.description,
+    });
+    toast.success(`${pkg.name} added to cart`);
+  };
+
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        const result = await api.fetchShopPackagesWithFallback();
+        setPackages(Array.isArray(result.data) ? result.data : []);
+        setPackagesSource(result.source);
+      } catch (error) {
+        setPackages([]);
+        setPackagesSource('empty');
+        toast.error("Failed to load packages");
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    loadPackages();
+  }, []);
+
   return (
     <Layout
-      title="Pricing & Packages | Luxury Maternity Photoshoot Nairobi"
-      description="Explore luxury maternity photoshoot pricing in Nairobi. 7 exclusive packages including designer gowns, professional makeup, and stunning studio photography at Fiesta House Attire."
-      keywords="maternity photoshoot nairobi, pregnancy photography pricing, luxury maternity shoot, baby bump photoshoot nairobi, fiesta house attire pricing"
+      title="Gift Vouchers | Maternity Photoshoot Gift Experiences Nairobi | Fiesta House Maternity"
+      description="Give the gift of a luxury maternity photoshoot. Add a Fiesta House Maternity Edition to your cart as a gift voucher for an expectant mother in Nairobi."
+      keywords="maternity photoshoot gift voucher, gift voucher Nairobi maternity, pregnancy photoshoot gift, fiesta house gift voucher"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Gift Vouchers", "item": "https://www.fiestahousematernity.com/gift-vouchers" }
+          ]
+        })}
+      </script>
 
       {/* Hero Section */}
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "4rem" }} className="fade-in">
-            <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Your Investment</span>
-            <h1 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", marginTop: "0.8rem", marginBottom: "1rem" }}>Packages & Rates</h1>
+            <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Gift An Experience</span>
+            <h1 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", marginTop: "0.8rem", marginBottom: "1rem" }}>Gift Vouchers</h1>
             <div style={{ width: "120px", height: "4px", backgroundColor: "var(--sky-blue)", margin: "0 auto 2rem" }}></div>
             <p style={{ maxWidth: "700px", margin: "0 auto", fontSize: "1.1rem", color: "var(--muted-foreground)" }}>
-              Choose a package that resonates with your vision. Every session is a luxury experience tailored to celebrate your motherhood.
+              Add any Edition to your cart as a gift voucher for someone you love. Every session is a luxury experience tailored to celebrate motherhood. Prefer to browse first? <Link to="/session-packages" style={{ color: "var(--magenta)", fontWeight: 600 }}>View our Pricing Plans</Link>.
             </p>
           </div>
 
           {/* Pricing Grid */}
-          <div style={{ 
+          <div id="packages" style={{ 
             display: "grid", 
             gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
             gap: "1.5rem" 
           }}>
-            {packages.map((pkg, i) => (
-              <div 
-                key={i} 
-                style={{ 
-                  padding: "2rem 1.2rem", 
-                  backgroundColor: pkg.popular ? "white" : "var(--bg)", 
-                  borderRadius: "16px",
-                  border: pkg.popular ? `2px solid ${pkg.color}` : "1px solid rgba(0,0,0,0.05)",
-                  boxShadow: pkg.popular ? "0 16px 32px rgba(0,0,0,0.08)" : "none",
-                  display: "flex",
-                  flexDirection: "column",
-                  transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
-                  position: "relative",
-                  overflow: "hidden"
-                }}
-                className="pricing-card"
-              >
-                {pkg.popular && (
-                  <div style={{ 
-                    position: "absolute", 
-                    top: "24px", 
-                    right: "24px", 
-                    backgroundColor: pkg.color, 
-                    color: "white", 
-                    padding: "0.4rem 1.2rem", 
-                    fontSize: "0.7rem", 
-                    textTransform: "uppercase", 
-                    letterSpacing: "0.1em",
-                    fontWeight: "700",
-                    borderRadius: "100px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem"
-                  }}>
-                    <Star size={12} fill="white" /> Popular
-                  </div>
-                )}
-                
-                <div style={{ marginBottom: "1.2rem" }}>
-                  <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.6rem", color: "var(--dark)" }}>{pkg.name}</h3>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "1rem" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: "600", color: pkg.color }}>Ksh</span>
-                    <span style={{ fontSize: "2.2rem", fontWeight: "300", color: "var(--dark)" }}>{pkg.price}</span>
-                  </div>
-                  <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", lineHeight: "1.5" }}>{pkg.description}</p>
+            {!loadingPackages && packagesSource !== 'live' && (
+              <div style={{ gridColumn: "1 / -1", marginBottom: "0.5rem" }}>
+                <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: "12px", padding: "0.85rem 1rem", fontSize: "0.9rem", color: "var(--muted-foreground)", backgroundColor: "#fff" }}>
+                  {packagesSource === 'cache'
+                    ? 'Showing saved package data while connection is unavailable.'
+                    : 'Showing fallback package data while live data is unavailable.'}
                 </div>
-
-                <div style={{ flexGrow: 1, marginBottom: "3rem" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${pkg.color}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: pkg.color }}>
-                        <Clock size={16} />
-                      </div>
-                      <span>{pkg.duration} session</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${pkg.color}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: pkg.color }}>
-                        <Image size={16} />
-                      </div>
-                      <span>{pkg.images}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
-                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: `${pkg.color}15`, display: "flex", alignItems: "center", justifyCenter: "center", color: pkg.color }}>
-                        <Shirt size={16} />
-                      </div>
-                      <span>{pkg.outfits}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
-                    <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: "700", marginBottom: "1rem", color: "var(--muted-foreground)" }}>Includes:</p>
-                    <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                      {pkg.features.map((feature, j) => (
-                        <li key={j} style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.8rem" }}>
-                          <Check size={14} style={{ color: pkg.color }} />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <a 
-                  href={`https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20book%20the%20${pkg.name}%20package.`} 
-                  className="btn" 
-                  style={{ 
-                    width: "100%", 
-                    backgroundColor: pkg.popular ? pkg.color : "var(--dark)", 
-                    color: "white",
-                    borderRadius: "12px",
-                    padding: "1.5rem",
-                    fontWeight: "600",
-                    display: "flex",
-                    gap: "0.8rem"
-                  }}
-                >
-                  Book via WhatsApp
-                </a>
               </div>
-            ))}
+            )}
+
+            {loadingPackages ? (
+              [1, 2, 3].map((skeleton) => (
+                <div
+                  key={skeleton}
+                  style={{
+                    minHeight: "360px",
+                    borderRadius: "16px",
+                    backgroundColor: "var(--bg)"
+                  }}
+                  className="animate-pulse"
+                />
+              ))
+            ) : packages.length === 0 ? (
+              <div style={{ gridColumn: "1 / -1", textAlign: "center", color: "var(--muted-foreground)", padding: "2.5rem 1rem" }}>
+                No packages available right now.
+              </div>
+            ) : (
+              packages.map((pkg) => {
+                const accentColor = pkg.color || "var(--sky-blue)";
+
+                return (
+                  <div
+                    key={pkg.id}
+                    style={{
+                      padding: "2rem 1.2rem",
+                      backgroundColor: pkg.popular ? "white" : "var(--bg)",
+                      borderRadius: "16px",
+                      border: pkg.popular ? `2px solid ${accentColor}` : "1px solid rgba(0,0,0,0.05)",
+                      boxShadow: pkg.popular ? "0 16px 32px rgba(0,0,0,0.08)" : "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
+                      position: "relative",
+                      overflow: "hidden"
+                    }}
+                    className="pricing-card"
+                  >
+                    {pkg.popular && (
+                      <div style={{
+                        position: "absolute",
+                        top: "24px",
+                        right: "24px",
+                        backgroundColor: accentColor,
+                        color: "white",
+                        padding: "0.4rem 1.2rem",
+                        fontSize: "0.7rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.1em",
+                        fontWeight: "700",
+                        borderRadius: "100px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem"
+                      }}>
+                        <Star size={12} fill="white" /> Most Loved
+                      </div>
+                    )}
+
+                    <div style={{ marginBottom: "1.2rem" }}>
+                      <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.6rem", color: "var(--plum)", fontWeight: 700 }}>{pkg.name}</h3>
+                      <p style={{ minHeight: "2.8rem", marginBottom: "1.25rem", fontSize: "0.95rem", fontStyle: "italic", color: "var(--magenta-tint)", lineHeight: "1.45" }}>
+                        {packagePositioning[pkg.name]}
+                      </p>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "1rem" }}>
+                        <span style={{ fontSize: "1rem", fontWeight: "600", color: accentColor }}>KSh</span>
+                        <span style={{ fontSize: "2.2rem", fontWeight: "300", color: "var(--dark)" }}>{Number(pkg.price || 0).toLocaleString("en-KE")}</span>
+                      </div>
+                      {pkg.description && (
+                        <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", lineHeight: "1.5" }}>{pkg.description}</p>
+                      )}
+                    </div>
+
+                    <div style={{ flexGrow: 1, marginBottom: "3rem" }}>
+                      <div style={{
+                        backgroundColor: "var(--plum)",
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "1.2rem",
+                        color: "white"
+                      }}>
+                        {pkg.duration && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--sky-blue)" }}>
+                              <Clock size={16} />
+                            </div>
+                            <span>{pkg.duration}</span>
+                          </div>
+                        )}
+                        {pkg.images_count && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--sky-blue)" }}>
+                              <Image size={16} />
+                            </div>
+                            <span>{pkg.images_count}</span>
+                          </div>
+                        )}
+                        {pkg.outfits_count && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.95rem" }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--sky-blue)" }}>
+                              <Shirt size={16} />
+                            </div>
+                            <span>{pkg.outfits_count}</span>
+                          </div>
+                        )}
+
+                        {Array.isArray(pkg.features) && pkg.features.length > 0 && (
+                          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                              {pkg.features.map((feature, j) => (
+                                <li key={`${pkg.id}-${j}`} style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.8rem" }}>
+                                  {/makeup/i.test(feature) ? (
+                                    <Palette size={14} style={{ color: "var(--sky-blue)" }} />
+                                  ) : (
+                                    <Check size={14} style={{ color: "var(--sky-blue)" }} />
+                                  )}
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddToCart(pkg)}
+                      data-track={`package_click:${pkg.name}`}
+                      className="btn"
+                      style={{
+                        width: "100%",
+                        backgroundColor: pkg.popular ? accentColor : "var(--dark)",
+                        color: "white",
+                        borderRadius: "12px",
+                        padding: "1.05rem 1.2rem",
+                        fontWeight: "600",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.75rem"
+                      }}
+                    >
+                      <ShoppingCart size={18} />
+                      <span>Add to Cart</span>
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
+
+          <section style={{ marginTop: "4rem", padding: "clamp(2rem, 5vw, 4rem) 0 0", borderTop: "1px solid rgba(0,0,0,0.12)" }}>
+            <div className="addons-header" style={{ display: "grid", gridTemplateColumns: "minmax(220px, 0.65fr) minmax(280px, 1.35fr)", gap: "2rem 5rem", alignItems: "end" }}>
+              <div>
+                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.75rem", fontWeight: 700 }}>Additional services</span>
+                <h2 className="display" style={{ fontSize: "clamp(2.25rem, 5vw, 3.5rem)", marginTop: "0.5rem", lineHeight: 1 }}>Add-ons</h2>
+              </div>
+              <p style={{ maxWidth: "520px", margin: 0, color: "var(--muted-foreground)", lineHeight: 1.7, fontSize: "1rem" }}>Enhance your Edition with considered details, arranged in advance with our team.</p>
+            </div>
+
+            <div className="addons-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginTop: "2.5rem" }}>
+              {[
+                {
+                  title: "Image & delivery",
+                  items: [
+                    ["Extra edited photo", "KSh 1,000 per photo"],
+                    ["Extra digital art edit", "KSh 3,000 per photo"],
+                    ["Raw files", "Quoted by package tier"],
+                  ],
+                },
+                {
+                  title: "Styling & wardrobe",
+                  items: [
+                    ["Extra outfit beyond package", "KSh 4,000 per outfit"],
+                    ["Extra professional makeup", "KSh 3,500 per session"],
+                    ["Fiesta House Power Suit, where not included", "KSh 10,000"],
+                    ["Fiesta House styled wig hire", "KSh 4,000 per wig - book in advance"],
+                    ["Wig styling only", "KSh 3,000 per wig - book in advance"],
+                  ],
+                },
+                {
+                  title: "Creative production",
+                  items: [
+                    ["Suspending Concept", "KSh 7,000"],
+                    ["Goddess Sculpture Set, where not included", "KSh 15,000"],
+                    ["Professional Reel", "Quoted by package tier - book in advance"],
+                  ],
+                },
+              ].map((group) => (
+                <div className="addon-card" key={group.title} style={{ padding: "1.5rem", background: "white", border: "1px solid rgba(0,0,0,0.08)", borderTop: "3px solid var(--sky-blue)" }}>
+                  <h3 style={{ margin: "0 0 1rem", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--dark)" }}>{group.title}</h3>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {group.items.map(([name, price]) => (
+                      <div key={name} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", alignItems: "start", padding: "0.95rem 0", borderTop: "1px solid rgba(0,0,0,0.07)", fontSize: "0.9rem", lineHeight: 1.45 }}>
+                        <span>{name}</span>
+                        <strong style={{ maxWidth: "155px", textAlign: "right", fontWeight: 600, color: "var(--magenta)" }}>{price}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bespoke-panel" style={{ marginTop: "1rem", padding: "clamp(1.5rem, 4vw, 2.5rem)", background: "var(--dark)", color: "white", display: "grid", gridTemplateColumns: "minmax(220px, 0.8fr) minmax(280px, 1.2fr) auto", gap: "1.5rem 3rem", alignItems: "center" }}>
+              <div>
+                <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.14em", fontSize: "0.72rem", fontWeight: 700 }}>By consultation</span>
+                <h3 className="display" style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", margin: "0.45rem 0 0", color: "white" }}>Bespoke Experiences</h3>
+              </div>
+              <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", lineHeight: 1.65 }}>For the mother whose vision does not fit inside a package, we design custom experiences by consultation. Reach out to our team to begin the conversation.</p>
+              <Link to="/contact?package=Bespoke%20Experience" className="btn" style={{ background: "white", color: "var(--dark)", whiteSpace: "nowrap", padding: "0.9rem 1.2rem" }}>Speak With Our Team <ArrowUpRight size={17} /></Link>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -244,7 +347,7 @@ const Pricing = () => {
             <div className="fade-in">
               <h2 className="display" style={{ fontSize: "3.5rem", marginBottom: "2rem" }}>The Luxury Experience</h2>
               <p style={{ fontSize: "1.1rem", lineHeight: "1.8", color: "var(--muted-foreground)" }}>
-                At Fiesta House Attire, we believe maternity photography is more than just taking pictures. It's about celebrating the strength, beauty, and grace of expectant mothers.
+                At Fiesta House Maternity, we believe maternity photography is more than just taking pictures. It's about celebrating the strength, beauty, and grace of expectant mothers.
               </p>
               <div style={{ marginTop: "3rem", display: "flex", flexDirection: "column", gap: "2rem" }}>
                 <div style={{ display: "flex", gap: "1.5rem" }}>
@@ -284,11 +387,11 @@ const Pricing = () => {
                   </li>
                   <li style={{ display: "flex", gap: "1rem", fontSize: "1rem" }}>
                     <ShieldCheck className="text-magenta" size={20} />
-                    <span>Rescheduling must be done at least 48 hours in advance.</span>
+                    <span>Rescheduling must be done at least 72 hours in advance.</span>
                   </li>
                   <li style={{ display: "flex", gap: "1rem", fontSize: "1rem" }}>
                     <ShieldCheck className="text-magenta" size={20} />
-                    <span>Fiesta House Attire owns the copyrights to all images produced.</span>
+                    <span>Fiesta House Maternity owns the copyrights to all images produced.</span>
                   </li>
                   <li style={{ display: "flex", gap: "1rem", fontSize: "1rem" }}>
                     <ShieldCheck className="text-magenta" size={20} />
@@ -322,6 +425,24 @@ const Pricing = () => {
                 </AccordionItem>
               ))}
             </Accordion>
+
+            <div style={{ textAlign: "center", marginTop: "3rem" }}>
+              <Link
+                to="/faq"
+                style={{
+                  display: "inline-block",
+                  padding: "0.85rem 2.2rem",
+                  border: "1px solid var(--magenta)",
+                  borderRadius: "100px",
+                  color: "var(--magenta)",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  textDecoration: "none",
+                }}
+              >
+                View Full Maternity Photoshoot FAQ Hub →
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -346,13 +467,13 @@ const Pricing = () => {
                <p style={{ maxWidth: "700px", margin: "0 auto 4rem", fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8 }}>
                  Surprise an expectant mother with a gift that lasts a lifetime. Our luxury photoshoot vouchers are the most cherished gifts at baby showers across Nairobi.
                </p>
-               <a 
-                 href="https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20enquire%20about%20a%20gift%20voucher." 
+               <Link 
+                 to="/session-packages" 
                  className="btn" 
                  style={{ backgroundColor: "white", color: "var(--dark)", padding: "1.5rem 4rem", fontWeight: "700", borderRadius: "100px" }}
                >
-                 Purchase a Gift Voucher
-               </a>
+                 Compare Full Pricing Plans
+               </Link>
             </div>
           </div>
         </div>
@@ -362,8 +483,8 @@ const Pricing = () => {
       <section style={{ padding: "4rem 0", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
         <div className="container">
           <div style={{ textAlign: "center", color: "var(--muted-foreground)", fontSize: "0.85rem" }}>
-            <p style={{ marginBottom: "0.5rem" }}>© 2026 Fiesta House Attire. All photography rights reserved.</p>
-            <p>Fiesta House Attire owns the copyrights to all images and has exclusive right to use, edit, print, and distribute images produced during sessions.</p>
+            <p style={{ marginBottom: "0.5rem" }}>© 2026 Fiesta House Maternity. All photography rights reserved.</p>
+            <p>Fiesta House Maternity owns the copyrights to all images and has exclusive right to use, edit, print, and distribute images produced during sessions.</p>
           </div>
         </div>
       </section>

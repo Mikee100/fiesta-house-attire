@@ -1,6 +1,7 @@
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SEO from "./SEO";
+import FloatingReviewsWidget from "./FloatingReviewsWidget";
 import { useLocation } from "react-router-dom";
 
 interface LayoutProps {
@@ -46,6 +47,7 @@ const Layout: React.FC<LayoutProps> = ({
       <Navbar />
       <main>{children}</main>
       <Footer />
+      <FloatingReviewsWidget />
 
       {/* Fixed Social Media Bar */}
       <style>{`
@@ -223,6 +225,7 @@ const Layout: React.FC<LayoutProps> = ({
         href="https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Attire,%20I'd%20like%20to%20enquire%20about%20a%20maternity%20photoshoot%20session." 
         target="_blank" 
         rel="noreferrer"
+        data-track="whatsapp_click:floating_button"
         className="btn-whatsapp"
         style={{
           position: "fixed",

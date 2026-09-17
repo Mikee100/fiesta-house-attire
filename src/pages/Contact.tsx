@@ -1,12 +1,94 @@
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import Layout from "@/components/site/Layout";
+import * as api from "@/lib/api";
+import { trackEvent } from "@/lib/tracking";
 
 const Contact = () => {
+  const [searchParams] = useSearchParams();
+  const selectedPackage = searchParams.get("package") || "The Bloom";
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+    preferred_date: "",
+    package_interest: selectedPackage,
+    message: "",
+  });
+
+  const handleChange = (field: keyof typeof formData) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
+    try {
+      const result = await api.submitContactEnquiry(formData);
+      if (!result?.success) {
+        throw new Error(result?.error || "Failed to send enquiry");
+      }
+
+      trackEvent("contact_form_submit", formData.package_interest || "unspecified");
+
+      toast.success("Enquiry sent. We will contact you shortly.");
+      setFormData({
+        full_name: "",
+        phone: "",
+        email: "",
+        preferred_date: "",
+        package_interest: "The Bloom",
+        message: "",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to send enquiry";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <Layout
-      title="Contact & Booking | Fiesta House Attire Nairobi"
-      description="Book your luxury maternity photoshoot at Fiesta House Attire in Nairobi. Reach us for availability, package guidance, and personalized session planning."
-      keywords="contact fiesta house attire, book maternity photoshoot nairobi, maternity studio booking kenya"
+      title="Contact & Booking | Fiesta House Maternity Nairobi"
+      description="Book your luxury maternity photoshoot at Fiesta House Maternity in Nairobi. Reach us for availability, package guidance, and personalized session planning."
+      keywords="contact fiesta house maternity, book maternity photoshoot nairobi, maternity studio booking kenya"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Contact & Booking", "item": "https://www.fiestahousematernity.com/contact" }
+          ]
+        })}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          "name": "Contact & Booking - Fiesta House Maternity",
+          "description": "Book a luxury maternity photography session at Fiesta House Maternity in Nairobi.",
+          "url": "https://www.fiestahousematernity.com/contact",
+          "mainEntity": {
+            "@type": "PhotographyBusiness",
+            "name": "Fiesta House Maternity",
+            "telephone": "+254720111928",
+            "email": "info@fiestahousematernity.com",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Diamond Plaza II, 4th Parklands Avenue, Parklands",
+              "addressLocality": "Nairobi",
+              "addressCountry": "KE"
+            }
+          }
+        })}
+      </script>
       {/* Brand color hero bar */}
       <div
         style={{
@@ -33,7 +115,7 @@ const Contact = () => {
             className="display"
             style={{ fontSize: "clamp(3rem, 7vw, 5rem)", color: "var(--dark)", marginBottom: "0.5rem" }}
           >
-            {/* Book Your Session heading removed for minimalism */}
+            Book Your Session
           </h1>
           <div style={{ width: "80px", height: "4px", background: "linear-gradient(90deg, var(--sky-blue), var(--magenta))", borderRadius: "2px", marginTop: "1.5rem" }} />
         </div>
@@ -48,7 +130,7 @@ const Contact = () => {
                 Fill in the details below and we will get back to you to confirm availability.
               </p>
 
-              <form style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                   <label
                     style={{
@@ -63,6 +145,8 @@ const Contact = () => {
                   </label>
                   <input
                     type="text"
+                    value={formData.full_name}
+                    onChange={handleChange("full_name")}
                     style={{
                       padding: "1rem 1.2rem",
                       border: "2px solid rgba(110,193,228,0.3)",
@@ -89,6 +173,8 @@ const Contact = () => {
                     </label>
                     <input
                       type="tel"
+                      value={formData.phone}
+                      onChange={handleChange("phone")}
                       style={{
                         padding: "1rem 1.2rem",
                         border: "2px solid rgba(110,193,228,0.3)",
@@ -113,6 +199,8 @@ const Contact = () => {
                     </label>
                     <input
                       type="email"
+                      value={formData.email}
+                      onChange={handleChange("email")}
                       style={{
                         padding: "1rem 1.2rem",
                         border: "2px solid rgba(110,193,228,0.3)",
@@ -140,6 +228,8 @@ const Contact = () => {
                     </label>
                     <input
                       type="date"
+                      value={formData.preferred_date}
+                      onChange={handleChange("preferred_date")}
                       style={{
                         padding: "1rem 1.2rem",
                         border: "2px solid rgba(110,193,228,0.3)",
@@ -163,6 +253,8 @@ const Contact = () => {
                       Package of Interest
                     </label>
                     <select
+                      value={formData.package_interest}
+                      onChange={handleChange("package_interest")}
                       style={{
                         padding: "1rem 1.2rem",
                         border: "2px solid rgba(110,193,228,0.3)",
@@ -171,13 +263,14 @@ const Contact = () => {
                         fontSize: "1rem",
                       }}
                     >
-                      <option>Standard (10k)</option>
-                      <option>Economy (15k)</option>
-                      <option>Executive (20k)</option>
-                      <option>Gold (30k)</option>
-                      <option>Platinum (35k)</option>
-                      <option>VIP (45k)</option>
-                      <option>VVIP (50k)</option>
+                      <option>The Bloom</option>
+                      <option>The Muse</option>
+                      <option>The Icon</option>
+                      <option>The Legend</option>
+                      <option>The Queen</option>
+                      <option>The Empress</option>
+                      <option>The Goddess</option>
+                      <option>Bespoke Experience</option>
                     </select>
                   </div>
                 </div>
@@ -196,6 +289,8 @@ const Contact = () => {
                   </label>
                   <textarea
                     rows={4}
+                    value={formData.message}
+                    onChange={handleChange("message")}
                     style={{
                       padding: "1rem 1.2rem",
                       border: "2px solid rgba(110,193,228,0.3)",
@@ -210,6 +305,7 @@ const Contact = () => {
                 <button
                   type="submit"
                   className="btn"
+                  disabled={submitting}
                   style={{
                     width: "fit-content",
                     background: "linear-gradient(135deg, var(--magenta), #8B3A78)",
@@ -220,7 +316,7 @@ const Contact = () => {
                     boxShadow: "0 6px 20px rgba(184,79,160,0.35)",
                   }}
                 >
-                  Send Enquiry
+                  {submitting ? "Sending..." : "Send Enquiry"}
                 </button>
               </form>
             </div>
@@ -245,6 +341,7 @@ const Contact = () => {
                 />
                 <a
                   href="https://wa.me/254720111928"
+                  data-track="whatsapp_click:contact_page"
                   className="btn"
                   style={{
                     width: "100%",
@@ -272,10 +369,11 @@ const Contact = () => {
                   </p>
                   <p>
                     <strong style={{ color: "var(--magenta)" }}>Email:</strong>{" "}
-                    info@fiestahouseattire.com
+                    info@fiestahousematernity.com
                   </p>
                   <p>
-                    <strong style={{ color: "var(--sky-blue)" }}>Phone:</strong> 0720 111928
+                    <strong style={{ color: "var(--sky-blue)" }}>Phone:</strong>{" "}
+                    <a href="tel:+254720111928" data-track="phone_click:contact_page" style={{ color: "inherit" }}>0720 111928</a>
                   </p>
                   <p>
                     <strong style={{ color: "var(--magenta)" }}>Instagram:</strong>{" "}

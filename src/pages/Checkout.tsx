@@ -17,7 +17,7 @@ const Checkout = () => {
   });
 
   if (cart.length === 0) {
-    navigate('/shop');
+    navigate('/gift-vouchers');
     return null;
   }
 
@@ -59,7 +59,7 @@ const Checkout = () => {
 
   return (
     <Layout
-      title="Checkout | Fiesta House Attire"
+      title="Checkout | Fiesta House Maternity"
       description="Securely complete your purchase of luxury photography packages."
       noindex
       nofollow

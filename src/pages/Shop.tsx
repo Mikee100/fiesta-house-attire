@@ -9,22 +9,19 @@ import * as api from "@/lib/api";
 const Shop = () => {
   const [packages, setPackages] = useState<api.ShopPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [packagesSource, setPackagesSource] = useState<api.ShopPackagesSource>('live');
   const { addToCart, cartCount } = useCart();
 
   useEffect(() => {
     const fetchPackages = async () => {
       try {
-        const data = await api.fetchShopPackages();
-        if (Array.isArray(data)) {
-          setPackages(data);
-        } else {
-          console.error("API did not return an array:", data);
-          toast.error("Failed to load packages. Please make sure the database is initialized.");
-          setPackages([]);
-        }
+        const result = await api.fetchShopPackagesWithFallback();
+        setPackages(Array.isArray(result.data) ? result.data : []);
+        setPackagesSource(result.source);
       } catch (error) {
         console.error("Failed to fetch packages:", error);
         toast.error("Failed to load packages. Please try again later.");
+        setPackagesSource('empty');
       } finally {
         setLoading(false);
       }
@@ -46,9 +43,19 @@ const Shop = () => {
 
   return (
     <Layout
-      title="Shop & Gift Vouchers | Fiesta House Attire"
+      title="Shop & Gift Vouchers | Fiesta House Maternity"
       description="Purchase luxury maternity photography packages and gift vouchers. The perfect gift for expectant mothers in Nairobi."
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Shop", "item": "https://www.fiestahousematernity.com/shop" }
+          ]
+        })}
+      </script>
       {/* Hero Section */}
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
@@ -94,8 +101,16 @@ const Shop = () => {
                ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {Array.isArray(packages) && packages.map((pkg) => (
+            <>
+              {packagesSource !== 'live' && (
+                <div className="mb-6 rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-[var(--muted-foreground)]">
+                  {packagesSource === 'cache'
+                    ? 'Showing saved package data while connection is unavailable.'
+                    : 'Showing fallback package data while live data is unavailable.'}
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {Array.isArray(packages) && packages.map((pkg) => (
                 <div 
                   key={pkg.id} 
                   style={{ 
@@ -197,8 +212,9 @@ const Shop = () => {
                     Add to Cart
                   </button>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </section>
@@ -247,6 +263,7 @@ const Shop = () => {
               </p>
               <a 
                 href="https://wa.me/254720111928?text=Hi%20Fiesta%20House,%20I'd%20like%20to%20request%20a%20custom%20gift%20voucher." 
+                data-track="whatsapp_click:shop_custom_voucher"
                 className="btn btn-outline" 
                 style={{ padding: "1rem 2.5rem", borderRadius: "100px", display: "inline-flex" }}
               >

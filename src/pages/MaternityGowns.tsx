@@ -5,6 +5,7 @@ import * as api from "@/lib/api";
 import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
 import MasonryImage from "@/components/site/MasonryImage";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { trackEvent } from "@/lib/tracking";
 
 const MaternityGowns = () => {
   const [images, setImages] = useState<api.AssetRecord[]>([]);
@@ -31,12 +32,20 @@ const MaternityGowns = () => {
     }
   };
 
+  const openLightbox = (index: number, imageUrl: string) => {
+    if (!imageUrl) return;
+    setLightboxIdx(index);
+    setLightboxSrc(imageUrl);
+    setLightboxOpen(true);
+    trackEvent("gallery_image_open", "maternity_gowns");
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const initialPageSize = 24;
-        const firstPage = await api.fetchAssets(gownsFolderId, 1, initialPageSize);
+        const firstPage = await api.fetchPublicAssets(gownsFolderId, 1, initialPageSize);
         const firstAssets = firstPage?.assets || [];
 
         if (firstAssets.length > 0) {
@@ -49,7 +58,7 @@ const MaternityGowns = () => {
         const totalPages = firstPage?.totalPages || 1;
         if (totalPages > 1) {
           for (let page = 2; page <= totalPages; page++) {
-            const nextPage = await api.fetchAssets(gownsFolderId, page, initialPageSize);
+            const nextPage = await api.fetchPublicAssets(gownsFolderId, page, initialPageSize);
             const nextAssets = nextPage?.assets || [];
             if (nextAssets.length > 0) {
               setImages((prev) => {
@@ -83,19 +92,54 @@ const MaternityGowns = () => {
   return (
     <Layout
       title="Designer Maternity Gowns Nairobi | The Fiesta Atelier"
-      description="Explore our exclusive collection of luxury designer maternity gowns in Nairobi. From silk trains to delicate lace, find the perfect gown for your photoshoot at Fiesta House Attire."
+      description="Explore our exclusive collection of luxury designer maternity gowns in Nairobi. From silk trains to delicate lace, find the perfect gown for your photoshoot at Fiesta House Maternity."
       keywords="maternity gowns nairobi, designer pregnancy dresses kenya, luxury maternity shoot outfits, maternity photoshoot clothing, fiesta house gowns"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Maternity Gowns", "item": "https://www.fiestahousematernity.com/maternity-gowns" }
+          ]
+        })}
+      </script>
       {/* Hero Section */}
+
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 11vw, 9rem)", backgroundColor: "white" }}>
         <div className="container">
-          <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center", marginBottom: "8rem" }}>
+          <div style={{ maxWidth: "840px", margin: "0 auto", textAlign: "center", marginBottom: "4rem" }}>
              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Fiesta Atelier</span>
-             <h1 className="display" style={{ fontSize: "clamp(3.5rem, 8vw, 6rem)", marginTop: "1.5rem", lineHeight: "1.1" }}>Our Maternity Gowns</h1>
-             <p style={{ fontSize: "1.3rem", opacity: 0.7, lineHeight: "1.8", marginTop: "2.5rem" }}>
-                Elevate your maternity story with our exclusive collection of high-end designer gowns. From flowing silks to intricate laces, our atelier is curated to make every expectant mother feel like a masterpiece.
+             <h1 className="display" style={{ fontSize: "clamp(3.2rem, 7vw, 5.5rem)", marginTop: "1rem", lineHeight: "1.1" }}>Explore Maternity Gowns & Looks</h1>
+             <p style={{ fontSize: "1.2rem", opacity: 0.8, lineHeight: "1.8", marginTop: "1.8rem" }}>
+                These gowns and styling looks are curated exclusively for your photography experience at Fiesta House. Expectant mothers select the looks they want to be photographed in from our private in-house wardrobe.
              </p>
-             <div style={{ width: "80px", height: "1px", backgroundColor: "var(--magenta)", margin: "3rem auto" }}></div>
+             
+             {/* Atelier Photography Wardrobe Callout */}
+             <div style={{
+               background: "#FBF6F3",
+               border: "1px solid var(--sky-blue-tint)",
+               borderRadius: "16px",
+               padding: "1.5rem 2rem",
+               margin: "2.5rem auto 1.5rem",
+               textAlign: "center",
+               maxWidth: "720px",
+             }}>
+               <p style={{ fontSize: "0.95rem", color: "var(--dark)", lineHeight: "1.6", margin: 0 }}>
+                 <strong>Photoshoot Wardrobe Inclusion:</strong> You do not need to buy or rent gowns separately. Full access to our atelier of over 300 designer gowns, silks, and robes is included in your maternity photography package.
+               </p>
+               <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+                 <Link to="/what-to-wear-maternity-photoshoot" style={{ fontSize: "0.85rem", color: "var(--magenta)", fontWeight: 600, borderBottom: "1px solid var(--magenta)" }}>
+                   Read Our What to Wear Guide →
+                 </Link>
+                 <Link to="/contact" style={{ fontSize: "0.85rem", color: "var(--sky-blue)", fontWeight: 600, borderBottom: "1px solid var(--sky-blue)" }}>
+                   Reserve Your Session →
+                 </Link>
+               </div>
+             </div>
+
+             <div style={{ width: "80px", height: "1px", backgroundColor: "var(--magenta)", margin: "2rem auto" }}></div>
           </div>
 
           <div className="masonry">
@@ -107,19 +151,14 @@ const MaternityGowns = () => {
                   key={img.id} 
                   className="masonry-item fade-in group relative"
                   style={{ animationDelay: `${i * 0.05}s`, cursor: "zoom-in" }}
+                  data-track="gallery_image_open:maternity_gowns"
                   onClick={() => {
-                    if (img?.url) {
-                      setLightboxIdx(i);
-                      setLightboxSrc(img.url);
-                      setLightboxOpen(true);
-                    }
+                    if (img?.url) openLightbox(i, img.url);
                   }}
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if ((e.key === "Enter" || e.key === " ") && img?.url) {
-                      setLightboxIdx(i);
-                      setLightboxSrc(img.url);
-                      setLightboxOpen(true);
+                      openLightbox(i, img.url);
                     }
                   }}
                   role="button"

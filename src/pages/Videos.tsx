@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
@@ -132,11 +132,15 @@ const fetchVimeoThumbnail = (vimeoId: string): Promise<string | null> => {
   }
 
   const promise = fetch(
-    `https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}&width=640`,
+    `https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}&width=1280`,
   )
     .then((r) => (r.ok ? r.json() : null))
     .then((data: { thumbnail_url?: string } | null) => {
-      const url = data?.thumbnail_url ?? null;
+      let url = data?.thumbnail_url ?? null;
+      if (url) {
+        // Vimeo oEmbed may still return a 640 variant; promote to 1280 when available.
+        url = url.replace(/_(640|720|960)(\.[a-z]+)(\?.*)?$/i, '_1280$2$3');
+      }
       vimeoThumbCache.set(vimeoId, url);
       vimeoThumbInflight.delete(vimeoId);
       return url;
@@ -154,6 +158,7 @@ const fetchVimeoThumbnail = (vimeoId: string): Promise<string | null> => {
 const getYouTubeThumbnailCandidates = (videoId: string) => [
   `https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp`,
   `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+  `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
   `https://i.ytimg.com/vi_webp/${videoId}/sddefault.webp`,
   `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`,
   `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
@@ -866,9 +871,19 @@ export default function Videos() {
   return (
     <Layout
       title="Maternity Films Nairobi | Fiesta House Videos"
-      description="Watch cinematic maternity films by Fiesta House Attire. Luxury sessions in motion with elegant styling and intentional storytelling."
+      description="Watch cinematic maternity films by Fiesta House Maternity. Luxury sessions in motion with elegant styling and intentional storytelling."
       keywords="maternity videos nairobi, maternity films kenya, fiesta house videos"
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Videos & Films", "item": "https://www.fiestahousematernity.com/videos" }
+          ]
+        })}
+      </script>
       <style>{`
         .vp-fade { opacity:0; transform:translateY(24px); transition:opacity .8s ease,transform .8s ease; }
         .vp-in   { opacity:1 !important; transform:translateY(0) !important; }
@@ -1066,7 +1081,7 @@ export default function Videos() {
                 <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.4rem", fontWeight: 300, fontStyle: "italic", color: "#fff", lineHeight: 1.3, marginBottom: "2rem" }}>
                   Want a film<br />of your own?
                 </p>
-                <Link to="/contact" style={{ display: "inline-block", padding: ".7rem 1.6rem", border: ".5px solid rgba(255,255,255,.3)", color: "rgba(255,255,255,.8)", textDecoration: "none", fontSize: ".62rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
+                <Link to="/contact" data-track="booking_click:videos_grid_cta" style={{ display: "inline-block", padding: ".7rem 1.6rem", border: ".5px solid rgba(255,255,255,.3)", color: "rgba(255,255,255,.8)", textDecoration: "none", fontSize: ".62rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
                   Book a Session
                 </Link>
               </div>
@@ -1084,7 +1099,7 @@ export default function Videos() {
             Your pregnancy deserves<br />
             to be <em style={{ fontStyle: "normal", color: "var(--magenta,#660032)" }}>felt</em>, not just seen.
           </h2>
-          <Link to="/contact" style={{ display: "inline-block", padding: ".9rem 2.8rem", background: "var(--magenta,#660032)", color: "#fff", textDecoration: "none", fontSize: ".68rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
+          <Link to="/contact" data-track="booking_click:videos_final_cta" style={{ display: "inline-block", padding: ".9rem 2.8rem", background: "var(--magenta,#660032)", color: "#fff", textDecoration: "none", fontSize: ".68rem", letterSpacing: ".25em", textTransform: "uppercase" }}>
             Book Your Film Session
           </Link>
         </div>

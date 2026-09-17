@@ -12,6 +12,11 @@ const normalizeApiBaseUrl = (rawValue: string | undefined, localHost: boolean): 
 
   normalized = normalized.replace(/\/+$/, '');
   normalized = normalized.replace(/\/api$/i, '');
+  normalized = normalized.replace(/\/_\/backend$/i, '/backend');
+
+  if (/^\/?_\/backend$/i.test(normalized)) {
+    return '/backend';
+  }
 
   return normalized || fallback;
 };
@@ -21,6 +26,20 @@ const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL, isLocalHost);
 const logApiError = (...args: unknown[]) => {
   if (import.meta.env.DEV) {
     console.error(...args);
+  }
+};
+
+const readJsonOrNull = async <T>(res: Response): Promise<T | null> => {
+  const contentType = res.headers.get('content-type') || '';
+  if (!res.ok || !contentType.toLowerCase().includes('application/json')) {
+    return null;
+  }
+
+  try {
+    return await res.json() as T;
+  } catch (err) {
+    logApiError(err);
+    return null;
   }
 };
 
@@ -42,6 +61,8 @@ export interface FolderRecord {
   name: string;
   parent_id?: string | null;
   cover_image_url?: string | null;
+  is_public?: boolean;
+  public_slug?: string | null;
 }
 
 export interface AssetRecord {
@@ -54,9 +75,24 @@ export interface PaginatedAssets {
   totalPages: number;
 }
 
+export interface PublicGalleryAssetsResponse extends PaginatedAssets {
+  totalCount?: number;
+  currentPage?: number;
+  folder?: FolderRecord | null;
+}
+
+const normalizeGallerySlug = (value: string): string => {
+  if (!value) return '';
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
 export const fetchPortfolios = async (): Promise<PortfolioRecord[] | null> => {
   try {
-    const res = await fetch(`${API_URL}/portfolios`);
+    const res = await fetch(`${API_URL}/portfolios`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch');
     return await res.json();
   } catch (err) {
@@ -67,7 +103,7 @@ export const fetchPortfolios = async (): Promise<PortfolioRecord[] | null> => {
 
 export const fetchPortfolio = async (idOrSlug: string): Promise<PortfolioRecord | null> => {
   try {
-    const res = await fetch(`${API_URL}/portfolios/${encodeURIComponent(idOrSlug)}`);
+    const res = await fetch(`${API_URL}/portfolios/${encodeURIComponent(idOrSlug)}`, { cache: 'no-store' });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error('Failed to fetch portfolio');
     return await res.json();
@@ -143,11 +179,31 @@ export const deleteImage = async (imageId: string) => {
   return await res.json();
 };
 
+export const removeImageFromPortfolio = async (imageId: string) => {
+  const res = await authenticatedFetch(`${API_URL}/portfolio-images/${imageId}`, {
+    method: 'DELETE'
+  });
+  return await res.json();
+};
+
+export const deleteLibraryAssetFromPortfolioImage = async (imageId: string) => {
+  const res = await authenticatedFetch(`${API_URL}/portfolio-images/${imageId}/library-asset`, {
+    method: 'DELETE'
+  });
+  return await res.json();
+};
+
 // --- Media Library ---
 
 export const fetchFolders = async (): Promise<FolderRecord[]> => {
-  const res = await fetch(`${API_URL}/folders`);
+  const res = await authenticatedFetch(`${API_URL}/folders`, { cache: 'no-store' });
   return await res.json();
+};
+
+export const fetchPublicFolders = async (): Promise<FolderRecord[]> => {
+  const res = await fetch(`${API_URL}/public/folders`, { cache: 'no-store' });
+  const data = await readJsonOrNull<FolderRecord[]>(res);
+  return Array.isArray(data) ? data : [];
 };
 
 export const createFolder = async (name: string, parentId?: string) => {
@@ -159,7 +215,7 @@ export const createFolder = async (name: string, parentId?: string) => {
   return await res.json();
 };
 
-export const updateFolder = async (id: string, data: { cover_image_url?: string; name?: string }) => {
+export const updateFolder = async (id: string, data: { cover_image_url?: string; name?: string; is_public?: boolean; public_slug?: string | null }) => {
   const res = await authenticatedFetch(`${API_URL}/folders/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -173,8 +229,52 @@ export const fetchAssets = async (folderId?: string, page: number = 1, limit: nu
   if (folderId) url += `&folder_id=${folderId}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
   
-  const res = await fetch(url);
+  const res = await authenticatedFetch(url, { cache: 'no-store' });
   return await res.json();
+};
+
+export const fetchPublicAssets = async (folderId?: string, page: number = 1, limit: number = 20): Promise<PaginatedAssets> => {
+  let url = `${API_URL}/public/assets?page=${page}&limit=${limit}`;
+  if (folderId) url += `&folder_id=${folderId}`;
+
+  const res = await fetch(url, { cache: 'no-store' });
+  return await readJsonOrNull<PaginatedAssets>(res) || { assets: [], totalPages: 1 };
+};
+
+export const fetchPublicGalleryAssetsBySlug = async (gallerySlug: string, page: number = 1, limit: number = 100): Promise<PublicGalleryAssetsResponse> => {
+  const normalizedSlug = normalizeGallerySlug(gallerySlug);
+  const safeSlug = encodeURIComponent(normalizedSlug);
+  const url = `${API_URL}/public/gallery/${safeSlug}/assets?page=${page}&limit=${limit}`;
+  const res = await fetch(url, { cache: 'no-store' });
+
+  if (res.ok) {
+    return await res.json();
+  }
+
+  // Backward compatibility: if backend is still on ID-based public APIs,
+  // resolve the slug from folder name/public_slug client-side and fetch by folder ID.
+  try {
+    const folders = await fetchPublicFolders();
+    const matchedFolder = folders.find((folder) => {
+      const fromPublicSlug = normalizeGallerySlug(folder.public_slug || '');
+      const fromName = normalizeGallerySlug(folder.name || '');
+      return fromPublicSlug === normalizedSlug || fromName === normalizedSlug;
+    });
+
+    if (!matchedFolder) {
+      return { assets: [], totalPages: 1, totalCount: 0, currentPage: 1, folder: null };
+    }
+
+    const assetsData = await fetchPublicAssets(matchedFolder.id, page, limit);
+    return {
+      ...assetsData,
+      folder: matchedFolder,
+      totalCount: assetsData.assets?.length || 0,
+      currentPage: page,
+    };
+  } catch {
+    return { assets: [], totalPages: 1, totalCount: 0, currentPage: 1, folder: null };
+  }
 };
 
 export const addAssetsBulk = async (urls: string[], folderId?: string) => {
@@ -213,6 +313,15 @@ export const createAsset = async (url: string, folderId?: string) => {
   return await res.json();
 };
 
+export const moveAssetsToFolder = async (assetIds: string[], folderId: string | null) => {
+  const res = await authenticatedFetch(`${API_URL}/assets/move`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ assetIds, folder_id: folderId })
+  });
+  return await res.json();
+};
+
 // --- Blog ---
 
 export interface BlogCategory {
@@ -230,6 +339,7 @@ export interface BlogPost {
   cover_image_url: string | null;
   author: string;
   status: 'draft' | 'published';
+  sort_order?: number;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -280,8 +390,19 @@ export const fetchBlogPost = async (slug: string): Promise<BlogPost | null> => {
 
 export const fetchRecentBlogPosts = async () => {
   const res = await fetch(`${API_URL}/blog-posts-recent`);
-  const data = await res.json();
+  const data = await readJsonOrNull<BlogPost[]>(res);
   return Array.isArray(data) ? data : [];
+};
+
+export const fetchRelatedBlogPosts = async (slug: string, limit = 4): Promise<BlogPost[]> => {
+  try {
+    const res = await fetch(`${API_URL}/blog-posts/${encodeURIComponent(slug)}/related?limit=${limit}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 };
 
 export const createBlogPost = async (data: Partial<BlogPost> & { category_ids?: string[] }) => {
@@ -304,6 +425,15 @@ export const updateBlogPost = async (id: string, data: Partial<BlogPost> & { cat
 
 export const deleteBlogPost = async (id: string) => {
   const res = await authenticatedFetch(`${API_URL}/blog-posts/${id}`, { method: 'DELETE' });
+  return await res.json();
+};
+
+export const reorderBlogPosts = async (postIds: string[]) => {
+  const res = await authenticatedFetch(`${API_URL}/blog-posts/reorder`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ postIds })
+  });
   return await res.json();
 };
 
@@ -337,8 +467,195 @@ export interface CreateShopOrderPayload {
   total_amount: number;
 }
 
+export interface ContactEnquiryPayload {
+  full_name: string;
+  phone: string;
+  email: string;
+  preferred_date: string;
+  package_interest: string;
+  message?: string;
+}
+
+export type ShopPackagesSource = 'live' | 'cache' | 'static' | 'empty';
+
+export interface ShopPackagesResult {
+  data: ShopPackage[];
+  source: ShopPackagesSource;
+}
+
+const SHOP_PACKAGES_CACHE_KEY = 'fiesta_shop_packages_cache_v1';
+
+const DEFAULT_SHOP_PACKAGES: ShopPackage[] = [
+  {
+    id: 'default-bloom',
+    name: 'The Bloom',
+    price: 15000,
+    description: 'An intimate introduction to Fiesta House. Ninety minutes with our team, two studio outfits, and six photos edited to gallery finish.',
+    duration: '1.5 hours studio time',
+    images_count: '6 final edited photos',
+    outfits_count: '2 studio outfits + styling',
+    features: ['Professional makeup'],
+    popular: false,
+    color: '#6EC1E4'
+  },
+  {
+    id: 'default-muse',
+    name: 'The Muse',
+    price: 25000,
+    description: 'A refined session with more time, more wardrobe, and twelve photos edited to gallery finish. Two hours in our hands, three outfits from our private collection.',
+    duration: '2 hours studio time',
+    images_count: '12 final edited photos',
+    outfits_count: '3 studio outfits + styling',
+    features: ['Professional makeup'],
+    popular: false,
+    color: '#B84FA0'
+  },
+  {
+    id: 'default-icon',
+    name: 'The Icon',
+    price: 35000,
+    description: 'A fuller experience for the woman ready to move deeper into the house. Two and a half hours, four outfits, fifteen photos finished to editorial standard, and a fine art A3 mount to take home.',
+    duration: '2.5 hours studio time',
+    images_count: '15 final edited photos',
+    outfits_count: '4 studio outfits + styling',
+    features: ['Professional makeup', '1 A3 fine art mount'],
+    popular: false,
+    color: '#6EC1E4'
+  },
+  {
+    id: 'default-legend',
+    name: 'The Legend',
+    price: 45000,
+    description: 'A defining Edition for the woman ready to hold this season in her hands. Two and a half hours, four studio outfits, fifteen photos finished to editorial standard, and an 8x8 hardcover photobook.',
+    duration: '2.5 hours studio time',
+    images_count: '15 final edited photos',
+    outfits_count: '4 studio outfits + styling',
+    features: ['Professional makeup', '8x8 hardcover photobook'],
+    popular: false,
+    color: '#B84FA0'
+  },
+  {
+    id: 'default-queen',
+    name: 'The Queen',
+    price: 55000,
+    description: 'Three hours, four outfits, a custom balloon backdrop with flowers designed around your story, a styled wig, and a fine art A3 mount for your home.',
+    duration: '3 hours studio time',
+    images_count: '20 final edited photos',
+    outfits_count: '4 studio outfits + styling',
+    features: ['Professional makeup', 'Custom balloon backdrop with flowers', '1 styled wig', '1 A3 fine art mount'],
+    popular: false,
+    color: '#6EC1E4'
+  },
+  {
+    id: 'default-empress',
+    name: 'The Empress',
+    price: 70000,
+    description: 'Our signature Edition. Three and a half hours in our hands, with four studio outfits including the signature Fiesta House Power Suit, two styled wigs, a custom balloon backdrop with flowers, and an 8x8 hardcover photobook.',
+    duration: '3.5 hours studio time',
+    images_count: '25 final edited photos',
+    outfits_count: '4 studio outfits + styling',
+    features: ['Professional makeup', 'Signature Fiesta House Power Suit included', '2 styled wigs', 'Custom balloon backdrop with flowers', '8x8 hardcover photobook', '1 A3 fine art mount'],
+    popular: true,
+    color: '#B84FA0'
+  },
+  {
+    id: 'default-goddess',
+    name: 'The Goddess',
+    price: 120000,
+    description: 'Our flagship Edition. Five hours in our house, with five studio outfits including the signature Fiesta House Power Suit, two styled wigs, and your choice of a custom balloon backdrop with flowers or the Goddess Sculpture Set.',
+    duration: '5 hours studio time',
+    images_count: '30 final edited photos',
+    outfits_count: '5 studio outfits + styling',
+    features: ['Professional makeup', 'Signature Fiesta House Power Suit included', '2 styled wigs', 'Custom balloon backdrop with flowers OR Goddess Sculpture Set', '1 professionally produced Reel', '8x8 hardcover photobook', '1 A2 fine art mount'],
+    popular: false,
+    color: '#6EC1E4'
+  }
+];
+
+const isValidShopPackageArray = (value: unknown): value is ShopPackage[] => {
+  return Array.isArray(value) && value.every((item) => {
+    if (!item || typeof item !== 'object') return false;
+    const pkg = item as Partial<ShopPackage>;
+    return typeof pkg.id === 'string' && typeof pkg.name === 'string';
+  });
+};
+
+const readCachedShopPackages = (): ShopPackage[] => {
+  if (!isBrowser) return [];
+  try {
+    const raw = window.localStorage.getItem(SHOP_PACKAGES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return isValidShopPackageArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeCachedShopPackages = (packages: ShopPackage[]): void => {
+  if (!isBrowser || !Array.isArray(packages) || packages.length === 0) return;
+  try {
+    window.localStorage.setItem(SHOP_PACKAGES_CACHE_KEY, JSON.stringify(packages));
+  } catch {
+    // Ignore cache write errors (quota/private mode).
+  }
+};
+
+export const fetchShopPackagesWithFallback = async (): Promise<ShopPackagesResult> => {
+  try {
+    const res = await fetch(`${API_URL}/shop/packages`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch shop packages: ${res.status}`);
+    }
+
+    const data = await res.json();
+    const safeData = isValidShopPackageArray(data) ? data : [];
+    writeCachedShopPackages(safeData);
+    return { data: safeData, source: 'live' };
+  } catch (err) {
+    logApiError('fetchShopPackagesWithFallback failed, attempting fallback', err);
+
+    const cached = readCachedShopPackages();
+    if (cached.length > 0) {
+      return { data: cached, source: 'cache' };
+    }
+
+    if (DEFAULT_SHOP_PACKAGES.length > 0) {
+      return { data: DEFAULT_SHOP_PACKAGES, source: 'static' };
+    }
+
+    return { data: [], source: 'empty' };
+  }
+};
+
 export const fetchShopPackages = async (): Promise<ShopPackage[]> => {
-  const res = await fetch(`${API_URL}/shop/packages`);
+  const result = await fetchShopPackagesWithFallback();
+  return result.data;
+};
+
+export const fetchAdminShopPackages = async (): Promise<ShopPackage[]> => {
+  const res = await authenticatedFetch(`${API_URL}/admin/shop/packages`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const updateAdminShopPackage = async (
+  id: string,
+  payload: {
+    name?: string;
+    description?: string | null;
+    price?: number;
+    duration?: string | null;
+    images_count?: string | null;
+    outfits_count?: string | null;
+    features?: string[];
+  }
+) => {
+  const res = await authenticatedFetch(`${API_URL}/admin/shop/packages/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
   return await res.json();
 };
 
@@ -349,6 +666,585 @@ export const createShopOrder = async (payload: CreateShopOrderPayload) => {
     body: JSON.stringify(payload)
   });
   return await res.json();
+};
+
+export const submitContactEnquiry = async (payload: ContactEnquiryPayload) => {
+  const res = await fetch(`${API_URL}/contact-enquiries`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+};
+
+export interface AnalyticsTopClickItem {
+  event_name: string;
+  label: string;
+  count: number;
+}
+
+export interface AnalyticsPageViewItem {
+  day: string;
+  views: number;
+}
+
+export interface AnalyticsDeviceBreakdownItem {
+  device_type: string;
+  count: number;
+}
+
+export interface AnalyticsEventMix {
+  total: number;
+  page_views: number;
+  click_events: number;
+}
+
+export interface AnalyticsClickTrendItem {
+  day: string;
+  clicks: number;
+}
+
+export interface AnalyticsVisitsTimeseriesItem {
+  granularity: 'day' | 'week' | 'month' | 'year';
+  bucket: string;
+  bucket_start: string;
+  visits: number;
+}
+
+export interface AnalyticsTopEventTypeItem {
+  event_name: string;
+  count: number;
+}
+
+export interface AnalyticsKpiSnapshot {
+  total_events: number;
+  page_views: number;
+  click_events: number;
+}
+
+export interface AnalyticsKpiCompare {
+  current: AnalyticsKpiSnapshot;
+  previous: AnalyticsKpiSnapshot;
+}
+
+export interface AnalyticsCtaPerformanceItem {
+  event_name: string;
+  label: string;
+  clicks: number;
+  unique_sessions: number;
+  previous_clicks: number;
+  total_clicks: number;
+}
+
+export interface AnalyticsBusinessKpis {
+  unique_visitors: number;
+  whatsapp_leads: number;
+  portfolio_engagement: number;
+  booking_intent: number;
+  returning_visitors: number;
+  conversion_rate: number;
+}
+
+export interface AnalyticsFunnel {
+  visitors: number;
+  portfolio_interest: number;
+  pricing_interest: number;
+  whatsapp: number;
+  booking: number;
+  checkout: number;
+}
+
+export interface AnalyticsTopPageItem {
+  page: string;
+  views: number;
+  unique_visitors: number;
+}
+
+export interface AnalyticsWhatsappByPageItem {
+  page: string;
+  whatsapp_clicks: number;
+  unique_sessions: number;
+}
+
+export interface AnalyticsEventRow {
+  id: string;
+  event_name: string;
+  label: string | null;
+  page_url: string | null;
+  session_id: string | null;
+  referrer: string | null;
+  device_type: string | null;
+  created_at: string;
+}
+
+export interface AnalyticsRecentResponse {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  rows: AnalyticsEventRow[];
+}
+
+const buildAnalyticsRangeQuery = (from: string, to: string): string => {
+  const search = new URLSearchParams({ from, to });
+  return search.toString();
+};
+
+export const fetchAnalyticsTopClicks = async (from: string, to: string, limit = 12): Promise<AnalyticsTopClickItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/top-clicks?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsPageViews = async (from: string, to: string): Promise<AnalyticsPageViewItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/page-views?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsDeviceBreakdown = async (from: string, to: string): Promise<AnalyticsDeviceBreakdownItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/device-breakdown?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsEventMix = async (from: string, to: string): Promise<AnalyticsEventMix> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/event-mix?${range}`);
+  const data = await res.json();
+  return {
+    total: Number(data?.total || 0),
+    page_views: Number(data?.page_views || 0),
+    click_events: Number(data?.click_events || 0),
+  };
+};
+
+export const fetchAnalyticsClickTrend = async (from: string, to: string): Promise<AnalyticsClickTrendItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/click-trend?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsVisitsTimeseries = async (
+  from: string,
+  to: string,
+  granularity: 'day' | 'week' | 'month' | 'year' = 'day'
+): Promise<AnalyticsVisitsTimeseriesItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/visits-timeseries?${range}&granularity=${granularity}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsTopEventTypes = async (from: string, to: string, limit = 8): Promise<AnalyticsTopEventTypeItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/top-event-types?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsBusinessKpis = async (from: string, to: string): Promise<AnalyticsBusinessKpis> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/business-kpis?${range}`);
+  const data = await res.json();
+  return {
+    unique_visitors: Number(data?.unique_visitors || 0),
+    whatsapp_leads: Number(data?.whatsapp_leads || 0),
+    portfolio_engagement: Number(data?.portfolio_engagement || 0),
+    booking_intent: Number(data?.booking_intent || 0),
+    returning_visitors: Number(data?.returning_visitors || 0),
+    conversion_rate: Number(data?.conversion_rate || 0),
+  };
+};
+
+export const fetchAnalyticsFunnel = async (from: string, to: string): Promise<AnalyticsFunnel> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/funnel?${range}`);
+  const data = await res.json();
+  return {
+    visitors: Number(data?.visitors || 0),
+    portfolio_interest: Number(data?.portfolio_interest || 0),
+    pricing_interest: Number(data?.pricing_interest || 0),
+    whatsapp: Number(data?.whatsapp || 0),
+    booking: Number(data?.booking || 0),
+    checkout: Number(data?.checkout || 0),
+  };
+};
+
+export const fetchAnalyticsTopPages = async (from: string, to: string, limit = 10): Promise<AnalyticsTopPageItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/top-pages?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsWhatsappByPage = async (
+  from: string,
+  to: string,
+  limit = 10
+): Promise<AnalyticsWhatsappByPageItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/whatsapp-by-page?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsKpiCompare = async (from: string, to: string): Promise<AnalyticsKpiCompare> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/kpi-compare?${range}`);
+  const data = await res.json();
+
+  return {
+    current: {
+      total_events: Number(data?.current?.total_events || 0),
+      page_views: Number(data?.current?.page_views || 0),
+      click_events: Number(data?.current?.click_events || 0),
+    },
+    previous: {
+      total_events: Number(data?.previous?.total_events || 0),
+      page_views: Number(data?.previous?.page_views || 0),
+      click_events: Number(data?.previous?.click_events || 0),
+    },
+  };
+};
+
+export const fetchAnalyticsCtaPerformance = async (
+  from: string,
+  to: string,
+  limit = 20
+): Promise<AnalyticsCtaPerformanceItem[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/cta-performance?${range}&limit=${limit}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsRecentEvents = async (
+  from: string,
+  to: string,
+  page = 1,
+  pageSize = 25,
+  eventType: "all" | "page_view" | "clicks" = "all"
+): Promise<AnalyticsRecentResponse> => {
+  const search = new URLSearchParams({
+    from,
+    to,
+    page: String(page),
+    pageSize: String(pageSize),
+    eventType,
+  });
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/recent?${search.toString()}`);
+  const data = await res.json();
+  return {
+    page: Number(data?.page || page),
+    pageSize: Number(data?.pageSize || pageSize),
+    total: Number(data?.total || 0),
+    totalPages: Number(data?.totalPages || 1),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export interface AnalyticsSourceRow {
+  source: string;
+  medium: string;
+  visitors: number;
+  page_views: number;
+  whatsapp_clicks: number;
+  whatsapp_sessions: number;
+}
+
+export interface AnalyticsContentRow {
+  page: string;
+  views: number;
+  unique_visitors: number;
+  organic_visits?: number;
+}
+
+export interface AnalyticsContentResponse {
+  blog: AnalyticsContentRow[];
+  portfolio: AnalyticsContentRow[];
+}
+
+export interface AnalyticsPackageClickRow {
+  package_name: string;
+  clicks: number;
+  unique_sessions: number;
+}
+
+export interface AnalyticsPackagesResponse {
+  pricing_visitors: number;
+  whatsapp_from_pricing: number;
+  package_clicks: AnalyticsPackageClickRow[];
+}
+
+export interface AnalyticsBusinessKpisCompare {
+  current: AnalyticsBusinessKpis;
+  previous: AnalyticsBusinessKpis;
+}
+
+export interface SeoStatusResponse {
+  configured: boolean;
+  site_url: string | null;
+  last_sync: {
+    id: string;
+    synced_at: string;
+    status: string;
+    rows_upserted: number;
+    date_from: string | null;
+    date_to: string | null;
+    error_message: string | null;
+  } | null;
+  total_rows: number;
+}
+
+export interface SeoOverviewSnapshot {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  avg_position: number;
+}
+
+export interface SeoOverviewResponse {
+  configured: boolean;
+  current: SeoOverviewSnapshot | null;
+  previous: SeoOverviewSnapshot | null;
+}
+
+export interface SeoTimeseriesRow {
+  date: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  avg_position: number;
+}
+
+export interface SeoTimeseriesResponse {
+  configured: boolean;
+  rows: SeoTimeseriesRow[];
+}
+
+export interface SeoQueryRow {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  avg_position: number;
+}
+
+export interface SeoQueriesResponse {
+  configured: boolean;
+  rows: SeoQueryRow[];
+}
+
+export interface SeoQueryPageRow {
+  query: string;
+  page: string;
+  clicks: number;
+  impressions: number;
+}
+
+export interface SeoQueryPagesResponse {
+  configured: boolean;
+  rows: SeoQueryPageRow[];
+}
+
+export interface SeoLandingPageRow {
+  page: string;
+  path: string;
+  organic_clicks: number;
+  impressions: number;
+  ctr: number;
+  avg_position: number;
+  website_visitors: number;
+  whatsapp_clicks: number;
+}
+
+export interface SeoLandingPagesResponse {
+  configured: boolean;
+  rows: SeoLandingPageRow[];
+}
+
+export interface SeoOpportunityRow {
+  type: 'low_ctr' | 'page_one_opportunity' | 'strong_ranking_low_ctr';
+  priority: 'high' | 'medium' | 'low';
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  branded: boolean;
+  commercial: boolean;
+  reason: string;
+  action: string;
+}
+
+export interface SeoOpportunitiesResponse {
+  configured: boolean;
+  opportunities: SeoOpportunityRow[];
+}
+
+export const fetchAnalyticsSources = async (from: string, to: string): Promise<AnalyticsSourceRow[]> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/sources?${range}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsContent = async (from: string, to: string, limit = 20): Promise<AnalyticsContentResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/content?${range}&limit=${limit}`);
+  const data = await res.json();
+  return {
+    blog: Array.isArray(data?.blog) ? data.blog : [],
+    portfolio: Array.isArray(data?.portfolio) ? data.portfolio : [],
+  };
+};
+
+export const fetchAnalyticsPackages = async (from: string, to: string): Promise<AnalyticsPackagesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/packages?${range}`);
+  const data = await res.json();
+  return {
+    pricing_visitors: Number(data?.pricing_visitors || 0),
+    whatsapp_from_pricing: Number(data?.whatsapp_from_pricing || 0),
+    package_clicks: Array.isArray(data?.package_clicks) ? data.package_clicks : [],
+  };
+};
+
+export const fetchAnalyticsBusinessKpisCompare = async (from: string, to: string): Promise<AnalyticsBusinessKpisCompare> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/business-kpis-compare?${range}`);
+  const data = await res.json();
+
+  const toSnapshot = (value: unknown): AnalyticsBusinessKpis => {
+    const row = (value || {}) as Partial<AnalyticsBusinessKpis>;
+    return {
+      unique_visitors: Number(row.unique_visitors || 0),
+      whatsapp_leads: Number(row.whatsapp_leads || 0),
+      portfolio_engagement: Number(row.portfolio_engagement || 0),
+      booking_intent: Number(row.booking_intent || 0),
+      returning_visitors: Number(row.returning_visitors || 0),
+      conversion_rate: Number(row.conversion_rate || 0),
+    };
+  };
+
+  return {
+    current: toSnapshot(data?.current),
+    previous: toSnapshot(data?.previous),
+  };
+};
+
+export const fetchSeoStatus = async (): Promise<SeoStatusResponse> => {
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/status`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    site_url: typeof data?.site_url === 'string' ? data.site_url : null,
+    last_sync: data?.last_sync || null,
+    total_rows: Number(data?.total_rows || 0),
+  };
+};
+
+export const triggerSeoSync = async (days = 90): Promise<{ ok?: boolean; message?: string; error?: string }> => {
+  const safeDays = Math.max(1, Math.min(500, Math.floor(Number(days) || 90)));
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/sync?days=${safeDays}`, {
+    method: 'POST',
+  });
+  return await res.json();
+};
+
+export const fetchSeoOverview = async (from: string, to: string): Promise<SeoOverviewResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/overview?${range}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    current: data?.current
+      ? {
+          clicks: Number(data.current.clicks || 0),
+          impressions: Number(data.current.impressions || 0),
+          ctr: Number(data.current.ctr || 0),
+          avg_position: Number(data.current.avg_position || 0),
+        }
+      : null,
+    previous: data?.previous
+      ? {
+          clicks: Number(data.previous.clicks || 0),
+          impressions: Number(data.previous.impressions || 0),
+          ctr: Number(data.previous.ctr || 0),
+          avg_position: Number(data.previous.avg_position || 0),
+        }
+      : null,
+  };
+};
+
+export const fetchSeoTimeseries = async (from: string, to: string): Promise<SeoTimeseriesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/timeseries?${range}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export const fetchSeoQueries = async (
+  from: string,
+  to: string,
+  options?: { limit?: number; sort?: 'clicks' | 'impressions' | 'ctr' | 'position'; filter?: string }
+): Promise<SeoQueriesResponse> => {
+  const search = new URLSearchParams({
+    from,
+    to,
+    limit: String(Math.max(1, Math.min(500, Math.floor(options?.limit || 50)))),
+    sort: options?.sort || 'impressions',
+  });
+
+  if (options?.filter) {
+    search.set('filter', options.filter);
+  }
+
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/queries?${search.toString()}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export const fetchSeoQueryPages = async (from: string, to: string, limit = 100): Promise<SeoQueryPagesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const safeLimit = Math.max(1, Math.min(500, Math.floor(limit)));
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/query-pages?${range}&limit=${safeLimit}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export const fetchSeoLandingPages = async (from: string, to: string, limit = 20): Promise<SeoLandingPagesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/landing-pages?${range}&limit=${Math.max(1, Math.min(100, Math.floor(limit)))}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    rows: Array.isArray(data?.rows) ? data.rows : [],
+  };
+};
+
+export const fetchSeoOpportunities = async (from: string, to: string): Promise<SeoOpportunitiesResponse> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/opportunities?${range}`);
+  const data = await res.json();
+  return {
+    configured: Boolean(data?.configured),
+    opportunities: Array.isArray(data?.opportunities) ? data.opportunities : [],
+  };
 };
 
 // --- Videos ---

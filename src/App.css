@@ -7,6 +7,22 @@
   overflow-x: clip;
 }
 
+@media (max-width: 700px) {
+  .addons-header,
+  .bespoke-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  .addons-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .bespoke-panel .btn {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

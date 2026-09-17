@@ -7,6 +7,7 @@ import * as api from "@/lib/api";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
 import { MasonrySkeleton } from "@/components/ui/SkeletonCards";
 import MasonryImage from "@/components/site/MasonryImage";
+import { trackEvent } from "@/lib/tracking";
 
 const PortfolioCategory = () => {
   const { id } = useParams<{ id: string }>();
@@ -91,12 +92,42 @@ const PortfolioCategory = () => {
     }
   };
 
+  const openLightbox = (index: number, imageUrl: string) => {
+    if (!imageUrl) return;
+    setLightboxIdx(index);
+    setLightboxSrc(imageUrl);
+    setLightboxOpen(true);
+    trackEvent("gallery_image_open", "portfolio_category");
+  };
+
   return (
     <Layout 
-      title={portfolio.title}
-      description={`View the ${portfolio.title} collection at Fiesta House Attire. Luxury maternity photography in Nairobi featuring our signature aesthetics.`}
+      title={`${portfolio.title} Ideas & Poses | Fiesta House Maternity`}
+      description={`Explore visual inspiration, concepts, and poses for ${portfolio.title} at Fiesta House Maternity in Nairobi. Over 300 designer gowns, professional makeup, and guided posing.`}
+      keywords={`${portfolio.title.toLowerCase()} ideas, ${portfolio.title.toLowerCase()} poses, maternity photoshoot inspiration nairobi, pregnancy photography poses kenya`}
       ogImage={portfolio.images[0]}
     >
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.fiestahousematernity.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Portfolio", "item": "https://www.fiestahousematernity.com/portfolio" },
+            { "@type": "ListItem", "position": 3, "name": portfolio.title, "item": `https://www.fiestahousematernity.com/portfolio/${portfolio.slug || id}` }
+          ]
+        })}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ImageGallery",
+          "name": `${portfolio.title} - Fiesta House Maternity`,
+          "description": `Luxury maternity photography collection: ${portfolio.title}`,
+          "url": `https://www.fiestahousematernity.com/portfolio/${portfolio.slug || id}`,
+          "image": portfolio.images
+        })}
+      </script>
       <section className="section-padding" style={{ paddingTop: "clamp(6.5rem, 10vw, 8.5rem)", backgroundColor: "white" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "6rem" }}>
@@ -125,19 +156,14 @@ const PortfolioCategory = () => {
                 key={i}
                 className="masonry-item fade-in group"
                 style={{ animationDelay: `${i * 0.05}s`, cursor: "zoom-in" }}
+                data-track="gallery_image_open:portfolio_category"
                 onClick={() => {
-                  if (img) {
-                    setLightboxIdx(i);
-                    setLightboxSrc(img);
-                    setLightboxOpen(true);
-                  }
+                  if (img) openLightbox(i, img);
                 }}
                 tabIndex={0}
                 onKeyDown={e => {
                   if ((e.key === "Enter" || e.key === " ") && img) {
-                    setLightboxIdx(i);
-                    setLightboxSrc(img);
-                    setLightboxOpen(true);
+                    openLightbox(i, img);
                   }
                 }}
                 aria-label={`View image ${i + 1} enlarged`}
@@ -235,7 +261,103 @@ const PortfolioCategory = () => {
             </Dialog>
           </div>
 
-          {/* ...call-to-action section removed for minimalism... */}
+          {/* Contextual Service Bridge */}
+          <div
+            style={{
+              marginTop: "4rem",
+              paddingTop: "3rem",
+              borderTop: "1px solid var(--sky-blue-tint)",
+              textAlign: "center",
+              maxWidth: "680px",
+              marginLeft: "auto",
+              marginRight: "auto"
+            }}
+          >
+            <span
+              style={{
+                color: "var(--magenta)",
+                textTransform: "uppercase",
+                letterSpacing: "0.2em",
+                fontSize: "0.8rem",
+                fontWeight: "600",
+                display: "block",
+                marginBottom: "0.5rem"
+              }}
+            >
+              Inspired by these {portfolio.title} Ideas?
+            </span>
+            <h3
+              className="display"
+              style={{
+                fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
+                color: "var(--dark)",
+                marginBottom: "1rem"
+              }}
+            >
+              Bring This Vision to Life at Our Nairobi Sanctuary
+            </h3>
+            <p
+              style={{
+                fontSize: "1rem",
+                lineHeight: "1.7",
+                color: "rgba(43, 35, 32, 0.8)",
+                marginBottom: "2rem"
+              }}
+            >
+              {(portfolio.slug || id || "").toLowerCase().includes("family")
+                ? "Love these family maternity photoshoot ideas? Explore our complete Family Maternity Photoshoot Guide for partner and toddler prep, or view package rates."
+                : `Our all-female Nairobi studio team handles every detail—from our private atelier of 80+ couture gowns to calm, guided posing on this exact set.`}
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "1rem",
+                justifyContent: "center",
+                flexWrap: "wrap"
+              }}
+            >
+              {(portfolio.slug || id || "").toLowerCase().includes("family") && (
+                <Link
+                  to="/family-maternity-photoshoot"
+                  className="btn btn-magenta"
+                  style={{
+                    padding: "0.75rem 1.8rem",
+                    borderRadius: "100px",
+                    fontWeight: "600",
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  Family Session Guide & Details →
+                </Link>
+              )}
+              <Link
+                to="/session-packages"
+                className="btn btn-outline"
+                style={{
+                  borderColor: "var(--magenta)",
+                  color: "var(--magenta)",
+                  padding: "0.75rem 1.8rem",
+                  borderRadius: "100px",
+                  fontWeight: "600",
+                  fontSize: "0.9rem"
+                }}
+              >
+                View Packages & Rates
+              </Link>
+              <Link
+                to="/contact"
+                className="btn btn-magenta"
+                style={{
+                  padding: "0.75rem 1.8rem",
+                  borderRadius: "100px",
+                  fontWeight: "600",
+                  fontSize: "0.9rem"
+                }}
+              >
+                Book Your Shoot
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </Layout>

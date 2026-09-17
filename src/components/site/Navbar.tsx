@@ -4,14 +4,35 @@ import { Menu, X, ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import logoLight from "@/assets/logo-dark.jpg";
 
-const navLinks = [
-  { to: "/", label: "Home" },
-  { to: "/portfolio", label: "Portfolio" },
+const mainNavLinks = [
+  { to: "/", label: "Home", exact: true },
   { to: "/maternity-gowns", label: "Gowns" },
+  { to: "/portfolio", label: "Portfolio" },
   { to: "/videos", label: "Videos" },
-  { to: "/pricing", label: "Pricing" },
-  { to: "/blog", label: "Blog" },
-  { to: "/shop", label: "Shop" },
+  { to: "/session-packages", label: "Packages" },
+  { to: "/gift-vouchers", label: "Gift Vouchers" },
+  { to: "/blog", label: "Blogs" },
+];
+
+const mobileMenuSections = [
+  {
+    title: "Main",
+    links: mainNavLinks,
+  },
+  {
+    title: "Plan Your Shoot",
+    links: [
+      { to: "/maternity-photoshoot", label: "Experience" },
+      { to: "/videos", label: "Videos" },
+      { to: "/planning-guide", label: "Planning Guide" },
+      { to: "/when-to-do-maternity-photos", label: "When to Shoot" },
+      { to: "/what-to-wear-maternity-photoshoot", label: "What to Wear" },
+      { to: "/maternity-photoshoot-ideas", label: "Ideas & Styles" },
+      { to: "/family-maternity-photoshoot", label: "Family Sessions" },
+      { to: "/faq", label: "FAQ" },
+      { to: "/contact", label: "Contact" },
+    ],
+  },
 ];
 
 const NAV_PRIMARY = "var(--magenta)";
@@ -44,34 +65,22 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => setMenuOpen(false), [location.pathname]);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
-    if (didPrefetchVideos || location.pathname === "/videos") return;
-
-    const win = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-
-    let timeoutId: number | null = null;
-    let idleId: number | null = null;
-
-    const start = () => prefetchVideosAssets();
-
-    if (typeof win.requestIdleCallback === "function") {
-      idleId = win.requestIdleCallback(start, { timeout: 1800 });
-    } else {
-      timeoutId = window.setTimeout(start, 900);
-    }
-
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      if (timeoutId !== null) window.clearTimeout(timeoutId);
-      if (idleId !== null && typeof win.cancelIdleCallback === "function") {
-        win.cancelIdleCallback(idleId);
-      }
+      document.body.style.overflow = previousOverflow;
     };
-  }, [location.pathname]);
+  }, [menuOpen]);
+
+  const isLinkActive = (link: { to: string; exact?: boolean }) => {
+    return link.exact ? location.pathname === link.to : location.pathname.startsWith(link.to);
+  };
 
   const handleLinkMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
     e.currentTarget.style.color = NAV_SECONDARY;
@@ -97,9 +106,10 @@ const Navbar = () => {
         padding: scrolled ? "0.3rem 0" : "0.7rem 0",
       }}
     >
-      <div className="container nav-container">
+      <div className="container nav-container" style={{ position: "relative" }}>
         <Link
           to="/"
+          data-track="nav_click:logo"
           style={{
             display: "flex",
             alignItems: "center",
@@ -111,18 +121,19 @@ const Navbar = () => {
             src={logoLight}
             alt="Fiesta House Maternity"
             style={{
-              height: "44px",
+              height: scrolled ? "52px" : "64px",
               width: "auto",
               objectFit: "contain",
               display: "block",
               border: "none",
               borderRadius: 0,
+              transition: "height 0.3s ease",
             }}
           />
           <span
             className="display"
             style={{
-              fontSize: "1.45rem",
+              fontSize: "1.3rem",
               fontWeight: 500,
               letterSpacing: "0.01em",
               lineHeight: 1,
@@ -133,27 +144,26 @@ const Navbar = () => {
           </span>
         </Link>
 
-        <div className="nav-links" style={{ alignItems: "center", gap: "2.5rem" }}>
-          {navLinks.map((link) => {
-            const isActive =
-              link.to === "/"
-                ? location.pathname === "/"
-                : location.pathname.startsWith(link.to);
+        {/* Streamlined Desktop Links */}
+        <div
+          className="nav-links"
+          style={{
+            alignItems: "center",
+            gap: "1.1rem",
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          {mainNavLinks.map((link) => {
+            const isActive = isLinkActive(link);
             return (
               <Link
                 key={link.to}
                 to={link.to}
+                data-track={`nav_click:${link.label.toLowerCase()}`}
                 className="nav-link"
-                onMouseEnter={(e) => {
-                  handleLinkMouseEnter(e);
-                  if (link.to === "/videos") prefetchVideosAssets();
-                }}
-                onFocus={() => {
-                  if (link.to === "/videos") prefetchVideosAssets();
-                }}
-                onTouchStart={() => {
-                  if (link.to === "/videos") prefetchVideosAssets();
-                }}
+                onMouseEnter={handleLinkMouseEnter}
                 onMouseLeave={handleLinkMouseLeave}
                 style={{
                   color: currentNavColor,
@@ -161,16 +171,21 @@ const Navbar = () => {
                   paddingBottom: "3px",
                   fontWeight: isActive ? "700" : "600",
                   transition: "all 0.3s ease",
+                  fontSize: "0.78rem",
                 }}
               >
                 {link.label}
               </Link>
             );
           })}
+        </div>
 
+        <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: "1rem", marginLeft: "auto" }}>
+          {/* Cart Icon */}
           <Link
             to="/cart"
             aria-label="Open cart"
+            data-track="cart_click:navbar"
             onMouseEnter={handleLinkMouseEnter}
             onMouseLeave={handleLinkMouseLeave}
             style={{
@@ -180,7 +195,7 @@ const Navbar = () => {
               alignItems: "center",
             }}
           >
-            <ShoppingCart size={22} />
+            <ShoppingCart size={19} />
             {cartCount > 0 && (
               <span
                 style={{
@@ -205,12 +220,14 @@ const Navbar = () => {
             )}
           </Link>
 
+          {/* Book Now Button */}
           <Link
             to="/contact"
+            data-track="booking_click:navbar_book_now"
             style={{
               background: "var(--sky-blue)",
               color: "white",
-              padding: "0.55rem 1.35rem",
+              padding: "0.48rem 1.2rem",
               borderRadius: "100px",
               textAlign: "center",
               fontSize: "0.72rem",
@@ -219,7 +236,7 @@ const Navbar = () => {
               fontWeight: "600",
               textDecoration: "none",
               transition: "all 0.3s ease",
-              boxShadow: "0 4px 12px rgba(176,147,69,0.2)",
+              boxShadow: "0 4px 12px rgba(176,147,69,0.25)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = "var(--magenta)";
@@ -234,16 +251,61 @@ const Navbar = () => {
           </Link>
         </div>
 
+        <Link
+          to="/cart"
+          aria-label="Open cart"
+          data-track="cart_click:mobile_navbar"
+          className="mobile-cart-link"
+          style={{
+            position: "relative",
+            color: currentNavColor,
+            alignItems: "center",
+            justifyContent: "center",
+            width: "42px",
+            height: "42px",
+            marginLeft: "auto",
+            textDecoration: "none",
+          }}
+        >
+          <ShoppingCart size={20} />
+          {cartCount > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: "4px",
+                right: "3px",
+                backgroundColor: "var(--sky-blue)",
+                color: "white",
+                fontSize: "10px",
+                fontWeight: "700",
+                width: "17px",
+                height: "17px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {cartCount}
+            </span>
+          )}
+        </Link>
+
         <button
           onClick={() => setMenuOpen((v) => !v)}
           aria-label="Toggle menu"
           style={{
             display: "none",
-            background: "none",
-            border: "none",
+            background: showSolidNavbar ? "rgba(102,0,50,0.08)" : "rgba(255,255,255,0.18)",
+            border: showSolidNavbar ? "1px solid rgba(102,0,50,0.12)" : "1px solid rgba(255,255,255,0.22)",
+            borderRadius: "999px",
             cursor: "pointer",
             color: currentNavColor,
-            padding: "0.5rem",
+            width: "42px",
+            height: "42px",
+            alignItems: "center",
+            justifyContent: "center",
+            marginLeft: "0.35rem",
           }}
           className="nav-hamburger"
         >
@@ -252,85 +314,51 @@ const Navbar = () => {
       </div>
 
       {menuOpen && (
-        <div
-          style={{
-            backgroundColor: "white",
-            borderTop: "3px solid var(--sky-blue)",
-            padding: "2rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.5rem",
-          }}
-        >
-          {navLinks.map((link) => {
-            const isActive =
-              link.to === "/"
-                ? location.pathname === "/"
-                : location.pathname.startsWith(link.to);
-            return (
-              <Link
-                key={link.to}
-                to={link.to}
-                onMouseEnter={handleLinkMouseEnter}
-                onMouseLeave={handleLinkMouseLeave}
-                style={{
-                  fontSize: "0.9rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.15em",
-                  color: NAV_PRIMARY,
-                  fontWeight: isActive ? "700" : "600",
-                  textDecoration: "none",
-                  transition: "color 0.3s ease",
-                }}
-              >
-                {link.label}
+        <div className="mobile-menu-overlay" onClick={() => setMenuOpen(false)}>
+          <div className="mobile-menu-panel" onClick={(event) => event.stopPropagation()}>
+            <div className="mobile-menu-header">
+              <div>
+                <span className="mobile-menu-kicker">Fiesta House</span>
+                <p className="mobile-menu-title">Navigate</p>
+              </div>
+              <button className="mobile-menu-close" type="button" aria-label="Close menu" onClick={() => setMenuOpen(false)}>
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="mobile-menu-content">
+              {mobileMenuSections.map((section) => (
+                <div key={section.title} className="mobile-menu-section">
+                  <p className="mobile-menu-section-title">{section.title}</p>
+                  <div className="mobile-menu-links">
+                    {section.links.map((link, linkIndex) => {
+                      const isActive = isLinkActive(link);
+                      return (
+                        <Link
+                          key={link.to}
+                          to={link.to}
+                          className={`mobile-menu-link ${isActive ? "active" : ""}`}
+                          style={{ animationDelay: `${section.title === "Main" ? linkIndex * 45 : 180 + linkIndex * 35}ms` }}
+                        >
+                          {link.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mobile-menu-actions">
+              <Link to="/cart" className="mobile-menu-cart">
+                <ShoppingCart size={18} />
+                Cart ({cartCount})
               </Link>
-            );
-          })}
-          <Link
-            to="/cart"
-            onMouseEnter={handleLinkMouseEnter}
-            onMouseLeave={handleLinkMouseLeave}
-            style={{
-              fontSize: "0.9rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.15em",
-              color: NAV_PRIMARY,
-              fontWeight: "600",
-              textDecoration: "none",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.8rem",
-              transition: "color 0.3s ease",
-            }}
-          >
-            <ShoppingCart size={18} /> Cart ({cartCount})
-          </Link>
-          <Link
-            to="/contact"
-            style={{
-              background: "var(--sky-blue)",
-              color: "white",
-              padding: "0.7rem 1.5rem",
-              borderRadius: "100px",
-              textAlign: "center",
-              fontSize: "0.78rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.12em",
-              fontWeight: "600",
-              textDecoration: "none",
-              transition: "all 0.3s ease",
-              boxShadow: "0 4px 12px rgba(176,147,69,0.2)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--magenta)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--sky-blue)";
-            }}
-          >
-            Book Now
-          </Link>
+              <Link to="/contact" className="mobile-menu-book">
+                Book Now
+              </Link>
+            </div>
+          </div>
         </div>
       )}
     </nav>

@@ -1,7 +1,7 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
-import { fetchPortfolios, fetchAssets, fetchFolders, fetchRecentBlogPosts, BlogPost } from "@/lib/api";
+import { fetchPortfolios, fetchPublicAssets, fetchPublicFolders, fetchRecentBlogPosts, BlogPost } from "@/lib/api";
 import {
   Accordion,
   AccordionContent,
@@ -33,9 +33,10 @@ interface PortfolioImage {
 interface Portfolio {
   id: string;
   title: string;
-  slug: string;
-  description: string;
-  images: PortfolioImage[];
+  slug?: string;
+  description?: string;
+  images: Array<PortfolioImage | string>;
+  cover_image_url?: string | null;
 }
 
 interface Asset {
@@ -50,14 +51,28 @@ interface Folder {
 }
 
 const HOME_CAROUSEL_FOLDER_ID = "185cc818-f082-4e21-9122-c629de3c34dc";
-const MAX_HERO_SLIDES = 5;
-const MAX_HERO_RENDERED = 5;
+const MAX_HERO_SLIDES = 10;
+const MAX_HERO_RENDERED = 10;
 const FALLBACK_HERO_IMAGES = [
   "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg",
   "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg",
-  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg"
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155014969_IMGL5839.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155058834_IMG_1131-1024x1536.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155064810_HI7A5986-460x460.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1785868050861_IMG_5861-scaled.jpg",
+  "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777835381314_IMGL29262.jpg"
 ];
-const HERO_DESKTOP_FOCAL_POINTS = ["center 18%", "center 22%", "center 16%", "center 20%"];
+const HERO_DESKTOP_FOCAL_POINTS = ["center 18%", "center 22%", "center 16%", "center 20%", "center 24%", "center 22%", "center center", "center 18%"];
+
+const getPortfolioCoverImage = (portfolio: Portfolio): string | null => {
+  if (portfolio.cover_image_url) return portfolio.cover_image_url;
+
+  const firstImage = portfolio.images?.[0];
+  if (!firstImage) return null;
+
+  return typeof firstImage === "string" ? firstImage : firstImage.url;
+};
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -73,10 +88,10 @@ const Index = () => {
       try {
         const [portfoliosData, assetsData, foldersData, postsData, heroAssetsData] = await Promise.all([
           fetchPortfolios(),
-          fetchAssets(undefined, 1, 12),
-          fetchFolders(),
+          fetchPublicAssets(undefined, 1, 12),
+          fetchPublicFolders(),
           fetchRecentBlogPosts(),
-          fetchAssets(HOME_CAROUSEL_FOLDER_ID, 1, MAX_HERO_SLIDES)
+          fetchPublicAssets(HOME_CAROUSEL_FOLDER_ID, 1, MAX_HERO_SLIDES)
         ]);
 
         if (portfoliosData) setPortfolios(portfoliosData);
@@ -108,23 +123,41 @@ const Index = () => {
   return (
     <>
       <Layout
-        title="Luxury Maternity Photography Nairobi | The Sanctuary"
-        description="Nairobi's premier luxury maternity studio. Experience world-class maternity photography with designer gowns, professional makeup, and iconic studio sets at Fiesta House Attire."
-        keywords="luxury maternity photography nairobi, best maternity photographer kenya, maternity gowns nairobi, pregnancy photoshoot nairobi, baby bump photoshoot nairobi"
+        title="Fiesta House Maternity – Maternity Photoshoots in Nairobi"
+        description="Fiesta House Maternity is Nairobi's premier luxury maternity photoshoot studio by Fiesta House at Diamond Plaza II, Parklands. Over 300 designer gowns, professional makeup, bespoke studio sets, and gentle all-female posing."
+        keywords="fiesta house maternity, fiesta house maternity reviews, fiesta house, maternity photoshoot nairobi, maternity photography nairobi, fiesta house nairobi, luxury pregnancy photoshoot kenya"
       >
-        <script type="application/ld+json">
-          {JSON.stringify({
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            "name": "Fiesta House Attire",
-            "image": "https://www.fiestahousematernity.com/og-image.jpg",
+            "@type": "PhotographyBusiness",
+            "name": "Fiesta House Maternity",
+            "alternateName": "Fiesta House",
+            "parentOrganization": {
+              "@type": "Organization",
+              "name": "Fiesta House",
+              "url": "https://www.fiestahousematernity.com"
+            },
+            "description": "Nairobi's premier luxury maternity photography studio offering exclusive designer gowns, professional makeup, and editorial portraits at Diamond Plaza II, Parklands.",
+            "image": [
+              "https://www.fiestahousematernity.com/og-image.jpg",
+              "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg",
+              "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg"
+            ],
+            "logo": "https://www.fiestahousematernity.com/og-image.jpg",
             "@id": "https://www.fiestahousematernity.com",
             "url": "https://www.fiestahousematernity.com",
             "telephone": "+254720111928",
+            "email": "info@fiestahousematernity.com",
+            "priceRange": "KES 15,000 – KES 120,000",
+            "currenciesAccepted": "KES",
+            "paymentAccepted": "Cash, M-Pesa, Bank Transfer",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "Diamond Plaza II, 4th Floor, Parklands",
+              "streetAddress": "Diamond Plaza II, 4th Parklands Avenue, Parklands",
               "addressLocality": "Nairobi",
+              "addressRegion": "Nairobi County",
               "addressCountry": "KE"
             },
             "geo": {
@@ -132,6 +165,7 @@ const Index = () => {
               "latitude": -1.2612,
               "longitude": 36.8228
             },
+            "hasMap": "https://maps.google.com/?q=Diamond+Plaza+II+Parklands+Nairobi",
             "openingHoursSpecification": {
               "@type": "OpeningHoursSpecification",
               "dayOfWeek": [
@@ -147,13 +181,49 @@ const Index = () => {
             },
             "sameAs": [
               "https://www.instagram.com/fiestahousematernity/",
-              "https://www.facebook.com/fiestahousematernity"
+              "https://www.facebook.com/fiestahousematernity",
+              "https://www.youtube.com/@fiestahousematernity",
+              "https://www.tiktok.com/@fiestahousematernity",
+              "https://www.pinterest.com/fiestahousematernity"
+            ],
+            "areaServed": {
+              "@type": "City",
+              "name": "Nairobi",
+              "sameAs": "https://en.wikipedia.org/wiki/Nairobi"
+            },
+            "knowsAbout": [
+              "Maternity Photography",
+              "Pregnancy Photoshoot",
+              "Luxury Studio Photography",
+              "Maternity Gowns",
+              "Baby Bump Photography"
             ]
-          })}
-        </script>
+          }) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Fiesta House Maternity",
+            "url": "https://www.fiestahousematernity.com",
+            "description": "Nairobi's premier luxury maternity photography studio.",
+            "inLanguage": "en-KE",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://www.fiestahousematernity.com/blog?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          }) }}
+        />
+
         {/* Hero Section */}
         <section className="hero" style={{
-          height: "100vh",
+          height: "100dvh",
+          minHeight: "560px",
           position: "relative",
           overflow: "hidden"
         }}>
@@ -162,68 +232,106 @@ const Index = () => {
             setApi={setCarouselApi}
             className="w-full h-full"
           >
-            <CarouselContent className="h-screen m-0 p-0">
+            <CarouselContent className="h-full m-0 p-0" style={{ height: "100dvh" }}>
               {heroImages.slice(0, MAX_HERO_RENDERED).map((url, i) => {
                 const desktopFocalPoint = HERO_DESKTOP_FOCAL_POINTS[i] || "center 20%";
 
                 return (
                 <CarouselItem key={i} className="relative h-full w-full p-0">
-                  {!isMobile && (
-                    <img
-                      src={url}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 h-full w-full object-cover scale-110 blur-sm"
-                      loading="lazy"
-                      decoding="async"
-                      style={{ objectPosition: desktopFocalPoint }}
-                    />
-                  )}
                   <img
                     src={url}
-                    alt={`Fiesta House hero slide ${i + 1}`}
+                    alt={`Fiesta House maternity session ${i + 1}`}
                     width={1920}
                     height={1080}
-                    className={`absolute inset-0 h-full w-full ${isMobile ? "object-cover" : "object-contain"}`}
+                    className="absolute inset-0 h-full w-full object-cover"
                     loading={i === 0 ? "eager" : "lazy"}
                     fetchPriority={i === 0 ? "high" : "auto"}
                     decoding="async"
-                    sizes={isMobile ? "100vw" : "100vw"}
+                    sizes="100vw"
                     style={{
                       transitionDuration: "1000ms",
-                      objectPosition: isMobile ? "center center" : desktopFocalPoint
+                      objectPosition: isMobile ? "center 20%" : desktopFocalPoint
                     }}
                   />
-                  <div className="absolute inset-0 bg-black/30 md:bg-black/40" />
+                  {/* Subtle, crystal-clear luxury vignette: vivid in the center, soft at top/bottom for text */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/25" />
                 </CarouselItem>
                 );
               })}
             </CarouselContent>
           </Carousel>
 
-          <div className="absolute inset-0 flex items-center justify-center text-center z-10 pointer-events-none">
-            <div className="container fade-in mobile-center" style={{ color: "white", pointerEvents: "auto" }}>
-              <div
-                style={{
-                  display: "inline-flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <h1 className="display h1-mobile" style={{ fontSize: "clamp(3rem, 10vw, 7rem)", marginBottom: "1rem", textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
-                  Fiesta House Attire
-                </h1>
-                <p style={{
-                  fontSize: "clamp(1rem, 2vw, 1.4rem)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.28em",
-                  marginBottom: "2rem",
-                  fontWeight: "400",
-                  color: "#FFFFFF"
-                }}>
-                  Nairobi's premier luxury maternity studio
-                </p>
-                
+          <div className="absolute inset-0 flex flex-col justify-center items-center text-center z-10 pointer-events-none px-4 py-24 sm:py-28 md:py-0">
+            <div className="fade-in" style={{ color: "white", pointerEvents: "auto", maxWidth: "860px" }}>
+              <span style={{
+                fontSize: "clamp(0.72rem, 1.8vw, 0.88rem)",
+                textTransform: "uppercase",
+                letterSpacing: "0.26em",
+                fontWeight: "500",
+                color: "rgba(255, 255, 255, 0.95)",
+                marginBottom: "0.6rem",
+                display: "block",
+                textShadow: "0 2px 8px rgba(0,0,0,0.6)"
+              }}>
+                Nairobi's Premier Sanctuary
+              </span>
+
+              <h1 className="display h1-mobile" style={{
+                fontSize: "clamp(2.1rem, 5.2vw, 4.6rem)",
+                fontWeight: 300,
+                lineHeight: 1.08,
+                marginBottom: "1rem",
+                textShadow: "0 2px 14px rgba(0,0,0,0.7)"
+              }}>
+                Maternity Photoshoots in Nairobi – Fiesta House Maternity
+              </h1>
+
+              <p className="hidden sm:block" style={{
+                fontSize: "clamp(0.88rem, 1.2vw, 1rem)",
+                lineHeight: 1.6,
+                color: "rgba(255,255,255,0.9)",
+                maxWidth: "520px",
+                margin: "0 auto 1.5rem",
+                textShadow: "0 1px 6px rgba(0,0,0,0.6)"
+              }}>
+                Curated couture gowns included, iconic permanent sets, and gentle posing guidance at Diamond Plaza II, Parklands.
+              </p>
+
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", alignItems: "center", marginTop: "0.6rem" }}>
+                <Link
+                  to="/contact"
+                  className="btn btn-magenta"
+                  data-track="booking_click:home_hero_primary"
+                  style={{
+                    padding: "0.65rem 1.8rem",
+                    fontSize: "0.8rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    fontWeight: "600",
+                    borderRadius: "100px",
+                    boxShadow: "0 6px 20px rgba(102,0,50,0.4)"
+                  }}
+                >
+                  Book Your Shoot
+                </Link>
+                <Link
+                  to="/portfolio"
+                  className="btn btn-outline"
+                  data-track="portfolio_click:home_hero_secondary"
+                  style={{
+                    borderColor: "rgba(255,255,255,0.75)",
+                    color: "#FFFFFF",
+                    padding: "0.65rem 1.6rem",
+                    fontSize: "0.8rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    borderRadius: "100px",
+                    backdropFilter: "blur(4px)",
+                    backgroundColor: "rgba(255,255,255,0.12)"
+                  }}
+                >
+                  Portfolio
+                </Link>
               </div>
             </div>
           </div>
@@ -231,28 +339,29 @@ const Index = () => {
 
         
         {/* Maternity Photoshoot Description Section */}
-        <section className="section-padding" style={{ background: "#f8f9fb" }}>
-          <div className="container" style={{ maxWidth: 930, margin: "0 auto" }}>
-            <h2 style={{ color: "var(--magenta)", fontSize: "clamp(2.15rem, 3.2vw, 2.6rem)", fontWeight: 700, marginBottom: 12, textAlign: "center", letterSpacing: "0.02em" }}>
-              Best Maternity Photoshoot in Kenya
+        <section className="section-padding" style={{ background: "#FBF6F3" }}>
+          <div className="container" style={{ maxWidth: 840, margin: "0 auto" }}>
+            <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600", display: "block", textAlign: "center", marginBottom: "0.5rem" }}>
+              Fiesta House Maternity
+            </span>
+            <h2 style={{ color: "var(--sky-blue)", fontSize: "clamp(2rem, 3.6vw, 3rem)", fontWeight: 700, marginBottom: 16, textAlign: "center", fontFamily: "'Cormorant Garamond', serif" }}>
+              Where Every Mother Becomes Iconic
             </h2>
-            <h3 style={{ color: "#222", fontSize: "clamp(1.28rem, 1.9vw, 1.55rem)", fontWeight: 600, marginBottom: 24, textAlign: "center" }}>
-              Maternity Photography in Nairobi | Fiesta House
-            </h3>
-            <p style={{ fontSize: "clamp(1.08rem, 1.5vw, 1.2rem)", color: "#444", marginBottom: 18, textAlign: "center", lineHeight: "1.68" }}>
-              Fiesta House is not a typical photoshoot studio. It is a private, fully curated maternity sanctuary designed exclusively for expectant mothers who refuse to be ordinary. We transform pregnancy into art through our iconic, one-of-a-kind studio sets - from the cinematic Boat Set to the regal Master Staircase, immersive Flower Gardens, elegant Swings, and grand Chandeliers. These are not ordinary backdrops, but meticulously designed environments created to produce imagery that cannot be replicated anywhere else.
+            <p style={{ fontSize: "1.05rem", color: "rgba(43, 35, 32, 0.8)", marginBottom: 16, textAlign: "center", lineHeight: "1.75" }}>
+              Fiesta House Maternity is Africa's reigning luxury maternity house, a private sanctuary in Parklands, Nairobi, built for pregnant women carrying something sacred and refusing to move through it unseen. Spanning over 3,000 square feet, our studio holds more than 20 sets, each one designed from the ground up with the pregnant body in mind — every step, every curve, every pose considered before you ever arrive. Step into our cinematic Boat Set. Ascend the Master Staircase. Disappear into the Flower Gardens, sway on the Celestial Swing, stand beneath chandeliers built for a coronation — because that is exactly what this is.
             </p>
-            <p style={{ fontSize: "clamp(1.08rem, 1.5vw, 1.2rem)", color: "#444", marginBottom: 18, textAlign: "center", lineHeight: "1.68" }}>
-              Every detail is intentional. From rare designer maternity gowns and professional makeup artistry to guided posing and an all-women team trained specifically to care for expectant mothers, everything is executed at a world-class standard. Most importantly, your comfort comes first - from the ambiance to the pacing of your session, every moment is designed to ensure you feel safe, supported, and celebrated. This is where confidence meets couture, and motherhood is captured without compromise.
+            <p style={{ fontSize: "1.05rem", color: "rgba(43, 35, 32, 0.8)", marginBottom: 0, textAlign: "center", lineHeight: "1.75" }}>
+              You will not lift a finger. Choose from over 300 designer gowns and trailing silks in our couture atelier, fitted by our in-house wardrobe stylists. Our professional makeup artists and hair stylists prepare you for the frame, while our all-women team — gentle hands, practiced eyes — guides you through every pose, every breath, every gesture. This is not a photoshoot. It is the moment you are crowned.
             </p>
           </div>
         </section>
+
         {/* Curated Collections Section */}
         <section className="section-padding" style={{ backgroundColor: "white" }}>
           <div className="container">
-            <div className="mobile-center" style={{ marginBottom: "3rem" }}>
-              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Curated Collections</span>
-              <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", marginTop: "1rem" }}>Explore our signature aesthetics</h2>
+            <div className="mobile-center" style={{ marginBottom: "2.5rem" }}>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>Curated Collections</span>
+              <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.7rem)", marginTop: "0.6rem" }}>Explore our signature aesthetics</h2>
             </div>
 
             <div className="grid grid-3" style={{ gap: "2rem" }}>
@@ -261,11 +370,19 @@ const Index = () => {
                   <Skeleton key={i} className="aspect-[3/4] w-full" />
                 ))
               ) : (
-                portfolios.slice(0, 6).map((portfolio) => (
-                  <Link key={portfolio.id} to={`/portfolio/${portfolio.slug}`} className="group relative overflow-hidden aspect-[3/4]">
-                    {portfolio.images[0] && (
+                portfolios.slice(0, 6).map((portfolio) => {
+                  const coverImage = getPortfolioCoverImage(portfolio);
+
+                  return (
+                  <Link
+                    key={portfolio.id}
+                    to={`/portfolio/${portfolio.slug || portfolio.id}`}
+                    data-track={`portfolio_click:home_collection_${portfolio.slug || portfolio.id}`}
+                    className="group relative overflow-hidden aspect-[3/4]"
+                  >
+                    {coverImage && (
                       <img
-                        src={portfolio.images[0].url}
+                        src={coverImage}
                         alt={portfolio.title}
                         width={1200}
                         height={1600}
@@ -279,12 +396,13 @@ const Index = () => {
                       <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "0.8rem" }}>View Collection</span>
                     </div>
                   </Link>
-                ))
+                );
+                })
               )}
             </div>
             {!loading && portfolios.length > 6 && (
               <div style={{ display: "flex", justifyContent: "center", marginTop: "2rem" }}>
-                <Link to="/portfolio" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)", fontWeight: 600, padding: "0.75rem 2.5rem", fontSize: "1.1rem" }}>
+                <Link to="/portfolio" data-track="portfolio_click:home_find_more" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)", fontWeight: 600, padding: "0.75rem 2.5rem", fontSize: "1.1rem" }}>
                   Find More
                 </Link>
               </div>
@@ -308,7 +426,7 @@ const Index = () => {
                   subtitle: "Studio Shoots",
                   desc: "Step into our studio for an elegant maternity photography experience focused on poses and perfection.",
                   fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778155044498_IMG_5453.jpg",
-                  link: "/gallery/2a2ab935-7752-4c1d-99a3-52c9046ef873"
+                  link: "/gallery/studio-shoots"
                 },
                 {
                   id: "b8b100e9-81ce-4778-bf57-0adee0b46fc0",
@@ -324,7 +442,7 @@ const Index = () => {
                   subtitle: "Cinematic Art",
                   desc: "Elevate your maternity story with Fiesta House's suspending concept-where gravity meets grace.",
                   fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg",
-                  link: "/gallery/1aea11b8-fd79-4602-9c44-af400754ebec"
+                  link: "/gallery/suspending-concept"
                 }
               ].map((concept, i) => {
                 const folder = folders.find(f => f.id === concept.id);
@@ -332,7 +450,7 @@ const Index = () => {
 
                 return (
                   <div key={i} className="group cursor-pointer">
-                    <Link to={concept.link}>
+                    <Link to={concept.link} data-track={`collection_click:home_signature_${concept.id}`}>
                       <div className="overflow-hidden aspect-[4/5] mb-8 relative">
                         <img
                           src={displayImg}
@@ -372,7 +490,7 @@ const Index = () => {
                 <p>
                   Every detail is intentional. From rare designer maternity gowns and professional makeup artistry to guided posing and an all-women team trained specifically to care for expectant mothers, everything is executed at a world-class standard.
                 </p>
-                <Link to="/experience" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way</Link>
+                <Link to="/experience" data-track="experience_click:home_sanctuary_text" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way</Link>
               </div>
               <div style={{ position: "relative" }} className="mobile-center">
                 <img src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg" alt="Maternity Portrait" width={1200} height={1600} loading="lazy" decoding="async" style={{ width: "100%", height: "auto", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
@@ -401,36 +519,36 @@ const Index = () => {
               <span style={{
                 color: "var(--sky-blue)",
                 textTransform: "uppercase",
-                letterSpacing: "0.4em",
-                fontSize: "1.1rem",
+                letterSpacing: "0.25em",
+                fontSize: "0.85rem",
                 fontWeight: "600",
                 display: "block",
-                marginBottom: "2.5rem",
-                textShadow: "0 2px 4px rgba(0,0,0,0.3)"
+                marginBottom: "1.2rem",
+                textShadow: "0 2px 4px rgba(0,0,0,0.4)"
               }}>The Sanctuary</span>
               <h2 className="display h2-mobile" style={{
-                fontSize: "clamp(3rem, 12vw, 7.5rem)",
-                lineHeight: "1",
-                marginBottom: "2.5rem",
-                textShadow: "0 4px 20px rgba(0,0,0,0.4)"
+                fontSize: "clamp(2rem, 4vw, 3.4rem)",
+                lineHeight: "1.15",
+                marginBottom: "1.5rem",
+                textShadow: "0 4px 20px rgba(0,0,0,0.5)"
               }}>Where Gravity Meets Grace</h2>
               <p style={{
-                fontSize: "1.4rem",
-                lineHeight: "1.6",
+                fontSize: "1.05rem",
+                lineHeight: "1.7",
                 opacity: 0.95,
-                marginBottom: "4rem",
-                textShadow: "0 2px 10px rgba(0,0,0,0.3)",
-                maxWidth: "600px"
+                marginBottom: "2.5rem",
+                textShadow: "0 2px 10px rgba(0,0,0,0.4)",
+                maxWidth: "540px"
               }}>
                 Our Nairobi studio is a private, fully curated sanctuary designed specifically for the expectant mother. We don't just take photos; we create environments where your maternity story is transformed into timeless art.
               </p>
-              <Link to="/experience" className="btn btn-primary" style={{
+              <Link to="/experience" data-track="experience_click:home_sanctuary_hero" className="btn btn-primary" style={{
                 backgroundColor: "var(--sky-blue)",
                 border: "none",
-                padding: "1.2rem 3rem",
-                fontSize: "1rem",
-                letterSpacing: "0.1em",
-                boxShadow: "0 10px 30px rgba(110, 193, 228, 0.3)"
+                padding: "0.85rem 2.2rem",
+                fontSize: "0.9rem",
+                letterSpacing: "0.08em",
+                boxShadow: "0 8px 24px rgba(110, 193, 228, 0.3)"
               }}>Discover the Atelier</Link>
             </div>
           </div>
@@ -439,12 +557,12 @@ const Index = () => {
         {/* Iconic Sets Section - Gallery Layout */}
         <section className="section-padding" style={{ backgroundColor: "white" }}>
           <div className="container">
-            <div className="mobile-center" style={{ marginBottom: "5rem" }}>
-              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Environments</span>
-              <h2 className="display h2-mobile" style={{ fontSize: "4rem", marginTop: "1rem" }}>Curated Studio Masterpieces</h2>
+            <div className="mobile-center" style={{ marginBottom: "3.5rem" }}>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>The Environments</span>
+              <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.8rem)", marginTop: "0.6rem" }}>Curated Studio Masterpieces</h2>
             </div>
 
-            <div className="grid grid-3" style={{ gap: "5rem 3rem" }}>
+            <div className="grid grid-3" style={{ gap: "3.5rem 2.5rem" }}>
               {[
                 { name: "The Master Staircase", detail: "Regal architecture for sweeping silhouettes.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1785868048311_IMG_5587-scaled.jpg" },
                 { name: "Flower Gardens", detail: "Immersive floral arrangements in full bloom.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778154974695_IMG_4156-683x1024.jpg" },
@@ -461,8 +579,8 @@ const Index = () => {
                       <span className="text-[10px] uppercase tracking-widest font-bold">SET {i + 1}</span>
                     </div>
                   </div>
-                  <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{set.name}</h3>
-                  <p style={{ fontSize: "1rem", opacity: 0.6, lineHeight: "1.6" }}>{set.detail}</p>
+                  <h3 className="display" style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>{set.name}</h3>
+                  <p style={{ fontSize: "0.95rem", opacity: 0.6, lineHeight: "1.6" }}>{set.detail}</p>
                 </div>
               ))}
             </div>
@@ -481,19 +599,19 @@ const Index = () => {
                 />
               </div>
               <div style={{ order: 1 }} className="mobile-center">
-                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Art of the Edit</span>
-                <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", margin: "1rem 0" }}>Cinematic Storytelling</h2>
-                <p style={{ fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8, marginBottom: "2rem" }}>
+                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>The Art of the Edit</span>
+                <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.8rem)", margin: "0.6rem 0 1rem" }}>Cinematic Storytelling</h2>
+                <p style={{ fontSize: "1.05rem", lineHeight: "1.7", opacity: 0.8, marginBottom: "2rem" }}>
                   We don't just take photos; we craft heirlooms. Our signature "Cinematic Edit" transforms raw moments into breathtaking art, balancing light, shadow, and texture to celebrate your journey in its most beautiful light.
                 </p>
                 <div style={{ display: "flex", gap: "2rem" }}>
                   <div>
-                    <h3 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Natural Skin</h3>
-                    <p style={{ fontSize: "0.9rem", opacity: 0.6 }}>Preserving the authentic beauty of motherhood.</p>
+                    <h3 className="display" style={{ fontSize: "1.3rem", marginBottom: "0.4rem" }}>Natural Skin</h3>
+                    <p style={{ fontSize: "0.88rem", opacity: 0.6 }}>Preserving the authentic beauty of motherhood.</p>
                   </div>
                   <div>
-                    <h3 className="display" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Eternal Glow</h3>
-                    <p style={{ fontSize: "0.9rem", opacity: 0.6 }}>Soft, ethereal lighting tailored to your silhouette.</p>
+                    <h3 className="display" style={{ fontSize: "1.3rem", marginBottom: "0.4rem" }}>Eternal Glow</h3>
+                    <p style={{ fontSize: "0.88rem", opacity: 0.6 }}>Soft, ethereal lighting tailored to your silhouette.</p>
                   </div>
                 </div>
               </div>
@@ -509,38 +627,41 @@ const Index = () => {
                 <img src={gownImg} alt="Designer Gowns" width={1200} height={1600} loading="lazy" decoding="async" style={{ width: "100%", height: "auto", borderRadius: "2px", boxShadow: "clamp(-20px, -4vw, -10px) clamp(10px, 4vw, 20px) 0 var(--magenta-tint)" }} />
               </div>
               <div className="mobile-center">
-                <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "500" }}>Couture Atelier</span>
-                <h2 className="display h2-mobile" style={{ fontSize: "3.5rem", margin: "1rem 0" }}>Originality, Designed.</h2>
-                <p style={{ fontSize: "1.2rem", lineHeight: "1.8", opacity: 0.8, marginBottom: "2rem" }}>
-                  Every piece in the Fiesta Closet is designed and crafted in-house. These are original garments that cannot be found anywhere else in Kenya. We transform fabrics into heirlooms.
+                <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "500" }}>Couture Atelier</span>
+                <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.8rem)", margin: "0.6rem 0 1rem" }}>Originality, Designed.</h2>
+                <p style={{ fontSize: "1.05rem", lineHeight: "1.7", opacity: 0.8, marginBottom: "1.5rem" }}>
+                  Every gown in our atelier is curated specifically for photography. Expectant mothers select the looks they want to be photographed in during their session. We do not sell retail fashion—we provide an exclusive couture wardrobe that transforms your photoshoot into magazine art.
                 </p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "3rem" }}>
-                  {["Silk Trains", "Delicate Lace", "Soft Chiffon", "Statement Pieces"].map(tag => (
-                    <span key={tag} style={{ padding: "0.5rem 1rem", backgroundColor: "var(--magenta-tint)", color: "var(--magenta)", fontSize: "0.85rem", borderRadius: "100px", fontWeight: "500" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "2.5rem" }}>
+                  {["Flying Silk Trains", "Sculpting Bodycon Lace", "Ethereal Tulle Robes", "Included in Sessions"].map(tag => (
+                    <span key={tag} style={{ padding: "0.5rem 1rem", backgroundColor: "var(--magenta-tint)", color: "var(--magenta)", fontSize: "0.85rem", borderRadius: "100px", fontWeight: "600" }}>
                       {tag}
                     </span>
                   ))}
                 </div>
-                <Link to="/maternity-gowns" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)" }}>The Collection</Link>
+                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                  <Link to="/maternity-gowns" data-track="gowns_click:home_gowns_section" className="btn btn-magenta" style={{ padding: "0.75rem 1.8rem", fontSize: "0.88rem" }}>Explore Gowns & Looks</Link>
+                  <Link to="/what-to-wear-maternity-photoshoot" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)", padding: "0.75rem 1.8rem", fontSize: "0.88rem" }}>What to Wear Guide</Link>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* The Fiesta Experience Walkthrough */}
-        <section className="section-padding" style={{ backgroundColor: "white" }}>
+        {/* The Fiesta Experience Walkthrough (How It Works) */}
+        <section className="section-padding" style={{ backgroundColor: "#FBF6F3" }}>
           <div className="container">
-            <div className="mobile-center" style={{ marginBottom: "4rem" }}>
-              <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>The Process</span>
-              <h2 className="display h2-mobile" style={{ fontSize: "4.5rem", marginTop: "1rem" }}>Your journey to the frame</h2>
+            <div className="mobile-center" style={{ marginBottom: "3.5rem" }}>
+              <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>How It Works</span>
+              <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.8rem)", marginTop: "0.6rem" }}>Your maternity shoot journey</h2>
             </div>
 
             <div className="grid grid-4" style={{ gap: "3rem" }}>
               {[
-                { step: "01", title: "Book your Session", desc: "We discuss your vision, preferred sets, and gown selections to curate your unique session." },
-                { step: "02", title: "Arrive & get glam", desc: "Professional makeup and styling in our private atelier to make you feel like the queen you are." },
-                { step: "03", title: "Strike your pose", desc: "Guided posing in our iconic sets with an all-women team focused on your comfort and beauty." },
-                { step: "04", title: "Receive your gallery", desc: "Receive your curated gallery of high-end, cinematically retouched heirlooms." }
+                { step: "01", title: "Consult & Book", desc: "Choose your session package and secure your date with our Parklands studio concierge." },
+                { step: "02", title: "Select Your Looks", desc: "Choose from over 300 designer gowns and trailing silks with personal styling guidance." },
+                { step: "03", title: "Pamper & Pose", desc: "Enjoy professional makeup and calm, all-female guided posing on our iconic physical sets." },
+                { step: "04", title: "Cherish Forever", desc: "Receive your curated digital gallery of high-end, cinematically retouched heirlooms." }
               ].map((s, i) => (
                 <div key={i} style={{ position: "relative" }}>
                   <div className="display" style={{ fontSize: "5rem", color: i % 2 === 0 ? "var(--sky-blue)" : "var(--magenta)", opacity: 0.2, position: "absolute", top: "-2rem", left: "-1rem", zIndex: 0 }}>{s.step}</div>
@@ -554,15 +675,82 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Planning Guidance Hub Section */}
+        <section className="section-padding" style={{ backgroundColor: "white" }}>
+          <div className="container">
+            <div className="mobile-center" style={{ marginBottom: "3rem", textAlign: "center" }}>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>
+                Education & Preparation
+              </span>
+              <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.7rem)", marginTop: "0.6rem", marginBottom: "0.8rem" }}>
+                Planning your maternity photoshoot
+              </h2>
+              <p style={{ maxWidth: "640px", margin: "0 auto", fontSize: "1.05rem", opacity: 0.75, lineHeight: 1.6 }}>
+                Clear answers to every question you have before stepping into our Nairobi studio.
+              </p>
+            </div>
+
+            <div className="grid grid-4" style={{ gap: "1.5rem" }}>
+              <Link
+                to="/when-to-do-maternity-photos"
+                className="group p-6 rounded-2xl border border-[#F1E4EC] bg-[#FBF6F3] hover:border-[#660032] transition-all block"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#B09345] block mb-2">Stage & Timing</span>
+                <h3 className="font-serif text-2xl text-[#2B2320] mb-2 group-hover:text-[#660032] transition-colors">When Is the Best Time?</h3>
+                <p className="text-sm text-[#2B2320]/70 leading-relaxed mb-4">
+                  Why weeks 28–34 are ideal, 7 vs 8 vs 9 months, and twin pregnancy timing.
+                </p>
+                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide →</span>
+              </Link>
+
+              <Link
+                to="/planning-guide"
+                className="group p-6 rounded-2xl border border-[#F1E4EC] bg-[#FBF6F3] hover:border-[#660032] transition-all block"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#B09345] block mb-2">Checklist</span>
+                <h3 className="font-serif text-2xl text-[#2B2320] mb-2 group-hover:text-[#660032] transition-colors">Pre-Shoot Planning</h3>
+                <p className="text-sm text-[#2B2320]/70 leading-relaxed mb-4">
+                  What to pack in your studio bag, skin prep, hydration, and day-of roadmap.
+                </p>
+                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide →</span>
+              </Link>
+
+              <Link
+                to="/what-to-wear-maternity-photoshoot"
+                className="group p-6 rounded-2xl border border-[#F1E4EC] bg-[#FBF6F3] hover:border-[#660032] transition-all block"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#B09345] block mb-2">Wardrobe & Colors</span>
+                <h3 className="font-serif text-2xl text-[#2B2320] mb-2 group-hover:text-[#660032] transition-colors">What to Wear</h3>
+                <p className="text-sm text-[#2B2320]/70 leading-relaxed mb-4">
+                  Gown silhouettes, undergarments, studio backdrop pairings, and atelier looks.
+                </p>
+                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide →</span>
+              </Link>
+
+              <Link
+                to="/family-maternity-photoshoot"
+                className="group p-6 rounded-2xl border border-[#F1E4EC] bg-[#FBF6F3] hover:border-[#660032] transition-all block"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#B09345] block mb-2">Partner & Siblings</span>
+                <h3 className="font-serif text-2xl text-[#2B2320] mb-2 group-hover:text-[#660032] transition-colors">Family Shoots</h3>
+                <p className="text-sm text-[#2B2320]/70 leading-relaxed mb-4">
+                  Husband styling, toddler participation, and stress-free sequencing.
+                </p>
+                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide →</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Latest from the Studio - Masonry Gallery */}
         <section className="section-padding" style={{ backgroundColor: "var(--bg)" }}>
           <div className="container">
-            <div className="grid grid-2 mobile-gap-8" style={{ gap: "4rem", alignItems: "flex-end", marginBottom: "5rem" }}>
+            <div className="grid grid-2 mobile-gap-8" style={{ gap: "4rem", alignItems: "flex-end", marginBottom: "3.5rem" }}>
               <div className="mobile-center">
-                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Live from the Sanctuary</span>
-                <h2 className="display h2-mobile" style={{ fontSize: "4.5rem", marginTop: "1rem" }}>Recent Masterpieces</h2>
+                <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>Live from the Sanctuary</span>
+                <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.7rem)", marginTop: "0.6rem" }}>Recent Masterpieces</h2>
               </div>
-              <p style={{ fontSize: "1.2rem", opacity: 0.7, maxWidth: "400px" }}>
+              <p style={{ fontSize: "1.05rem", opacity: 0.7, maxWidth: "400px" }}>
                 Explore the latest captures from our Nairobi studio. Every frame is a testament to the beauty of life in bloom.
               </p>
             </div>
@@ -591,27 +779,36 @@ const Index = () => {
 
         {/* Frequently Asked Questions - Accordion */}
         <section className="section-padding" style={{ backgroundColor: "white" }}>
-          <div className="container" style={{ maxWidth: "900px" }}>
-            <div className="mobile-center" style={{ marginBottom: "3rem" }}>
-              <h2 className="display h2-mobile" style={{ fontSize: "3.5rem" }}>Common Inquiries</h2>
+          <div className="container" style={{ maxWidth: "860px" }}>
+            <div className="mobile-center" style={{ marginBottom: "2.5rem", textAlign: "center" }}>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>
+                Answers to Your Questions
+              </span>
+              <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.6rem)", marginTop: "0.4rem" }}>Common Inquiries</h2>
             </div>
             <Accordion type="single" collapsible className="w-full">
               {[
-                { q: "When is the best time for my session?", a: "We typically recommend booking your session between 28 and 34 weeks, when your bump is beautifully defined but you are still comfortable moving." },
-                { q: "What do I need to bring?", a: "Bring nothing but yourself and a change of undergarments. We provide the gowns, the makeup, and all styling accessories." },
-                { q: "Can my partner and children join?", a: "Absolutely. We encourage family participation. All our packages include options for partners and siblings to be part of the portraits." },
-                { q: "How long does it take to receive my images?", a: "A curated preview is shared within 10 working days. Your final retouched gallery is delivered within 14 working days." }
+                { q: "Do I need to buy my own gown or are outfits provided?", a: "You do not need to buy gowns! Fiesta House provides complimentary access to our in-house atelier of over 80 couture maternity gowns, trailing silks, and lace robes. You select the looks you wish to wear for your session." },
+                { q: "When is the best time for my maternity photoshoot?", a: "We typically recommend booking your session between 28 and 34 weeks of pregnancy, when your bump is beautifully defined but you still have comfortable energy." },
+                { q: "Can my husband, partner, and children join?", a: "Absolutely. We encourage partner and family inclusion. All our core packages allow partners and siblings to be part of the session at no additional cost." },
+                { q: "I have never posed before. Will you guide me?", a: "Yes! 95% of our expectant mothers have never posed in a studio. Our all-women photography team guides every single finger placement, chin angle, and posture with warmth and care." },
+                { q: "How long does it take to receive my images?", a: "Soft copy retouched images are delivered via a private online gallery within 7 to 10 working days. Print heirlooms follow shortly after." }
               ].map((faq, i) => (
                 <AccordionItem key={i} value={`item-${i}`} style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", padding: "0.5rem 0" }}>
-                  <AccordionTrigger className="display" style={{ fontSize: "1.5rem", fontWeight: "300", textAlign: "left" }}>
+                  <AccordionTrigger className="display" style={{ fontSize: "1.25rem", fontWeight: "400", textAlign: "left" }}>
                     {faq.q}
                   </AccordionTrigger>
-                  <AccordionContent style={{ fontSize: "1.1rem", opacity: 0.7, lineHeight: "1.8", paddingTop: "1rem" }}>
+                  <AccordionContent style={{ fontSize: "1rem", opacity: 0.8, lineHeight: "1.7", paddingTop: "0.6rem" }}>
                     {faq.a}
                   </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
+            <div style={{ textAlign: "center", marginTop: "2rem" }}>
+              <Link to="/faq" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)", fontWeight: 600, padding: "0.7rem 1.8rem", fontSize: "0.88rem" }}>
+                View All Frequently Asked Questions →
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -620,8 +817,8 @@ const Index = () => {
           <div className="container">
             <div className="grid grid-2 mobile-gap-12" style={{ gap: "6rem" }}>
               <div className="mobile-center">
-                <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.9rem", fontWeight: "600" }}>Visit the Sanctuary</span>
-                <h2 className="display h2-mobile" style={{ fontSize: "4rem", marginTop: "1rem", marginBottom: "3rem" }}>Where to find us</h2>
+                <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>Visit the Sanctuary</span>
+                <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.7rem)", marginTop: "0.6rem", marginBottom: "2.5rem" }}>Where to find us</h2>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
                   <div style={{ display: "flex", gap: "1.5rem" }}>
@@ -650,8 +847,8 @@ const Index = () => {
                 </div>
 
                 <div style={{ marginTop: "4rem", display: "flex", gap: "1.5rem" }}>
-                  <a href="https://www.instagram.com/fiestahousematernity/" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Instagram" style={{ color: "var(--sky-blue)" }}><Instagram /></a>
-                  <a href="https://www.facebook.com/fiestahousematernity" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Facebook" style={{ color: "var(--sky-blue)" }}><Facebook /></a>
+                  <a href="https://www.instagram.com/fiestahousematernity/" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Instagram" data-track="social_click:home_instagram" style={{ color: "var(--sky-blue)" }}><Instagram /></a>
+                  <a href="https://www.facebook.com/fiestahousematernity" target="_blank" rel="noreferrer" aria-label="Visit Fiesta House Facebook" data-track="social_click:home_facebook" style={{ color: "var(--sky-blue)" }}><Facebook /></a>
                 </div>
               </div>
 
@@ -680,6 +877,7 @@ const Index = () => {
                       href="https://maps.google.com"
                       target="_blank"
                       rel="noreferrer"
+                      data-track="location_click:home_get_directions"
                       style={{
                         display: "block",
                         marginTop: "1.5rem",
@@ -701,30 +899,91 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Testimonials */}
+        {/* Client Reviews & Testimonials */}
         <section className="section-padding" style={{ backgroundColor: "#FBF6F3" }}>
           <div className="container">
-            <div className="grid grid-2 mobile-gap-12" style={{ gap: "6rem" }}>
+            <div className="text-center" style={{ maxWidth: "700px", margin: "0 auto 3rem" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", color: "#F59E0B", marginBottom: "0.75rem", fontSize: "1.2rem" }}>
+                <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                <span style={{ color: "var(--plum)", fontSize: "0.88rem", fontWeight: "700", letterSpacing: "0.03em", marginLeft: "0.3rem" }}>
+                  4.9 Rating • 1,169+ Google Reviews
+                </span>
+              </div>
+              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600", display: "block", marginBottom: "0.5rem" }}>
+                Verified Client Stories
+              </span>
+              <h2 className="display" style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)", color: "var(--dark)" }}>
+                What Expectant Mothers Say
+              </h2>
+            </div>
+
+            <div className="grid grid-3 mobile-gap-8" style={{ gap: "2rem" }}>
               {[
                 {
-                  text: "I have never felt more beautiful in my life. The gowns, the makeup, the way they made me feel - it was the most special day of my pregnancy.",
-                  author: "Wanjiru K."
+                  text: "I received baby girl treatment, felt like I was outside Kenya for a minute, in those countries where Expectant mothers are valued and cherished. Staff are amazing, from Faith, to Indiana to Beverly to Amazing the talented photographer. I'm a happy Client!",
+                  author: "Lydia Opiyo",
+                  tag: "Baby Girl Treatment • Google Review"
                 },
                 {
-                  text: "Worth every shilling. The team handled everything. I just walked in, and three hours later I had photos I'll treasure forever.",
-                  author: "Amina O."
+                  text: "Very helpful staff. Indiana the make up artist was exceptional! Beverly my stylist was incredible! And words cannot describe Amazing the photographer… she was just as her name describes. Am blessed!",
+                  author: "Hellen Okochil",
+                  tag: "MUA & Styling Team • Google Review"
+                },
+                {
+                  text: "It was a great experience having our maternity shoot done by Fiesta House Maternity. The team is well organized, from front office to makeup artists, stylists, photographer and team. A special pause and reflection moment before welcoming a newborn.",
+                  author: "Alvin Gachie",
+                  tag: "Local Guide • Couple Session"
                 }
               ].map((t, i) => (
-                <div key={i} style={{ fontStyle: "italic", position: "relative", padding: "2rem" }}>
-                  <span style={{ position: "absolute", top: 0, left: 0, fontSize: "4rem", color: "rgba(102, 0, 50, 0.2)", zIndex: 0 }}>"</span>
-                  <p style={{ fontSize: "1.8rem", lineHeight: "1.4", marginBottom: "1.5rem", fontFamily: "var(--font-display)", position: "relative", zIndex: 1, color: "var(--magenta)" }}>
-                    {t.text}
-                  </p>
-                  <cite style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: "600", color: "var(--sky-blue)" }}>
-                    - {t.author}
-                  </cite>
+                <div
+                  key={i}
+                  style={{
+                    backgroundColor: "#FFFFFF",
+                    padding: "2.2rem 1.8rem",
+                    borderRadius: "4px",
+                    border: "1px solid rgba(102, 0, 50, 0.08)",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between"
+                  }}
+                >
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#F59E0B", fontSize: "0.95rem", marginBottom: "1rem" }}>
+                      <span>★★★★★</span>
+                      <span style={{ fontSize: "0.72rem", color: "var(--plum)", fontWeight: "700", marginLeft: "0.3rem" }}>
+                        Verified Google Review
+                      </span>
+                    </div>
+                    <p style={{ fontSize: "1rem", lineHeight: "1.7", color: "rgba(43, 35, 32, 0.85)", fontStyle: "italic", marginBottom: "1.5rem" }}>
+                      "{t.text}"
+                    </p>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: "700", color: "var(--plum)", fontSize: "0.95rem" }}>{t.author}</div>
+                    <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--sky-blue)", marginTop: "0.2rem" }}>
+                      {t.tag}
+                    </div>
+                  </div>
                 </div>
               ))}
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: "3rem" }}>
+              <Link
+                to="/reviews"
+                className="btn btn-outline"
+                style={{
+                  borderColor: "var(--magenta)",
+                  color: "var(--magenta)",
+                  fontWeight: "600",
+                  padding: "0.75rem 2rem",
+                  fontSize: "0.92rem",
+                  borderRadius: "100px"
+                }}
+              >
+                Read All 5-Star Reviews & Client Stories →
+              </Link>
             </div>
           </div>
         </section>
@@ -740,7 +999,7 @@ const Index = () => {
                   Give the expectant mother in your life an experience she will never forget. Our luxury gift vouchers are the perfect way to celebrate a new chapter with art that lasts a lifetime.
                 </p>
                 <div style={{ marginTop: "2.5rem" }}>
-                  <Link to="/shop" className="btn btn-magenta">Purchase a Voucher</Link>
+                  <Link to="/shop" className="btn btn-magenta" data-track="voucher_click:home_gift_section">Purchase a Voucher</Link>
                 </div>
               </div>
               <div style={{ position: "relative" }}>
@@ -868,8 +1127,8 @@ const Index = () => {
               </div>
 
               <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }} className="mobile-center justify-center home-final-cta-actions">
-                <Link to="/contact" className="btn btn-magenta home-final-cta-btn" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
-                <a href="https://wa.me/254720111928" className="btn btn-whatsapp home-final-cta-btn" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
+                <Link to="/contact" className="btn btn-magenta home-final-cta-btn" data-track="booking_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
+                <a href="https://wa.me/254720111928" className="btn btn-whatsapp home-final-cta-btn" data-track="whatsapp_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
               </div>
             </div>
           </div>
