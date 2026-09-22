@@ -162,29 +162,29 @@ const Pricing = () => {
                     }}
                     className="pricing-card"
                   >
-                    {pkg.popular && (
-                      <div style={{
-                        position: "absolute",
-                        top: "24px",
-                        right: "24px",
-                        backgroundColor: accentColor,
-                        color: "white",
-                        padding: "0.4rem 1.2rem",
-                        fontSize: "0.7rem",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.1em",
-                        fontWeight: "700",
-                        borderRadius: "100px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem"
-                      }}>
-                        <Star size={12} fill="white" /> Most Loved
-                      </div>
-                    )}
-
                     <div style={{ marginBottom: "1.2rem" }}>
-                      <h3 className="display" style={{ fontSize: "2rem", marginBottom: "0.6rem", color: "var(--plum)", fontWeight: 700 }}>{pkg.name}</h3>
+                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.6rem 1rem", marginBottom: "0.6rem" }}>
+                        <h3 className="display" style={{ fontSize: "2rem", margin: 0, color: "var(--plum)", fontWeight: 700 }}>{pkg.name}</h3>
+                        {pkg.popular && (
+                          <div style={{
+                            backgroundColor: accentColor,
+                            color: "white",
+                            padding: "0.4rem 1.2rem",
+                            fontSize: "0.7rem",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.1em",
+                            fontWeight: "700",
+                            borderRadius: "100px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            flexShrink: 0,
+                            whiteSpace: "nowrap"
+                          }}>
+                            <Star size={12} fill="white" /> Most Loved
+                          </div>
+                        )}
+                      </div>
                       <p style={{ minHeight: "2.8rem", marginBottom: "1.25rem", fontSize: "0.95rem", fontStyle: "italic", color: "var(--magenta-tint)", lineHeight: "1.45" }}>
                         {packagePositioning[pkg.name]}
                       </p>
