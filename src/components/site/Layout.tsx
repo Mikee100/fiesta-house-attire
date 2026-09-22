@@ -102,6 +102,10 @@ const Layout: React.FC<LayoutProps> = ({
         
         @media (max-width: 768px) {
           .social-fixed-bar {
+            top: auto;
+            bottom: 10.75rem;
+            animation: none;
+            transform: none;
             right: 0.45rem;
             gap: 0.45rem;
             padding: 0.55rem 0.4rem;
