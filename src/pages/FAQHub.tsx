@@ -359,7 +359,7 @@ export default function FAQHub() {
                 Chat on WhatsApp (+254 720 111 928)
               </a>
             </Button>
-            <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 rounded-full px-8 py-6">
+            <Button asChild variant="outline" size="lg" className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white rounded-full px-8 py-6">
               <Link to="/contact">Send an Enquiry</Link>
             </Button>
           </div>

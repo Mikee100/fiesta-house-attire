@@ -258,7 +258,7 @@ export default function FamilyMaternityGuide() {
             <Button asChild size="lg" className="bg-[#660032] hover:bg-[#80003f] text-white rounded-full px-8 py-6">
               <Link to="/contact">Reserve a Family Session</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 rounded-full px-8 py-6">
+            <Button asChild variant="outline" size="lg" className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white rounded-full px-8 py-6">
               <Link to="/session-packages">View Package Rates</Link>
             </Button>
           </div>
