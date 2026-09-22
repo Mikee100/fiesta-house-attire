@@ -213,7 +213,7 @@ export default function IdeasAndStylesGuide() {
               <Button asChild className="bg-[#660032] hover:bg-[#80003f] text-white rounded-full">
                 <Link to="/portfolio">Explore Set Photos in Portfolio</Link>
               </Button>
-              <Button asChild variant="outline" className="border-white/30 text-white hover:bg-white/10 rounded-full">
+              <Button asChild variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white rounded-full">
                 <Link to="/maternity-photoshoot">Learn About Our Nairobi Studio</Link>
               </Button>
             </div>

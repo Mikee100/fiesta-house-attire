@@ -166,7 +166,7 @@ export default function MaternityPhotoshootNairobi() {
               asChild
               variant="outline"
               size="lg"
-              className="border-white/40 text-white hover:bg-white/10 px-8 py-6 rounded-full text-base"
+              className="bg-transparent border-white/40 text-white hover:bg-white/10 hover:text-white px-8 py-6 rounded-full text-base"
             >
               <Link to="/portfolio">Explore Our Portfolio</Link>
             </Button>
