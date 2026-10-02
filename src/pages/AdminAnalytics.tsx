@@ -27,7 +27,7 @@ import {
   Tablet,
   TrendingUp,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AdminPage from "@/components/admin/AdminPage";
 import SEO from "@/components/site/SEO";
 import * as api from "@/lib/api";
