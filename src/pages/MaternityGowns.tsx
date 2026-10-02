@@ -193,7 +193,7 @@ const MaternityGowns = () => {
             }}
           >
             <DialogContent
-              className="flex flex-col items-center justify-center border-none bg-transparent p-0 shadow-none max-w-[95vw] w-auto max-h-[95vh]"
+              className="flex flex-col items-center justify-center border-none bg-transparent p-0 shadow-none max-w-[95vw] w-auto max-h-[95vh] max-md:w-screen max-md:max-w-[100vw] max-md:max-h-[100dvh]"
               aria-describedby="gown-lightbox-description"
             >
               <DialogTitle style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
@@ -210,6 +210,7 @@ const MaternityGowns = () => {
                 <>
                   <img
                     src={lightboxSrc}
+                    className="max-md:!max-w-[98vw] max-md:!max-h-[98dvh] max-md:!mt-0"
                     alt={`Enlarged designer maternity gown look ${lightboxIdx !== null ? lightboxIdx + 1 : ""} for Nairobi studio photoshoot`}
                     onLoad={(e) => {
                       const image = e.currentTarget;
@@ -274,7 +275,9 @@ const MaternityGowns = () => {
                       Our collection includes a wide range of sizes and styles, from minimalist editorial slips to grand, multi-layered chiffon masterpieces that command the entire frame.
                    </p>
                    <div style={{ paddingTop: "2rem" }}>
-                      <Link to="/contact" className="btn btn-primary" style={{ backgroundColor: "var(--magenta)" }}>Book a session with a gown</Link>
+                     <p style={{ marginBottom: "1rem" }}>Found a look you love?</p>
+                     <Link to="/session-packages" data-track="packages_click:gowns_next_step" className="btn btn-primary" style={{ backgroundColor: "var(--magenta)" }}>See session packages</Link>
+                     <Link to="/portfolio" data-track="portfolio_click:gowns_next_step" style={{ display: "block", marginTop: "1rem", color: "var(--magenta)", fontWeight: 600 }}>See gowns in our finished portraits</Link>
                    </div>
                 </div>
              </div>

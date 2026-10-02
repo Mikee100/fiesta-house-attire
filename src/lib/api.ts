@@ -1,4 +1,5 @@
 import { authenticatedFetch } from "@/lib/adminAuth";
+import { getTrackingContext } from "@/lib/tracking";
 
 const isBrowser = typeof window !== 'undefined';
 const isLocalHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
@@ -672,7 +673,7 @@ export const submitContactEnquiry = async (payload: ContactEnquiryPayload) => {
   const res = await fetch(`${API_URL}/contact-enquiries`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({ ...payload, tracking: getTrackingContext() })
   });
   return await res.json();
 };
@@ -714,6 +715,35 @@ export interface AnalyticsVisitsTimeseriesItem {
 export interface AnalyticsTopEventTypeItem {
   event_name: string;
   count: number;
+}
+
+export interface AnalyticsActionJourney {
+  stages: Array<{
+    id: 'discovery' | 'consideration' | 'conversion';
+    label: string;
+    count: number;
+    actions: Array<{ id: string; label: string; count: number }>;
+  }>;
+  unclassified: number;
+  booking_completed: number | null;
+}
+
+export interface AnalyticsBookingFunnel {
+  landing_sessions: number;
+  packages_sessions: number;
+  selected_sessions: number;
+  intent_sessions: number;
+  lead_sessions: number;
+  booking_confirmed: number | null;
+  packages: Array<{
+    package_id: string;
+    package_name: string;
+    views: number;
+    selected: number;
+    booking_clicks: number;
+    whatsapp_clicks: number;
+    view_sessions: number;
+  }>;
 }
 
 export interface AnalyticsKpiSnapshot {
@@ -845,6 +875,22 @@ export const fetchAnalyticsTopEventTypes = async (from: string, to: string, limi
   const res = await authenticatedFetch(`${API_URL}/admin/analytics/top-event-types?${range}&limit=${limit}`);
   const data = await res.json();
   return Array.isArray(data) ? data : [];
+};
+
+export const fetchAnalyticsActionJourney = async (from: string, to: string): Promise<AnalyticsActionJourney> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/action-journey?${range}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Failed to load action journey');
+  return data;
+};
+
+export const fetchAnalyticsBookingFunnel = async (from: string, to: string): Promise<AnalyticsBookingFunnel> => {
+  const range = buildAnalyticsRangeQuery(from, to);
+  const res = await authenticatedFetch(`${API_URL}/admin/analytics/booking-funnel?${range}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Failed to load booking funnel');
+  return data;
 };
 
 export const fetchAnalyticsBusinessKpis = async (from: string, to: string): Promise<AnalyticsBusinessKpis> => {
@@ -1006,6 +1052,8 @@ export interface SeoOverviewSnapshot {
   impressions: number;
   ctr: number;
   avg_position: number;
+  non_brand_queries?: number;
+  non_brand_top_ten_queries?: number;
 }
 
 export interface SeoOverviewResponse {
@@ -1141,6 +1189,7 @@ export const fetchAnalyticsBusinessKpisCompare = async (from: string, to: string
 export const fetchSeoStatus = async (): Promise<SeoStatusResponse> => {
   const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/status`);
   const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Failed to load Search Console status');
   return {
     configured: Boolean(data?.configured),
     site_url: typeof data?.site_url === 'string' ? data.site_url : null,
@@ -1161,6 +1210,7 @@ export const fetchSeoOverview = async (from: string, to: string): Promise<SeoOve
   const range = buildAnalyticsRangeQuery(from, to);
   const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/overview?${range}`);
   const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Failed to load Search Console performance');
   return {
     configured: Boolean(data?.configured),
     current: data?.current
@@ -1169,6 +1219,8 @@ export const fetchSeoOverview = async (from: string, to: string): Promise<SeoOve
           impressions: Number(data.current.impressions || 0),
           ctr: Number(data.current.ctr || 0),
           avg_position: Number(data.current.avg_position || 0),
+          non_brand_queries: data.current.non_brand_queries === undefined ? undefined : Number(data.current.non_brand_queries),
+          non_brand_top_ten_queries: data.current.non_brand_top_ten_queries === undefined ? undefined : Number(data.current.non_brand_top_ten_queries),
         }
       : null,
     previous: data?.previous
@@ -1210,6 +1262,7 @@ export const fetchSeoQueries = async (
 
   const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/queries?${search.toString()}`);
   const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Failed to load Search Console queries');
   return {
     configured: Boolean(data?.configured),
     rows: Array.isArray(data?.rows) ? data.rows : [],
@@ -1231,6 +1284,7 @@ export const fetchSeoLandingPages = async (from: string, to: string, limit = 20)
   const range = buildAnalyticsRangeQuery(from, to);
   const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/landing-pages?${range}&limit=${Math.max(1, Math.min(100, Math.floor(limit)))}`);
   const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Failed to load Search Console landing pages');
   return {
     configured: Boolean(data?.configured),
     rows: Array.isArray(data?.rows) ? data.rows : [],
@@ -1241,6 +1295,7 @@ export const fetchSeoOpportunities = async (from: string, to: string): Promise<S
   const range = buildAnalyticsRangeQuery(from, to);
   const res = await authenticatedFetch(`${API_URL}/admin/analytics/seo/opportunities?${range}`);
   const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || 'Failed to load Search Console opportunities');
   return {
     configured: Boolean(data?.configured),
     opportunities: Array.isArray(data?.opportunities) ? data.opportunities : [],

@@ -21,7 +21,8 @@ const normalizeApiBaseUrl = (rawValue: string | undefined, localHost: boolean): 
 
 const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL, isLocalHost);
 const TRACK_ENDPOINT = `${API_URL}/api/track`;
-const TRACKING_SESSION_KEY = "fiesta_tracking_session_id";
+const TRACKING_SESSION_KEY = "fiesta_tracking_session_v2";
+const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 const TRACKING_ATTRIBUTION_KEY = "fiesta_tracking_attribution_v1";
 
 const EVENT_NAME_ALIASES: Record<string, string> = {
@@ -33,6 +34,13 @@ const EVENT_NAME_ALIASES: Record<string, string> = {
 
 let trackingInitialized = false;
 let cachedSessionId: string | null = null;
+let sessionLastSeen = 0;
+let sessionStarted = false;
+
+export interface TrackingEventContext {
+  location?: string;
+  packageId?: string;
+}
 
 type AttributionSnapshot = {
   source: string | null;
@@ -58,23 +66,27 @@ const generateSessionId = (): string => {
 };
 
 const getSessionId = (): string => {
-  if (cachedSessionId) return cachedSessionId;
-
+  const now = Date.now();
   try {
-    const existing = window.localStorage.getItem(TRACKING_SESSION_KEY);
-    if (existing) {
-      cachedSessionId = existing;
-      return existing;
+    const raw = window.sessionStorage.getItem(TRACKING_SESSION_KEY);
+    const existing = raw ? JSON.parse(raw) as { id?: string; lastSeen?: number } : null;
+    if (existing?.id?.startsWith("v2_") && typeof existing.lastSeen === "number" && now - existing.lastSeen < SESSION_IDLE_TIMEOUT_MS) {
+      cachedSessionId = existing.id;
+    } else {
+      cachedSessionId = `v2_${generateSessionId()}`;
+      sessionStarted = true;
+      window.sessionStorage.removeItem(TRACKING_ATTRIBUTION_KEY);
     }
-
-    const next = generateSessionId();
-    window.localStorage.setItem(TRACKING_SESSION_KEY, next);
-    cachedSessionId = next;
-    return next;
+    sessionLastSeen = now;
+    window.sessionStorage.setItem(TRACKING_SESSION_KEY, JSON.stringify({ id: cachedSessionId, lastSeen: now }));
+    return cachedSessionId;
   } catch {
-    const ephemeral = generateSessionId();
-    cachedSessionId = ephemeral;
-    return ephemeral;
+    if (!cachedSessionId || now - sessionLastSeen >= SESSION_IDLE_TIMEOUT_MS) {
+      cachedSessionId = `v2_${generateSessionId()}`;
+      sessionStarted = true;
+    }
+    sessionLastSeen = now;
+    return cachedSessionId;
   }
 };
 
@@ -181,6 +193,7 @@ const buildSessionAttribution = (): AttributionSnapshot => {
   const utmTerm = sanitizeAttributionValue(params.get("utm_term"), 200);
 
   const existing = readStoredAttribution();
+  if (existing) return existing;
   const hasUtm = Boolean(utmSource || utmMedium || utmCampaign || utmContent || utmTerm);
 
   if (hasUtm) {
@@ -194,10 +207,6 @@ const buildSessionAttribution = (): AttributionSnapshot => {
     };
     writeStoredAttribution(next);
     return next;
-  }
-
-  if (existing) {
-    return existing;
   }
 
   const fromReferrer = getSourceFromReferrer(document.referrer || "");
@@ -262,20 +271,20 @@ const postEvent = (payload: Record<string, unknown>): void => {
   }
 };
 
-export const trackEvent = (eventName: string, label?: string | null): void => {
+export const trackEvent = (eventName: string, label?: string | null, context: TrackingEventContext = {}): void => {
   if (!isBrowser) return;
   if (!eventName || isAdminPath(window.location.pathname)) return;
 
   const normalized = normalizeTrackPayload(eventName, label);
   if (!normalized.eventName) return;
 
+  const sessionId = getSessionId();
   const attribution = buildSessionAttribution();
-
-  postEvent({
-    event_name: normalized.eventName,
-    label: normalized.label,
+  const payload = {
     page_url: `${window.location.pathname}${window.location.search}`,
-    session_id: getSessionId(),
+    session_id: sessionId,
+    location: context.location || normalizeKey(window.location.pathname) || "home",
+    package_id: context.packageId || null,
     referrer: document.referrer || null,
     device_type: getDeviceType(),
     source: attribution.source,
@@ -286,12 +295,25 @@ export const trackEvent = (eventName: string, label?: string | null): void => {
     utm_content: attribution.content,
     utm_term: attribution.term,
     timestamp: new Date().toISOString(),
-  });
+  };
+  if (sessionStarted) {
+    sessionStarted = false;
+    postEvent({ ...payload, event_name: "session_started", label: window.location.pathname, package_id: null });
+  }
+  postEvent({ ...payload, event_name: normalized.eventName, label: normalized.label });
+};
+
+export const getTrackingContext = () => {
+  if (!isBrowser) return null;
+  return { session_id: getSessionId(), ...buildSessionAttribution() };
 };
 
 export const trackPageView = (): void => {
   if (!isBrowser || isAdminPath(window.location.pathname)) return;
   trackEvent("page_view", window.location.pathname);
+  if (window.location.pathname.replace(/\/$/, "") === "/session-packages") {
+    trackEvent("packages_viewed", "session_packages", { location: "session_packages" });
+  }
 };
 
 export const initTracking = (): void => {
@@ -313,7 +335,10 @@ export const initTracking = (): void => {
       const parsed = parseTrackAttribute(dataTrack);
       if (!parsed) return;
 
-      trackEvent(parsed.eventName, parsed.label);
+      trackEvent(parsed.eventName, parsed.label, {
+        location: trackedElement.getAttribute("data-track-location") || undefined,
+        packageId: trackedElement.getAttribute("data-track-package-id") || undefined,
+      });
     },
     { capture: true }
   );

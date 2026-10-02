@@ -433,6 +433,11 @@ const BlogPostPage = () => {
             </div>
           </div>
 
+          <section className="my-10 border-y border-slate-200 py-6">
+            <h2 className="font-display text-2xl mb-3">Planning your maternity session?</h2>
+            <Link to="/session-packages" data-track="packages_click:blog_article_next_step" className="font-semibold text-[#660032] underline">View our maternity session packages</Link>
+          </section>
+
           {relatedPosts.length > 0 && (
             <section className="mt-16 pt-12 border-t border-slate-200 fade-in" style={{ animationDelay: '500ms' }}>
               <h3 className="font-display text-3xl font-medium mb-8 text-center">Related Posts</h3>

@@ -176,7 +176,13 @@ const Portfolio = () => {
             ))}
           </div>
           
-          {/* ...call-to-action section removed for minimalism... */}
+          <section style={{ marginTop: "3rem", paddingTop: "2rem", borderTop: "1px solid rgba(0,0,0,0.1)" }}>
+            <h2 className="display" style={{ fontSize: "2rem", marginBottom: "1rem" }}>Love this style?</h2>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem 2rem" }}>
+              <Link to="/session-packages" data-track="packages_click:portfolio_next_step" style={{ color: "var(--magenta)", fontWeight: 600 }}>Explore maternity session packages</Link>
+              <Link to="/maternity-gowns" data-track="gowns_click:portfolio_next_step" style={{ color: "var(--magenta)", fontWeight: 600 }}>Find your maternity gown</Link>
+            </div>
+          </section>
         </div>
       </section>
     </Layout>
