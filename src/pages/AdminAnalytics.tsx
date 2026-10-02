@@ -700,37 +700,33 @@ const AdminAnalytics = () => {
             {/* Conversion Funnel (5 cols) */}
             <div className="rounded-lg border border-slate-200 bg-white p-3.5 shadow-xs lg:col-span-5">
               <div className="mb-2.5 flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Conversion Funnel</h3>
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                  {formatPercent(safeNumber(curr.conversion_rate))} total
-                </span>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Journey Activity</h3>
+                <Link to={`/admin/analytics/deep-dive?section=booking_funnel&from=${from}&to=${to}`} className="text-[10px] font-semibold text-sky-700">Ordered booking funnel</Link>
               </div>
 
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between rounded border border-slate-200 bg-slate-50 p-2">
-                  <span className="font-semibold text-slate-800">1. Visitors</span>
+                  <span className="font-semibold text-slate-800">Visitors</span>
                   <span className="font-bold text-slate-900">{safeNumber(funnel.visitors).toLocaleString()}</span>
                 </div>
 
-                <div className="text-center text-[10px] text-slate-400">
-                  ↓ {funnel.visitors > 0 ? `${Math.round(((safeNumber(funnel.portfolio_interest) + safeNumber(funnel.pricing_interest)) / safeNumber(funnel.visitors)) * 100)}% viewed packages` : "0%"}
-                </div>
-
                 <div className="flex items-center justify-between rounded border border-slate-200 bg-slate-50 p-2">
-                  <span className="font-semibold text-slate-800">2. Viewed Packages / Portfolio</span>
+                  <span className="font-semibold text-slate-800">Package/pricing interest</span>
                   <span className="font-bold text-slate-900">
-                    {(safeNumber(funnel.portfolio_interest) + safeNumber(funnel.pricing_interest)).toLocaleString()}
+                    {safeNumber(funnel.pricing_interest).toLocaleString()}
                   </span>
                 </div>
 
-                <div className="text-center text-[10px] text-slate-400">
-                  ↓ {safeNumber(funnel.portfolio_interest) + safeNumber(funnel.pricing_interest) > 0 ? `${Math.round((safeNumber(funnel.whatsapp) / (safeNumber(funnel.portfolio_interest) + safeNumber(funnel.pricing_interest))) * 100)}% initiated chat` : "0%"}
+                <div className="flex items-center justify-between rounded border border-slate-200 bg-slate-50 p-2">
+                  <span className="font-semibold text-slate-800">Portfolio/gown interest</span>
+                  <span className="font-bold text-slate-900">{safeNumber(funnel.portfolio_interest).toLocaleString()}</span>
                 </div>
 
                 <div className="flex items-center justify-between rounded border border-emerald-200 bg-emerald-50/50 p-2">
-                  <span className="font-bold text-emerald-900">3. WhatsApp Enquiries</span>
+                  <span className="font-bold text-emerald-900">Clicked WhatsApp</span>
                   <span className="font-extrabold text-emerald-800">{safeNumber(funnel.whatsapp).toLocaleString()}</span>
                 </div>
+                <p className="pt-1 text-[11px] leading-relaxed text-slate-500">Categories overlap; this is not a sequential funnel. Confirmed bookings are not connected.</p>
               </div>
             </div>
           </div>

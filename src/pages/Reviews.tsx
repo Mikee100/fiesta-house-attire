@@ -43,53 +43,50 @@ export default function Reviews() {
 
   return (
     <Layout
-      title="Fiesta House Maternity Reviews | 4.9★ from 1,169+ Clients"
-      description="Read genuine Google reviews and testimonials from 1,169+ expectant mothers. Discover why Fiesta House Maternity is Nairobi's highest-rated maternity photography sanctuary."
+      title="Fiesta House Maternity Reviews | Google Client Stories"
+      description="Read Fiesta House Maternity reviews from clients in Nairobi. Explore Google testimonials about maternity photoshoots, gowns, makeup, posing and family sessions."
       keywords="fiesta house maternity reviews, fiesta house reviews, maternity photoshoot nairobi reviews, best maternity photographer kenya reviews, fiesta house google reviews"
     >
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
-          "@type": "PhotographyBusiness",
-          "name": "Fiesta House Maternity",
-          "alternateName": ["Fiesta House", "Fiesta House Attire", "Fiesta House Maternity Studio"],
+          "@type": "CollectionPage",
+          "name": "Fiesta House Maternity Reviews",
           "url": "https://www.fiestahousematernity.com/reviews",
-          "telephone": "+254720111928",
-          "priceRange": "KES 15,000 – KES 120,000",
-          "address": {
-            "@type": "PostalAddress",
-            "streetAddress": "Diamond Plaza II, 4th Parklands Avenue, Parklands",
-            "addressLocality": "Nairobi",
-            "addressRegion": "Nairobi County",
-            "addressCountry": "KE"
+          "about": {
+            "@type": "LocalBusiness",
+            "@id": "https://www.fiestahousematernity.com/#business",
+            "name": "Fiesta House Maternity",
+            "url": "https://www.fiestahousematernity.com/",
+            "telephone": "+254720111928",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Diamond Plaza II, 4th Parklands Avenue, Parklands",
+              "addressLocality": "Nairobi",
+              "addressRegion": "Nairobi County",
+              "addressCountry": "KE"
+            },
           },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.9",
-            "reviewCount": "1169",
-            "bestRating": "5",
-            "worstRating": "1"
-          },
-          "review": REAL_REVIEWS.slice(0, 10).map((t) => ({
-            "@type": "Review",
-            "itemReviewed": {
-              "@type": "PhotographyBusiness",
-              "name": "Fiesta House Maternity",
-              "url": "https://www.fiestahousematernity.com/"
-            },
-            "author": {
-              "@type": "Person",
-              "name": t.author
-            },
-            "reviewRating": {
-              "@type": "Rating",
-              "ratingValue": t.rating,
-              "bestRating": "5",
-              "worstRating": "1"
-            },
-            "reviewBody": t.quote,
-            "datePublished": "2026-01-15"
-          }))
+          "mainEntity": {
+            "@type": "ItemList",
+            "numberOfItems": filteredReviews.length,
+            "itemListElement": filteredReviews.map((review, index) => ({
+              "@type": "ListItem",
+              "position": index + 1,
+              "item": {
+                "@type": "Review",
+                "itemReviewed": { "@id": "https://www.fiestahousematernity.com/#business" },
+                "author": { "@type": "Person", "name": review.author },
+                "reviewRating": {
+                  "@type": "Rating",
+                  "ratingValue": review.rating,
+                  "bestRating": 5,
+                  "worstRating": 1
+                },
+                "reviewBody": review.quote
+              }
+            }))
+          }
         })}
       </script>
 
@@ -158,12 +155,11 @@ export default function Reviews() {
               maxWidth: "760px"
             }}
           >
-            What it feels like to be cared for
+            Fiesta House Maternity Reviews
           </h1>
 
           <p
             style={{
-              fontSize: "1.15rem",
               lineHeight: "1.75",
               color: "rgba(43, 35, 32, 0.82)",
               maxWidth: "650px",
@@ -171,8 +167,17 @@ export default function Reviews() {
               fontSize: "1.05rem"
             }}
           >
-            A selection of words from mothers and families who have spent time in the house. Their experiences speak most clearly to the care, patience, and artistry behind each session.
+            Read selected Google reviews from mothers and families who visited our Nairobi maternity photography studio. Hear about their experiences with gowns, makeup, guided posing and family portraits.
           </p>
+
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=Fiesta%20House%20Maternity%20Diamond%20Plaza%20Nairobi"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-block", marginBottom: "1.5rem", color: "var(--magenta)", fontWeight: 600, textDecoration: "underline" }}
+          >
+            Read reviews on Google Maps
+          </a>
 
           {/* Key Trust Stats Pill Grid */}
           <div
@@ -221,7 +226,7 @@ export default function Reviews() {
             }}
           >
             {[
-              { key: "all", label: "All Reviews (1,169+)" },
+              { key: "all", label: `All Selected Reviews (${REAL_REVIEWS.length})` },
               { key: "stylist", label: "Gowns & Styling (Beverly)" },
               { key: "makeup", label: "Makeup & Beauty (Indiana)" },
               { key: "photographer", label: "Posing & Photos (Amazing)" },
@@ -543,6 +548,7 @@ export default function Reviews() {
             >
               Book Your Photoshoot
             </Link>
+            <Link to="/session-packages" data-track="packages_click:reviews_next_step" className="btn" style={{ backgroundColor: "white", color: "var(--plum)", padding: "0.8rem 1.5rem", whiteSpace: "normal" }}>Explore maternity session packages</Link>
             <Link
               to="/session-packages"
               className="btn btn-outline"

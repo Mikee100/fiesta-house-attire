@@ -307,7 +307,8 @@ export default function WhatToWearGuide() {
               <Link to="/maternity-gowns">Explore The Atelier Gowns</Link>
             </Button>
             <Link
-              to="/contact"
+              to="/session-packages"
+              data-track="packages_click:what_to_wear_next_step"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -324,7 +325,7 @@ export default function WhatToWearGuide() {
                 boxShadow: "0 10px 24px rgba(0,0,0,0.18)",
               }}
             >
-              Book Your Session
+              View Session Packages
             </Link>
           </div>
         </div>

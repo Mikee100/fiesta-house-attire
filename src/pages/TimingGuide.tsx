@@ -303,6 +303,7 @@ export default function TimingGuide() {
           <Button asChild size="lg" className="bg-[#660032] hover:bg-[#80003f] text-white rounded-full px-8 py-6">
             <Link to="/contact">Calculate Your Best Date With Us</Link>
           </Button>
+          <p className="mt-6 text-sm"><Link to="/session-packages" data-track="packages_click:timing_guide_next_step" className="font-semibold text-white underline">Planning your session? View our maternity packages</Link></p>
         </div>
       </section>
     </Layout>

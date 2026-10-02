@@ -35,6 +35,7 @@ type DeepDiveSection =
   | "sources"
   | "top_pages"
   | "event_types"
+  | "booking_funnel"
   | "whatsapp_pages"
   | "cta_performance"
   | "top_clicks"
@@ -60,7 +61,7 @@ const CATEGORIES: Array<{
     sections: [
       { id: "sources", label: "Traffic Sources", description: "Where visitors originate (Google, Instagram, Direct, Referrals)" },
       { id: "top_pages", label: "Top Page Views", description: "Most visited URLs across the website" },
-      { id: "event_types", label: "Event Breakdown", description: "Raw event volume by action type" },
+      { id: "event_types", label: "Visitor Actions", description: "How visitors interact with the site" },
     ],
   },
   {
@@ -68,6 +69,7 @@ const CATEGORIES: Array<{
     label: "Conversions & WhatsApp",
     icon: MessageCircle,
     sections: [
+      { id: "booking_funnel", label: "Booking Funnel", description: "Ordered visit stages and package-specific booking intent" },
       { id: "whatsapp_pages", label: "WhatsApp by Page", description: "Pages generating direct WhatsApp enquiries" },
       { id: "cta_performance", label: "CTA Performance", description: "Click rates and trends on buttons and links" },
       { id: "top_clicks", label: "Click Drilldown", description: "Granular click event names and labels" },
@@ -106,6 +108,24 @@ const safeNumber = (value: unknown): number => {
   return Number.isFinite(numeric) ? numeric : 0;
 };
 
+const getSourceIndicator = (visitors: number, leadRate: number) => {
+  const smallSample = visitors < 10;
+  const volume = smallSample ? "Very small sample" : visitors >= 100 ? "High volume" : "Lower volume";
+  const conversion = leadRate >= 10 ? "High" : leadRate >= 2 ? "Moderate" : "Low";
+  const label = visitors <= 0
+    ? "No visitors · Lead rate unavailable"
+    : `${volume} · ${conversion}${smallSample ? " observed conversion" : " WhatsApp conversion"}`;
+  const tone = smallSample
+    ? "text-slate-500"
+    : leadRate >= 10 ? "text-emerald-700" : leadRate < 2 ? "text-amber-700" : "text-slate-600";
+
+  return {
+    label,
+    tone,
+    tooltip: "Volume: fewer than 10 visitors is a very small sample; 100+ is high volume. WhatsApp conversion: below 2% is low; 2% to below 10% is moderate; 10%+ is high. Based on unique visitors clicking WhatsApp, not confirmed bookings. Small samples are not reliable trends.",
+  };
+};
+
 const percentageDelta = (current: number, previous: number): number | null => {
   if (previous <= 0) return null;
   return ((current - previous) / previous) * 100;
@@ -135,6 +155,7 @@ const getSectionFromSearch = (raw: string | null): DeepDiveSection => {
     "sources",
     "top_pages",
     "event_types",
+    "booking_funnel",
     "whatsapp_pages",
     "cta_performance",
     "top_clicks",
@@ -165,6 +186,13 @@ const AdminAnalyticsDeepDive = () => {
   const [topN, setTopN] = useState<TopN>(getTopNFromSearch(searchParams.get("topN")));
   const [searchFilter, setSearchFilter] = useState(searchParams.get("search") || "");
   const [ctaEventFilter, setCtaEventFilter] = useState(searchParams.get("ctaEventFilter") || "all");
+  const [actionsView, setActionsView] = useState<"overview" | "all">("overview");
+  const [actionJourney, setActionJourney] = useState<api.AnalyticsActionJourney | null>(null);
+  const [journeyError, setJourneyError] = useState<string | null>(null);
+  const [journeyLoading, setJourneyLoading] = useState(true);
+  const [bookingFunnel, setBookingFunnel] = useState<api.AnalyticsBookingFunnel | null>(null);
+  const [funnelError, setFunnelError] = useState<string | null>(null);
+  const [funnelLoading, setFunnelLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [refreshTick, setRefreshTick] = useState(0);
@@ -183,10 +211,104 @@ const AdminAnalyticsDeepDive = () => {
     package_clicks: [],
   });
   const [seoQueries, setSeoQueries] = useState<api.SeoQueryRow[]>([]);
+  const [seoPerformance, setSeoPerformance] = useState<api.SeoOverviewSnapshot | null>(null);
+  const [seoLoading, setSeoLoading] = useState(true);
   const [seoLandingPages, setSeoLandingPages] = useState<api.SeoLandingPageRow[]>([]);
   const [seoOpportunities, setSeoOpportunities] = useState<api.SeoOpportunityRow[]>([]);
+  const [seoStatus, setSeoStatus] = useState<api.SeoStatusResponse | null>(null);
+  const [seoError, setSeoError] = useState<string | null>(null);
+  const [seoLoadError, setSeoLoadError] = useState<string | null>(null);
+  const [syncingSeo, setSyncingSeo] = useState(false);
 
   const activeCategory = useMemo(() => getCategoryForSection(section), [section]);
+
+  useEffect(() => {
+    if (section !== "booking_funnel") return;
+    let cancelled = false;
+    setFunnelLoading(true);
+    setFunnelError(null);
+    setBookingFunnel(null);
+    api.fetchAnalyticsBookingFunnel(from, to).then((data) => {
+      if (!cancelled) setBookingFunnel(data);
+    }).catch((error: unknown) => {
+      if (!cancelled) setFunnelError(error instanceof Error ? error.message : "Failed to load booking funnel");
+    }).finally(() => {
+      if (!cancelled) setFunnelLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [section, from, to, refreshTick]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setJourneyLoading(true);
+    setJourneyError(null);
+    setActionJourney(null);
+    api.fetchAnalyticsActionJourney(from, to).then((data) => {
+      if (!cancelled) setActionJourney(data);
+    }).catch((error: unknown) => {
+      if (!cancelled) setJourneyError(error instanceof Error ? error.message : "Failed to load action journey");
+    }).finally(() => {
+      if (!cancelled) setJourneyLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [from, to, refreshTick]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSeoLoadError(null);
+    setSeoLoading(true);
+    setSeoPerformance(null);
+    Promise.all([
+      api.fetchSeoQueries(from, to, { limit: 100, sort: "impressions" }),
+      api.fetchSeoLandingPages(from, to, 100),
+      api.fetchSeoOpportunities(from, to),
+      api.fetchSeoOverview(from, to),
+    ]).then(([queries, landingPages, opportunities, overview]) => {
+      if (cancelled) return;
+      setSeoPerformance(overview.current);
+      setSeoQueries(queries.rows);
+      setSeoLandingPages(landingPages.rows);
+      setSeoOpportunities(opportunities.opportunities);
+    }).catch((error: unknown) => {
+      if (cancelled) return;
+      setSeoQueries([]);
+      setSeoLandingPages([]);
+      setSeoOpportunities([]);
+      setSeoLoadError(error instanceof Error ? error.message : "Failed to load Search Console data");
+    }).finally(() => {
+      if (!cancelled) setSeoLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [from, to, refreshTick]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSeoError(null);
+    api.fetchSeoStatus().then((status) => {
+      if (!cancelled) setSeoStatus(status);
+    }).catch((error: unknown) => {
+      if (!cancelled) {
+        setSeoStatus(null);
+        setSeoError(error instanceof Error ? error.message : "Unable to load Search Console status");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [refreshTick]);
+
+  const syncSeo = async () => {
+    setSyncingSeo(true);
+    setSeoError(null);
+    try {
+      const result = await api.triggerSeoSync(90);
+      if (!result.ok) throw new Error(result.error || "Search Console sync failed");
+      toast.success(result.message || "Search Console sync completed");
+      setRefreshTick((tick) => tick + 1);
+    } catch (error) {
+      setSeoError(error instanceof Error ? error.message : "Search Console sync failed");
+    } finally {
+      setSyncingSeo(false);
+    }
+  };
 
   useEffect(() => {
     const run = async () => {
@@ -201,9 +323,6 @@ const AdminAnalyticsDeepDive = () => {
           sources,
           content,
           packages,
-          queryRows,
-          landingPages,
-          opportunities,
         ] = await Promise.all([
           api.fetchAnalyticsTopClicks(from, to, 100),
           api.fetchAnalyticsTopEventTypes(from, to, 100),
@@ -213,9 +332,6 @@ const AdminAnalyticsDeepDive = () => {
           api.fetchAnalyticsSources(from, to),
           api.fetchAnalyticsContent(from, to, 100),
           api.fetchAnalyticsPackages(from, to),
-          api.fetchSeoQueries(from, to, { limit: 100, sort: "impressions" }),
-          api.fetchSeoLandingPages(from, to, 100),
-          api.fetchSeoOpportunities(from, to),
         ]);
 
         setTopClicksFull(Array.isArray(clicks) ? clicks : []);
@@ -226,9 +342,6 @@ const AdminAnalyticsDeepDive = () => {
         setSourceRows(Array.isArray(sources) ? sources : []);
         setContentAnalytics(content);
         setPackageAnalytics(packages);
-        setSeoQueries(Array.isArray(queryRows.rows) ? queryRows.rows : []);
-        setSeoLandingPages(Array.isArray(landingPages.rows) ? landingPages.rows : []);
-        setSeoOpportunities(Array.isArray(opportunities.opportunities) ? opportunities.opportunities : []);
       } catch {
         toast.error("Failed to load deep-dive analytics");
       } finally {
@@ -346,7 +459,6 @@ const AdminAnalyticsDeepDive = () => {
         .map((item) => ({
           name: item.event_name,
           count: safeNumber(item.count),
-          sessions: safeNumber(item.unique_sessions),
         }))
         .filter((item) => item.name.toLowerCase().includes(normalizedQuery))
         .sort((a, b) => b.count - a.count)
@@ -355,6 +467,15 @@ const AdminAnalyticsDeepDive = () => {
   );
 
   const ctaTotalClicks = ctaPerformanceFull[0]?.total_clicks || 0;
+  const eventCounts = new Map(topEventTypesFull.map((event) => [event.event_name, safeNumber(event.count)]));
+  const overviewActions = (actionJourney?.stages || [])
+    .flatMap((stage) => stage.actions.map((action) => ({ name: `${stage.label} · ${action.label}`, count: action.count })))
+    .filter((action) => action.name.toLowerCase().includes(normalizedQuery))
+    .slice(0, topNValue);
+  const displayedActions = actionsView === "overview" ? overviewActions : filteredEventTypes;
+  const whatsappActions = eventCounts.get("whatsapp_click") || 0;
+  const contactSubmissions = eventCounts.get("contact_form_submit") || 0;
+  const bookingActions = eventCounts.get("booking_click") || 0;
 
   return (
     <>
@@ -509,6 +630,20 @@ const AdminAnalyticsDeepDive = () => {
           {/* ========================================================================= */}
           {/* MAIN DATA VIEW CONTAINER */}
           {/* ========================================================================= */}
+          {activeCategory === "seo" && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-200 bg-white px-3 py-3 text-xs text-slate-700" role="status">
+              <div className="min-w-0 space-y-1">
+                <p className="font-semibold">{seoStatus?.configured ? `Google Search Console: ${seoStatus.site_url}` : seoStatus ? "Google Search Console is not connected" : seoError ? "Google Search Console status unavailable" : "Checking Google Search Console connection..."}</p>
+                {seoStatus && !seoStatus.configured && <p>Missing server configuration: GOOGLE_SEARCH_CONSOLE_SITE_URL, GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL, or GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY.</p>}
+                {seoStatus?.configured && <p>{seoStatus.last_sync ? `Last sync: ${new Date(seoStatus.last_sync.synced_at).toLocaleString()} (${seoStatus.last_sync.status}). ${seoStatus.total_rows.toLocaleString()} stored rows.` : "No sync has completed yet. No Google search data has been imported."}</p>}
+                {(seoError || seoLoadError || seoStatus?.last_sync?.error_message) && <p className="break-words text-rose-700">{seoError || seoLoadError || seoStatus?.last_sync?.error_message}</p>}
+              </div>
+              <button type="button" onClick={() => void syncSeo()} disabled={!seoStatus?.configured || syncingSeo} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 font-semibold disabled:opacity-50">
+                <RefreshCw className={`h-3.5 w-3.5 ${syncingSeo ? "animate-spin" : ""}`} />
+                {syncingSeo ? "Syncing..." : "Sync Google"}
+              </button>
+            </div>
+          )}
           <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
             {/* Header info */}
             <div className="flex items-center justify-between border-b border-slate-100 p-4">
@@ -542,6 +677,40 @@ const AdminAnalyticsDeepDive = () => {
 
             {/* Content Table */}
             <div className="overflow-x-auto p-2">
+              {section === "booking_funnel" && (
+                <div className="space-y-4 px-2.5 py-3">
+                  {funnelLoading && <p className="text-xs text-slate-500">Loading attributed visits...</p>}
+                  {funnelError && <p role="alert" className="text-xs text-rose-700">{funnelError}</p>}
+                  {bookingFunnel && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4 border-y border-slate-200 py-4 lg:grid-cols-5">
+                        {[
+                          { label: "Landing", count: bookingFunnel.landing_sessions },
+                          { label: "Packages viewed", count: bookingFunnel.packages_sessions },
+                          { label: "Package selected", count: bookingFunnel.selected_sessions },
+                          { label: "Book / WhatsApp", count: bookingFunnel.intent_sessions },
+                          { label: "Contact lead", count: bookingFunnel.lead_sessions },
+                        ].map((step) => (
+                          <div key={step.label}><p className="text-xs text-slate-500">{step.label}</p><p className="mt-1 text-lg font-bold tabular-nums text-slate-900">{safeNumber(step.count).toLocaleString()}</p></div>
+                        ))}
+                      </div>
+                      <p className="text-xs leading-relaxed text-slate-600">Visit sessions starting in this date range must reach each stage in order. New tracking only; historical browser IDs are excluded. Contact leads are forms accepted by the server. WhatsApp conversations and confirmed bookings are not connected.</p>
+                      <p className="text-xs font-semibold text-slate-700">Confirmed bookings: Not connected</p>
+                      <h4 className="text-sm font-semibold text-slate-900">Package-specific activity</h4>
+                      <p className="text-xs text-slate-500">Views count package cards at least 25% visible. Actions are event counts, not people; package selection and booking can occur in the same click.</p>
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 text-slate-500"><tr><th className="p-2.5">Package</th><th className="p-2.5 text-right">Views</th><th className="p-2.5 text-right">Viewing sessions</th><th className="p-2.5 text-right">Selected</th><th className="p-2.5 text-right">Booking clicks</th><th className="p-2.5 text-right">WhatsApp clicks</th></tr></thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {bookingFunnel.packages.filter((row) => row.package_name.toLowerCase().includes(normalizedQuery)).slice(0, topNValue).map((row) => (
+                            <tr key={`${row.package_id}-${row.package_name}`}><td className="p-2.5 font-medium text-slate-900">{toHumanToken(row.package_name)}</td><td className="p-2.5 text-right">{row.views.toLocaleString()}</td><td className="p-2.5 text-right">{row.view_sessions.toLocaleString()}</td><td className="p-2.5 text-right">{row.selected.toLocaleString()}</td><td className="p-2.5 text-right">{row.booking_clicks.toLocaleString()}</td><td className="p-2.5 text-right">{row.whatsapp_clicks.toLocaleString()}</td></tr>
+                          ))}
+                          {bookingFunnel.packages.length === 0 && <tr><td colSpan={6} className="py-6 text-center text-slate-500">No package-specific tracking recorded in this date range yet.</td></tr>}
+                        </tbody>
+                      </table>
+                    </>
+                  )}
+                </div>
+              )}
               {/* 1. SOURCES */}
               {section === "sources" && (
                 <table className="w-full text-left text-xs">
@@ -567,9 +736,16 @@ const AdminAnalyticsDeepDive = () => {
                         const visitors = safeNumber(r.visitors);
                         const leads = safeNumber(r.whatsapp_sessions);
                         const conv = visitors > 0 ? (leads / visitors) * 100 : 0;
+                        const indicator = getSourceIndicator(visitors, conv);
                         return (
                           <tr key={`${r.source}-${r.medium}`} className="hover:bg-slate-50/80">
-                            <td className="p-2.5 font-medium text-slate-900">{r.source}</td>
+                            <td className="p-2.5 font-medium text-slate-900">
+                              <span>{r.source}</span>
+                              <span className={`mt-1 flex items-start gap-1.5 text-[11px] font-normal leading-relaxed ${indicator.tone}`} title={indicator.tooltip}>
+                                <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+                                {indicator.label}
+                              </span>
+                            </td>
                             <td className="p-2.5 text-slate-500">{r.medium}</td>
                             <td className="p-2.5 text-right font-semibold text-slate-900">{visitors.toLocaleString()}</td>
                             <td className="p-2.5 text-right text-slate-600">{safeNumber(r.page_views).toLocaleString()}</td>
@@ -621,32 +797,80 @@ const AdminAnalyticsDeepDive = () => {
 
               {/* 3. EVENT TYPES */}
               {section === "event_types" && (
+                <>
+                <div className="space-y-3 border-b border-slate-200 px-2.5 py-3">
+                  <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-0.5" role="group" aria-label="Visitor actions view">
+                    {([
+                      { value: "overview", label: "Overview" },
+                      { value: "all", label: "All Events" },
+                    ] as const).map((view) => (
+                      <button key={view.value} type="button" aria-pressed={actionsView === view.value} onClick={() => setActionsView(view.value)} className={`rounded px-3 py-1.5 text-xs font-semibold ${actionsView === view.value ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}>
+                        {view.label}
+                      </button>
+                    ))}
+                  </div>
+                  {actionsView === "overview" && (
+                    <>
+                      {journeyError && <p role="alert" className="text-xs text-rose-700">{journeyError}</p>}
+                      {actionJourney && (
+                        <div className="grid gap-3 border-y border-slate-200 py-3 sm:grid-cols-3">
+                          {actionJourney.stages.map((stage) => (
+                            <div key={stage.id}>
+                              <h4 className="text-xs font-semibold text-slate-600">{stage.label}</h4>
+                              <p className="mt-1 text-lg font-bold tabular-nums text-slate-900">{stage.count.toLocaleString()} <span className="text-xs font-normal text-slate-500">actions</span></p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-xs text-slate-500">Confirmed bookings: Not connected. Conversion-stage actions indicate intent, not completed bookings.</p>
+                      {actionJourney && actionJourney.unclassified > 0 && <p className="text-xs text-slate-500">{actionJourney.unclassified.toLocaleString()} other actions are available in All Events.</p>}
+                    </>
+                  )}
+                  {!loading && topEventTypesFull.length > 0 && (
+                    <div className="grid gap-3 text-xs sm:grid-cols-2">
+                      {(whatsappActions > 0 || contactSubmissions > 0) && (
+                        <div className="border-l-2 border-emerald-500 pl-3">
+                          <p className="font-semibold text-slate-900">{whatsappActions > contactSubmissions ? "WhatsApp is the dominant tracked contact action" : "Direct contact activity"}</p>
+                          <p className="mt-1 text-slate-600">{whatsappActions.toLocaleString()} WhatsApp clicks vs {contactSubmissions.toLocaleString()} contact-form submissions.</p>
+                        </div>
+                      )}
+                      {bookingActions > 0 && (
+                        <div className="border-l-2 border-sky-500 pl-3">
+                          <p className="font-semibold text-slate-900">{bookingActions > whatsappActions ? "Booking clicks exceed WhatsApp clicks" : "Booking and WhatsApp activity"}</p>
+                          <p className="mt-1 text-slate-600">{bookingActions.toLocaleString()} booking clicks vs {whatsappActions.toLocaleString()} WhatsApp clicks.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-xs leading-relaxed text-slate-500">Event counts are actions, not people. WhatsApp clicks are not confirmed enquiries. These comparisons are not a measured funnel or evidence of abandonment.</p>
+                </div>
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
                     <tr>
-                      <th className="p-2.5 font-semibold">Event Name</th>
+                      <th className="p-2.5 font-semibold">{actionsView === "overview" ? "Action" : "Event"}</th>
                       <th className="p-2.5 text-right font-semibold">Total Events</th>
-                      <th className="p-2.5 text-right font-semibold">Unique Sessions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {filteredEventTypes.length === 0 ? (
+                    {(actionsView === "overview" ? journeyLoading : loading) ? (
+                      <tr><td colSpan={2} className="py-8 text-center text-slate-400">Loading visitor actions...</td></tr>
+                    ) : displayedActions.length === 0 ? (
                       <tr>
-                        <td colSpan={3} className="py-8 text-center text-slate-400">
+                        <td colSpan={2} className="py-8 text-center text-slate-400">
                           No events match your filter
                         </td>
                       </tr>
                     ) : (
-                      filteredEventTypes.map((r) => (
+                      displayedActions.map((r) => (
                         <tr key={r.name} className="hover:bg-slate-50/80">
                           <td className="p-2.5 font-medium text-slate-900">{r.name}</td>
                           <td className="p-2.5 text-right font-semibold text-slate-900">{r.count.toLocaleString()}</td>
-                          <td className="p-2.5 text-right text-slate-600">{r.sessions.toLocaleString()}</td>
                         </tr>
                       ))
                     )}
                   </tbody>
                 </table>
+                </>
               )}
 
               {/* 4. WHATSAPP PAGES */}
@@ -824,6 +1048,39 @@ const AdminAnalyticsDeepDive = () => {
 
               {/* 9. SEO QUERIES */}
               {section === "seo_queries" && (
+                <>
+                <section className="border-b border-slate-200 px-4 py-4" aria-label="Google Search Performance" aria-busy={seoLoading}>
+                  <h4 className="mb-3 text-sm font-bold text-slate-900">Google Search Performance</h4>
+                  {seoLoading ? (
+                    <p className="text-xs text-slate-500">Loading search performance...</p>
+                  ) : seoPerformance ? (
+                    <>
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+                        {[
+                          { label: "Impressions", value: safeNumber(seoPerformance.impressions).toLocaleString() },
+                          { label: "Clicks", value: safeNumber(seoPerformance.clicks).toLocaleString() },
+                          { label: "CTR", value: `${safeNumber(seoPerformance.ctr).toFixed(2)}%` },
+                          { label: "Average position", value: seoPerformance.impressions > 0 ? `~${safeNumber(seoPerformance.avg_position).toFixed(1)}` : "Not available" },
+                        ].map((metric) => (
+                          <div key={metric.label}>
+                            <dt className="text-xs text-slate-500">{metric.label}</dt>
+                            <dd className="mt-1 text-lg font-bold tabular-nums text-slate-900">{metric.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                      {seoPerformance.non_brand_queries !== undefined && (
+                        <p className="mt-4 border-l-2 border-sky-500 pl-3 text-xs leading-relaxed text-slate-700">
+                          <strong className="text-slate-900">Top opportunity:</strong>{" "}
+                          {seoPerformance.non_brand_queries > 0
+                            ? `${seoPerformance.non_brand_queries.toLocaleString()} non-brand ${seoPerformance.non_brand_queries === 1 ? "query is" : "queries are"} appearing on Google${seoPerformance.non_brand_top_ten_queries ? `, including ${seoPerformance.non_brand_top_ten_queries.toLocaleString()} with average positions in the top 10` : ""}.`
+                            : "No non-brand queries recorded for this date range."}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-slate-500">Search performance is unavailable. Check the connection status above.</p>
+                  )}
+                </section>
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
                     <tr>
@@ -838,7 +1095,7 @@ const AdminAnalyticsDeepDive = () => {
                     {filteredSeoQueries.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="py-8 text-center text-slate-400">
-                          No search queries match your filter
+                          {!seoStatus?.configured ? "Search Console data is unavailable. Check the connection status above." : normalizedQuery ? "No search queries match your filter" : "No imported search queries for this date range. Check the sync status above."}
                         </td>
                       </tr>
                     ) : (
@@ -854,6 +1111,7 @@ const AdminAnalyticsDeepDive = () => {
                     )}
                   </tbody>
                 </table>
+                </>
               )}
 
               {/* 10. SEO LANDING PAGES */}

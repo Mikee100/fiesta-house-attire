@@ -10,6 +10,7 @@ import {
 import { Check, Clock, Image, Shirt, Sparkles, Star, Camera, ShieldCheck, ArrowUpRight, Palette, Plane } from "lucide-react";
 import { toast } from "sonner";
 import * as api from "@/lib/api";
+import { trackEvent } from "@/lib/tracking";
 
 const packagePositioning: Record<string, string> = {
   "The Bloom": "For the mother in her becoming.",
@@ -48,6 +49,20 @@ const PricingPlans = () => {
   const [packages, setPackages] = useState<api.ShopPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
   const [packagesSource, setPackagesSource] = useState<api.ShopPackagesSource>('live');
+
+  useEffect(() => {
+    if (loadingPackages || !packages.length || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const element = entry.target as HTMLElement;
+        trackEvent("package_view", element.dataset.packageName, { location: "session_packages", packageId: element.dataset.packageId });
+        observer.unobserve(element);
+      }
+    }, { threshold: 0.25 });
+    document.querySelectorAll("[data-package-id]").forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, [loadingPackages, packages]);
 
   useEffect(() => {
     const loadPackages = async () => {
@@ -134,6 +149,8 @@ const PricingPlans = () => {
                 return (
                   <div
                     key={pkg.id}
+                    data-package-id={pkg.id}
+                    data-package-name={pkg.name}
                     style={{
                       padding: "2rem 1.2rem",
                       backgroundColor: pkg.popular ? "white" : "var(--bg)",

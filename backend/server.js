@@ -840,6 +840,9 @@ const initAnalyticsDb = async () => {
     await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS utm_campaign TEXT');
     await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS utm_content TEXT');
     await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS utm_term TEXT');
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS location TEXT');
+    await pool.query('ALTER TABLE events ADD COLUMN IF NOT EXISTS package_id TEXT');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_events_session_created_at ON events(session_id, created_at)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at DESC)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_events_event_name_created_at ON events(event_name, created_at DESC)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_events_device_type_created_at ON events(device_type, created_at DESC)');
@@ -989,6 +992,100 @@ const getPreviousAnalyticsDateRange = (from, to) => {
   return { from: previousFrom, to: previousTo };
 };
 
+const ANALYTICS_TRACKING_PARAMS = new Set([
+  'gclid', 'dclid', 'gbraid', 'wbraid', 'gad_source', 'gad_campaignid',
+  'fbclid', 'msclkid', 'srsltid', 'igshid', 'mc_cid', 'mc_eid', '_gl',
+]);
+
+const normalizeAnalyticsPageUrl = (value) => {
+  if (typeof value !== 'string' || !value.trim()) return '/';
+  try {
+    const url = new URL(value.trim(), 'https://analytics.invalid');
+    if (!['http:', 'https:'].includes(url.protocol)) return value.trim();
+    for (const key of [...url.searchParams.keys()]) {
+      const normalizedKey = key.toLowerCase();
+      if (normalizedKey.startsWith('utm_') || ANALYTICS_TRACKING_PARAMS.has(normalizedKey)) {
+        url.searchParams.delete(key);
+      }
+    }
+    url.searchParams.sort();
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return value.trim();
+  }
+};
+
+const ACTION_JOURNEY = [
+  { id: 'discovery', label: 'Discovery', actions: [
+    { id: 'portfolio', label: 'Portfolio', events: ['portfolio_click', 'collection_click'], navigation: ['portfolio', 'collections', 'the_collections'] },
+    { id: 'gowns', label: 'Gowns', events: ['gowns_click', 'gown_click', 'maternity_gowns_click'], navigation: ['gowns', 'maternity_gowns'] },
+    { id: 'videos', label: 'Videos', events: ['video_click', 'videos_click', 'video_gallery_click'], navigation: ['videos', 'films'] },
+    { id: 'blog', label: 'Blog', events: ['blog_click'], navigation: ['blog', 'journal', 'the_journal'] },
+    { id: 'experience', label: 'Experience', events: ['experience_click'], navigation: ['experience', 'the_experience'] },
+    { id: 'reviews', label: 'Reviews', events: ['reviews_click'], navigation: ['reviews'] },
+  ] },
+  { id: 'consideration', label: 'Consideration', actions: [
+    { id: 'packages', label: 'Packages', events: ['packages_click', 'session_packages_click', 'packages_viewed', 'package_view'], navigation: ['packages', 'session_packages', 'editions', 'the_editions'] },
+    { id: 'pricing', label: 'Pricing', events: ['pricing_click'], navigation: ['pricing', 'pricing_plans', 'gift_vouchers'] },
+    { id: 'package_selection', label: 'Package selection', events: ['package_click', 'pricing_package_click', 'package_selected'], navigation: [] },
+    { id: 'gallery', label: 'Gallery', events: ['gallery_image_open'], navigation: ['gallery'] },
+    { id: 'reviews', label: 'Reviews from package/pricing pages', events: [], navigation: [] },
+  ] },
+  { id: 'conversion', label: 'Conversion', actions: [
+    { id: 'booking', label: 'Book Now', events: ['booking_click'], navigation: ['book', 'book_now', 'booking'] },
+    { id: 'whatsapp', label: 'WhatsApp', events: ['whatsapp_click'], navigation: [] },
+    { id: 'contact', label: 'Contact form', events: ['contact_form_submit'], navigation: [] },
+    { id: 'checkout', label: 'Checkout/cart', events: ['cart_click', 'checkout_start', 'checkout_form_start', 'checkout_form_submit'], navigation: ['cart', 'checkout'] },
+  ] },
+];
+
+const summarizeActionJourney = (rows) => {
+  const stages = ACTION_JOURNEY.map((stage) => ({
+    id: stage.id,
+    label: stage.label,
+    count: 0,
+    actions: stage.actions.map((action) => ({ id: action.id, label: action.label, count: 0 })),
+  }));
+  let unclassified = 0;
+  for (const row of rows) {
+    const count = Number(row.count) || 0;
+    const navigationLabel = String(row.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    let matched = false;
+    for (const stage of ACTION_JOURNEY) {
+      const action = stage.actions.find((candidate) => candidate.events.includes(row.event_name)
+        || (row.event_name === 'nav_click' && candidate.navigation.includes(navigationLabel)));
+      if (!action) continue;
+      const isReview = action.id === 'reviews';
+      const packageContext = /^\/(session-packages|pricing|pricing-plans|gift-vouchers)(?:[/?]|$)/.test(normalizeAnalyticsPageUrl(row.page_url));
+      const targetStage = stages.find((candidate) => candidate.id === (isReview && packageContext ? 'consideration' : stage.id));
+      targetStage.actions.find((candidate) => candidate.id === action.id).count += count;
+      targetStage.count += count;
+      matched = true;
+      break;
+    }
+    if (!matched) unclassified += count;
+  }
+  return { stages, unclassified, booking_completed: null };
+};
+
+const getAnalyticsPageMappings = async (from, to, includeSearchConsole = false) => {
+  const params = [from.toISOString(), to.toISOString()];
+  if (includeSearchConsole) {
+    params.push(from.toISOString().slice(0, 10), to.toISOString().slice(0, 10));
+  }
+  const result = await pool.query(
+    `SELECT DISTINCT page_url FROM events
+     WHERE created_at >= $1 AND created_at <= $2
+       AND page_url IS NOT NULL AND page_url <> ''
+     ${includeSearchConsole ? 'UNION SELECT page AS page_url FROM search_console_data WHERE date >= $3 AND date <= $4' : ''}`,
+    params
+  );
+  return JSON.stringify(result.rows.map((row) => ({
+    raw_url: row.page_url,
+    page: normalizeAnalyticsPageUrl(row.page_url),
+  })));
+};
+
 // Routes
 
 // --- Authentication API ---
@@ -1133,10 +1230,15 @@ app.post('/api/track', async (req, res) => {
   if (!eventName) {
     return res.status(202).json({ ok: true });
   }
+  if (['lead_created', 'booking_confirmed'].includes(eventName)) {
+    return res.status(202).json({ ok: true });
+  }
 
   const label = typeof body.label === 'string' ? body.label.trim().slice(0, 300) : null;
   const pageUrl = typeof body.page_url === 'string' ? body.page_url.trim().slice(0, 500) : null;
   const sessionId = typeof body.session_id === 'string' ? body.session_id.trim().slice(0, 128) : null;
+  const location = sanitizePlainText(body.location, 120);
+  const packageId = sanitizePlainText(body.package_id, 120);
   const referrer = typeof body.referrer === 'string' ? body.referrer.trim().slice(0, 500) : null;
   const deviceType = typeof body.device_type === 'string' ? body.device_type.trim().slice(0, 40) : null;
   const rawTimestamp = typeof body.timestamp === 'string' ? body.timestamp : null;
@@ -1159,10 +1261,10 @@ app.post('/api/track', async (req, res) => {
     medium = detected.medium;
   }
 
-  pool.query(
-    `INSERT INTO events (event_name, label, page_url, session_id, referrer, device_type, source, medium, utm_source, utm_medium, utm_campaign, utm_content, utm_term, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-    [eventName, label, pageUrl, sessionId, referrer, deviceType, source, medium, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, createdAt]
+  await pool.query(
+    `INSERT INTO events (event_name, label, page_url, session_id, referrer, device_type, source, medium, utm_source, utm_medium, utm_campaign, utm_content, utm_term, created_at, location, package_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+    [eventName, label, pageUrl, sessionId, referrer, deviceType, source, medium, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, createdAt, location, packageId]
   ).catch((error) => {
     if (process.env.NODE_ENV !== 'production') {
       console.error('track insert failed', error);
@@ -1403,19 +1505,24 @@ app.get('/admin/analytics/top-pages', requireAdminAuth, async (req, res) => {
     : 10;
 
   try {
+    const pageMappings = await getAnalyticsPageMappings(from, to);
     const result = await pool.query(
-      `SELECT
-         COALESCE(NULLIF(page_url, ''), '/') AS page,
+      `WITH normalized_pages AS (
+         SELECT * FROM jsonb_to_recordset($3::jsonb) AS mapping(raw_url TEXT, page TEXT)
+       )
+       SELECT
+         COALESCE(normalized.page, '/') AS page,
          COUNT(*)::int AS views,
-         COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_visitors
-       FROM events
-       WHERE created_at >= $1
-         AND created_at <= $2
-         AND event_name = 'page_view'
-       GROUP BY page
+         COUNT(DISTINCT NULLIF(e.session_id, ''))::int AS unique_visitors
+       FROM events e
+       LEFT JOIN normalized_pages normalized ON normalized.raw_url = e.page_url
+       WHERE e.created_at >= $1
+         AND e.created_at <= $2
+         AND e.event_name = 'page_view'
+       GROUP BY COALESCE(normalized.page, '/')
        ORDER BY views DESC
-       LIMIT $3`,
-      [from.toISOString(), to.toISOString(), limit]
+       LIMIT $4`,
+      [from.toISOString(), to.toISOString(), pageMappings, limit]
     );
 
     res.json(Array.isArray(result.rows) ? result.rows : []);
@@ -1433,19 +1540,24 @@ app.get('/admin/analytics/whatsapp-by-page', requireAdminAuth, async (req, res) 
     : 10;
 
   try {
+    const pageMappings = await getAnalyticsPageMappings(from, to);
     const result = await pool.query(
-      `SELECT
-         COALESCE(NULLIF(page_url, ''), '(unknown)') AS page,
+      `WITH normalized_pages AS (
+         SELECT * FROM jsonb_to_recordset($3::jsonb) AS mapping(raw_url TEXT, page TEXT)
+       )
+       SELECT
+         COALESCE(normalized.page, '(unknown)') AS page,
          COUNT(*)::int AS whatsapp_clicks,
-         COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_sessions
-       FROM events
-       WHERE created_at >= $1
-         AND created_at <= $2
-         AND event_name = 'whatsapp_click'
-       GROUP BY page
+         COUNT(DISTINCT NULLIF(e.session_id, ''))::int AS unique_sessions
+       FROM events e
+       LEFT JOIN normalized_pages normalized ON normalized.raw_url = e.page_url
+       WHERE e.created_at >= $1
+         AND e.created_at <= $2
+         AND e.event_name = 'whatsapp_click'
+       GROUP BY COALESCE(normalized.page, '(unknown)')
        ORDER BY whatsapp_clicks DESC
-       LIMIT $3`,
-      [from.toISOString(), to.toISOString(), limit]
+       LIMIT $4`,
+      [from.toISOString(), to.toISOString(), pageMappings, limit]
     );
 
     res.json(Array.isArray(result.rows) ? result.rows : []);
@@ -1459,7 +1571,7 @@ app.get('/admin/analytics/top-event-types', requireAdminAuth, async (req, res) =
   const { from, to } = getAnalyticsDateRange(req);
   const limitRaw = Number(req.query.limit || 8);
   const limit = Number.isFinite(limitRaw)
-    ? Math.max(1, Math.min(20, Math.floor(limitRaw)))
+    ? Math.max(1, Math.min(100, Math.floor(limitRaw)))
     : 8;
 
   try {
@@ -1480,6 +1592,88 @@ app.get('/admin/analytics/top-event-types', requireAdminAuth, async (req, res) =
   } catch (err) {
     console.error('admin analytics top-event-types error', err);
     res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/admin/analytics/action-journey', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  try {
+    const result = await pool.query(
+      `SELECT event_name, label, page_url, COUNT(*)::int AS count
+       FROM events
+       WHERE created_at >= $1 AND created_at <= $2
+         AND event_name <> 'page_view' AND event_name NOT LIKE 'debug_%'
+       GROUP BY event_name, label, page_url`,
+      [from.toISOString(), to.toISOString()]
+    );
+    res.json(summarizeActionJourney(result.rows));
+  } catch (err) {
+    console.error('admin analytics action-journey error', err);
+    res.status(500).json({ error: 'Failed to fetch action journey' });
+  }
+});
+
+app.get('/admin/analytics/booking-funnel', requireAdminAuth, async (req, res) => {
+  const { from, to } = getAnalyticsDateRange(req);
+  const params = [from.toISOString(), to.toISOString()];
+  try {
+    const [funnel, packages] = await Promise.all([
+      pool.query(
+        `WITH cohort AS (
+           SELECT session_id, MIN(created_at) AS landed_at
+           FROM events
+           WHERE event_name = 'session_started' AND session_id LIKE 'v2\\_%' ESCAPE '\\'
+             AND created_at >= $1 AND created_at <= $2
+           GROUP BY session_id
+         )
+         SELECT COUNT(*)::int AS landing_sessions,
+           COUNT(packages.viewed_at)::int AS packages_sessions,
+           COUNT(selected.selected_at)::int AS selected_sessions,
+           COUNT(intent.clicked_at)::int AS intent_sessions,
+           COUNT(leads.created_at)::int AS lead_sessions
+         FROM cohort c
+         LEFT JOIN LATERAL (
+           SELECT MIN(created_at) AS viewed_at FROM events
+           WHERE session_id = c.session_id AND event_name = 'packages_viewed'
+             AND created_at >= c.landed_at AND created_at <= $2
+         ) packages ON true
+         LEFT JOIN LATERAL (
+           SELECT MIN(created_at) AS selected_at FROM events
+           WHERE session_id = c.session_id AND event_name = 'package_selected'
+             AND created_at >= packages.viewed_at AND created_at <= $2
+         ) selected ON true
+         LEFT JOIN LATERAL (
+           SELECT MIN(created_at) AS clicked_at FROM events
+           WHERE session_id = c.session_id AND event_name IN ('booking_click', 'whatsapp_click')
+             AND created_at >= selected.selected_at AND created_at <= $2
+         ) intent ON true
+         LEFT JOIN LATERAL (
+           SELECT MIN(created_at) AS created_at FROM events
+           WHERE session_id = c.session_id AND event_name = 'lead_created'
+             AND created_at >= intent.clicked_at AND created_at <= $2
+         ) leads ON true`,
+        params
+      ),
+      pool.query(
+        `SELECT package_id, label AS package_name,
+           COUNT(*) FILTER (WHERE event_name = 'package_view')::int AS views,
+           COUNT(*) FILTER (WHERE event_name = 'package_selected')::int AS selected,
+           COUNT(*) FILTER (WHERE event_name = 'booking_click')::int AS booking_clicks,
+           COUNT(*) FILTER (WHERE event_name = 'whatsapp_click')::int AS whatsapp_clicks,
+           COUNT(DISTINCT session_id) FILTER (WHERE event_name = 'package_view')::int AS view_sessions
+         FROM events
+         WHERE created_at >= $1 AND created_at <= $2
+           AND location = 'session_packages' AND package_id IS NOT NULL
+           AND event_name IN ('package_view', 'package_selected', 'booking_click', 'whatsapp_click')
+         GROUP BY package_id, label
+         ORDER BY views DESC, selected DESC, label ASC`,
+        params
+      ),
+    ]);
+    res.json({ ...funnel.rows[0], booking_confirmed: null, packages: packages.rows });
+  } catch (err) {
+    console.error('admin analytics booking-funnel error', err);
+    res.status(500).json({ error: 'Failed to fetch attributed booking funnel' });
   }
 });
 
@@ -1848,39 +2042,48 @@ app.get('/admin/analytics/content', requireAdminAuth, async (req, res) => {
   const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.floor(limitRaw))) : 20;
 
   try {
+    const pageMappings = await getAnalyticsPageMappings(from, to);
     const [blogResult, portfolioResult] = await Promise.all([
       // Blog post analytics
       pool.query(
-        `SELECT
-           COALESCE(NULLIF(page_url, ''), '/') AS page,
+        `WITH normalized_pages AS (
+           SELECT * FROM jsonb_to_recordset($3::jsonb) AS mapping(raw_url TEXT, page TEXT)
+         )
+         SELECT
+           normalized.page,
            COUNT(*)::int AS views,
-           COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_visitors,
-           COUNT(*) FILTER (WHERE source IN ('google', 'bing', 'yahoo', 'duckduckgo') OR medium = 'organic')::int AS organic_visits
-         FROM events
-         WHERE created_at >= $1
-           AND created_at <= $2
-           AND event_name = 'page_view'
-           AND page_url LIKE '/blog/%'
-         GROUP BY page
+           COUNT(DISTINCT NULLIF(e.session_id, ''))::int AS unique_visitors,
+           COUNT(*) FILTER (WHERE e.source IN ('google', 'bing', 'yahoo', 'duckduckgo') OR e.medium = 'organic')::int AS organic_visits
+         FROM events e
+         JOIN normalized_pages normalized ON normalized.raw_url = e.page_url
+         WHERE e.created_at >= $1
+           AND e.created_at <= $2
+           AND e.event_name = 'page_view'
+           AND normalized.page LIKE '/blog/%'
+         GROUP BY normalized.page
          ORDER BY views DESC
-         LIMIT $3`,
-        [from.toISOString(), to.toISOString(), limit]
+         LIMIT $4`,
+        [from.toISOString(), to.toISOString(), pageMappings, limit]
       ),
       // Portfolio/gallery analytics
       pool.query(
-        `SELECT
-           COALESCE(NULLIF(page_url, ''), '/') AS page,
+        `WITH normalized_pages AS (
+           SELECT * FROM jsonb_to_recordset($3::jsonb) AS mapping(raw_url TEXT, page TEXT)
+         )
+         SELECT
+           normalized.page,
            COUNT(*)::int AS views,
-           COUNT(DISTINCT NULLIF(session_id, ''))::int AS unique_visitors
-         FROM events
-         WHERE created_at >= $1
-           AND created_at <= $2
-           AND event_name = 'page_view'
-           AND (page_url LIKE '/portfolio%' OR page_url LIKE '/gallery%')
-         GROUP BY page
+           COUNT(DISTINCT NULLIF(e.session_id, ''))::int AS unique_visitors
+         FROM events e
+         JOIN normalized_pages normalized ON normalized.raw_url = e.page_url
+         WHERE e.created_at >= $1
+           AND e.created_at <= $2
+           AND e.event_name = 'page_view'
+           AND (normalized.page LIKE '/portfolio%' OR normalized.page LIKE '/gallery%')
+         GROUP BY normalized.page
          ORDER BY views DESC
-         LIMIT $3`,
-        [from.toISOString(), to.toISOString(), limit]
+         LIMIT $4`,
+        [from.toISOString(), to.toISOString(), pageMappings, limit]
       ),
     ]);
 
@@ -2075,7 +2278,10 @@ app.get('/admin/analytics/seo/status', requireAdminAuth, async (req, res) => {
       const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM search_console_data`);
       totalRows = Number(countResult.rows[0]?.total || 0);
     }
-  } catch {}
+  } catch (err) {
+    console.error('admin analytics seo/status error', err);
+    return res.status(500).json({ error: 'Failed to read Search Console sync status' });
+  }
 
   res.json({
     configured,
@@ -2092,17 +2298,12 @@ app.post('/admin/analytics/seo/sync', requireAdminAuth, async (req, res) => {
   }
 
   const daysRaw = Number(req.query.days || 90);
-  const days = Math.max(1, Math.min(500, daysRaw));
+  const days = Number.isFinite(daysRaw) ? Math.max(1, Math.min(500, Math.floor(daysRaw))) : 90;
   const endDate = new Date().toISOString().slice(0, 10);
   const startDateObj = new Date();
   startDateObj.setDate(startDateObj.getDate() - days);
   const startDate = startDateObj.toISOString().slice(0, 10);
 
-  // Fire off sync asynchronously and respond immediately
-  res.json({ ok: true, message: `GSC sync started for ${days} days (${startDate} to ${endDate})` });
-
-  // Async sync
-  (async () => {
     let rowsUpserted = 0;
     let errorMessage = null;
     try {
@@ -2112,17 +2313,27 @@ app.post('/admin/analytics/seo/sync', requireAdminAuth, async (req, res) => {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        for (const row of rows) {
-          const [date, query, page] = row.keys;
-          await client.query(
-            `INSERT INTO search_console_data (date, query, page, country, device, clicks, impressions, ctr, position, synced_at)
-             VALUES ($1, $2, $3, 'all', 'all', $4, $5, $6, $7, NOW())
-             ON CONFLICT (date, query, page, country, device)
-             DO UPDATE SET clicks=$4, impressions=$5, ctr=$6, position=$7, synced_at=NOW()`,
-            [date, query, page, row.clicks || 0, row.impressions || 0, row.ctr || 0, row.position || 0]
-          );
-          rowsUpserted++;
-        }
+        const importedRows = rows.map((row) => ({
+          date: row.keys[0],
+          query: row.keys[1],
+          page: row.keys[2],
+          clicks: row.clicks || 0,
+          impressions: row.impressions || 0,
+          ctr: row.ctr || 0,
+          position: row.position || 0,
+        }));
+        const imported = await client.query(
+          `INSERT INTO search_console_data (date, query, page, country, device, clicks, impressions, ctr, position, synced_at)
+           SELECT date, query, page, 'all', 'all', clicks, impressions, ctr, position, NOW()
+           FROM jsonb_to_recordset($1::jsonb) AS imported (
+             date DATE, query TEXT, page TEXT, clicks INTEGER, impressions INTEGER, ctr NUMERIC, position NUMERIC
+           )
+           ON CONFLICT (date, query, page, country, device)
+           DO UPDATE SET clicks=EXCLUDED.clicks, impressions=EXCLUDED.impressions,
+             ctr=EXCLUDED.ctr, position=EXCLUDED.position, synced_at=NOW()`,
+          [JSON.stringify(importedRows)]
+        );
+        rowsUpserted = imported.rowCount;
         await client.query('COMMIT');
       } catch (e) {
         await client.query('ROLLBACK');
@@ -2136,6 +2347,7 @@ app.post('/admin/analytics/seo/sync', requireAdminAuth, async (req, res) => {
         [rowsUpserted, startDate, endDate]
       );
       console.log(`GSC sync complete: ${rowsUpserted} rows upserted`);
+      return res.json({ ok: true, message: `GSC sync completed: ${rowsUpserted} rows imported (${startDate} to ${endDate})` });
     } catch (err) {
       errorMessage = err.message || 'Unknown error';
       console.error('GSC sync error:', errorMessage);
@@ -2145,8 +2357,8 @@ app.post('/admin/analytics/seo/sync', requireAdminAuth, async (req, res) => {
           [startDate, endDate, errorMessage]
         );
       } catch {}
+      return res.status(502).json({ error: `Search Console sync failed: ${errorMessage}` });
     }
-  })();
 });
 
 // GSC Overview KPIs
@@ -2159,7 +2371,7 @@ app.get('/admin/analytics/seo/overview', requireAdminAuth, async (req, res) => {
   }
 
   try {
-    const [current, previous] = await Promise.all([
+    const [current, previous, querySummary] = await Promise.all([
       pool.query(
         `SELECT
            COALESCE(SUM(clicks), 0)::int AS clicks,
@@ -2180,11 +2392,26 @@ app.get('/admin/analytics/seo/overview', requireAdminAuth, async (req, res) => {
          WHERE date >= $1 AND date <= $2`,
         [previousRange.from.toISOString().slice(0, 10), previousRange.to.toISOString().slice(0, 10)]
       ),
+      pool.query(
+        `WITH query_positions AS (
+           SELECT query, SUM(impressions) AS impressions,
+             SUM(position * impressions) / NULLIF(SUM(impressions), 0) AS avg_position
+           FROM search_console_data
+           WHERE date >= $1 AND date <= $2
+           GROUP BY query
+         )
+         SELECT
+           COUNT(*) FILTER (WHERE impressions > 0 AND query !~* '\\mfiesta\\M')::int AS non_brand_queries,
+           COUNT(*) FILTER (WHERE impressions > 0 AND query !~* '\\mfiesta\\M'
+             AND avg_position >= 1 AND avg_position <= 10)::int AS non_brand_top_ten_queries
+         FROM query_positions`,
+        [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10)]
+      ),
     ]);
 
     res.json({
       configured: true,
-      current: current.rows[0],
+      current: { ...current.rows[0], ...querySummary.rows[0] },
       previous: previous.rows[0],
     });
   } catch (err) {
@@ -2322,40 +2549,53 @@ app.get('/admin/analytics/seo/landing-pages', requireAdminAuth, async (req, res)
   }
 
   try {
-    const siteBase = GSC_SITE_URL.replace(/\/$/, '');
+    const pageMappings = await getAnalyticsPageMappings(from, to, true);
 
     const [gscPages, eventPages, whatsappPages] = await Promise.all([
       pool.query(
-        `SELECT
-           page,
-           SUM(clicks)::int AS organic_clicks,
-           SUM(impressions)::int AS impressions,
-           CASE WHEN SUM(impressions) > 0 THEN ROUND((SUM(clicks)::numeric / SUM(impressions)) * 100, 2) ELSE 0 END AS ctr,
-           ROUND(SUM(position * impressions)::numeric / NULLIF(SUM(impressions), 0), 2) AS avg_position
-         FROM search_console_data
-         WHERE date >= $1 AND date <= $2
-         GROUP BY page
+        `WITH normalized_pages AS (
+           SELECT * FROM jsonb_to_recordset($3::jsonb) AS mapping(raw_url TEXT, page TEXT)
+         )
+         SELECT
+           normalized.page AS path,
+           MIN(sc.page) AS page,
+           SUM(sc.clicks)::int AS organic_clicks,
+           SUM(sc.impressions)::int AS impressions,
+           CASE WHEN SUM(sc.impressions) > 0 THEN ROUND((SUM(sc.clicks)::numeric / SUM(sc.impressions)) * 100, 2) ELSE 0 END AS ctr,
+           ROUND(SUM(sc.position * sc.impressions)::numeric / NULLIF(SUM(sc.impressions), 0), 2) AS avg_position
+         FROM search_console_data sc
+         JOIN normalized_pages normalized ON normalized.raw_url = sc.page
+         WHERE sc.date >= $1 AND sc.date <= $2
+         GROUP BY normalized.page
          ORDER BY impressions DESC
-         LIMIT $3`,
-        [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10), limit]
+         LIMIT $4`,
+        [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10), pageMappings, limit]
       ),
       pool.query(
-        `SELECT
-           COALESCE(NULLIF(page_url, ''), '/') AS page,
-           COUNT(DISTINCT NULLIF(session_id, ''))::int AS website_visitors
-         FROM events
-         WHERE created_at >= $1 AND created_at <= $2 AND event_name = 'page_view'
-         GROUP BY page_url`,
-        [from.toISOString(), to.toISOString()]
+        `WITH normalized_pages AS (
+           SELECT * FROM jsonb_to_recordset($3::jsonb) AS mapping(raw_url TEXT, page TEXT)
+         )
+         SELECT
+           COALESCE(normalized.page, '/') AS page,
+           COUNT(DISTINCT NULLIF(e.session_id, ''))::int AS website_visitors
+         FROM events e
+         LEFT JOIN normalized_pages normalized ON normalized.raw_url = e.page_url
+         WHERE e.created_at >= $1 AND e.created_at <= $2 AND e.event_name = 'page_view'
+         GROUP BY COALESCE(normalized.page, '/')`,
+        [from.toISOString(), to.toISOString(), pageMappings]
       ),
       pool.query(
-        `SELECT
-           COALESCE(NULLIF(page_url, ''), '/') AS page,
+        `WITH normalized_pages AS (
+           SELECT * FROM jsonb_to_recordset($3::jsonb) AS mapping(raw_url TEXT, page TEXT)
+         )
+         SELECT
+           COALESCE(normalized.page, '/') AS page,
            COUNT(*)::int AS whatsapp_clicks
-         FROM events
-         WHERE created_at >= $1 AND created_at <= $2 AND event_name = 'whatsapp_click'
-         GROUP BY page_url`,
-        [from.toISOString(), to.toISOString()]
+         FROM events e
+         LEFT JOIN normalized_pages normalized ON normalized.raw_url = e.page_url
+         WHERE e.created_at >= $1 AND e.created_at <= $2 AND e.event_name = 'whatsapp_click'
+         GROUP BY COALESCE(normalized.page, '/')`,
+        [from.toISOString(), to.toISOString(), pageMappings]
       ),
     ]);
 
@@ -2366,9 +2606,10 @@ app.get('/admin/analytics/seo/landing-pages', requireAdminAuth, async (req, res)
     whatsappPages.rows.forEach(r => { waMap[r.page] = Number(r.whatsapp_clicks || 0); });
 
     const merged = gscPages.rows.map(r => {
-      const path = r.page.replace(siteBase, '') || '/';
+      const path = r.path;
       return {
         ...r,
+        page: new URL(path, SITEMAP_SITE_URL).toString(),
         path,
         website_visitors: visitorMap[path] || 0,
         whatsapp_clicks: waMap[path] || 0,
@@ -4204,6 +4445,17 @@ app.post('/contact-enquiries', contactLimiter, async (req, res) => {
       text: adminText,
       html: adminHtml
     });
+
+    const tracking = req.body?.tracking || {};
+    const trackedSession = sanitizePlainText(tracking.session_id, 128);
+    if (trackedSession && /^v2_[a-f0-9]{32}$/.test(trackedSession)) {
+      await pool.query(
+        `INSERT INTO events (event_name, label, page_url, session_id, source, medium, utm_campaign, location)
+         VALUES ('lead_created', $1, '/contact', $2, $3, $4, $5, 'contact_form')`,
+        [packageInterest.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''), trackedSession,
+          sanitizePlainText(tracking.source, 100), sanitizePlainText(tracking.medium, 100), sanitizePlainText(tracking.campaign, 200)]
+      ).catch((error) => console.error('contact lead attribution failed', error));
+    }
 
     res.json({ success: true, routedTo: CONTACT_TEST_RECIPIENT });
   } catch (err) {

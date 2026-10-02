@@ -1128,6 +1128,7 @@ const Index = () => {
 
               <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }} className="mobile-center justify-center home-final-cta-actions">
                 <Link to="/contact" className="btn btn-magenta home-final-cta-btn" data-track="booking_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
+                <Link to="/session-packages" data-track="packages_click:home_final_packages" style={{ display: "inline-block", margin: "1rem", color: "var(--magenta)", fontWeight: 600 }}>Explore maternity session packages</Link>
                 <a href="https://wa.me/254720111928" className="btn btn-whatsapp home-final-cta-btn" data-track="whatsapp_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
               </div>
             </div>
