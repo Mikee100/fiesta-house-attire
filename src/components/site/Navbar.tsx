@@ -9,7 +9,7 @@ const mainNavLinks = [
   { to: "/maternity-gowns", label: "Gowns" },
   { to: "/portfolio", label: "Portfolio" },
   { to: "/videos", label: "Videos" },
-  { to: "/session-packages", label: "Packages" },
+  { to: "/session-packages", label: "Pricing" },
   { to: "/gift-vouchers", label: "Gift Vouchers" },
   { to: "/blog", label: "Blogs" },
 ];
