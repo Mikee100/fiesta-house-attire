@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MOCK_PORTFOLIOS } from "@/lib/mockData";
 import * as api from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, Library, Sparkles, Search, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon, LayoutDashboard, Library, Sparkles, Search, ArrowUp, ArrowDown, Pencil, Check, X, Loader2 } from "lucide-react";
 import AdminPage from "@/components/admin/AdminPage";
 import SEO from "@/components/site/SEO";
 
@@ -17,6 +17,9 @@ const Admin = () => {
   const [useMock, setUseMock] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isReordering, setIsReordering] = useState(false);
+  const [editingPortfolioId, setEditingPortfolioId] = useState<string | null>(null);
+  const [portfolioTitleDraft, setPortfolioTitleDraft] = useState("");
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
 
   // Use brand colors for consistent luxury feel
   const brandSky = "#B09345";
@@ -62,6 +65,33 @@ const Admin = () => {
       toast.success("Portfolio created");
       setNewPortfolioTitle("");
       fetchPortfolios();
+    }
+  };
+
+  const handleRenamePortfolio = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const title = portfolioTitleDraft.trim();
+    if (!editingPortfolioId || !title || isSavingTitle || useMock) return;
+
+    setIsSavingTitle(true);
+    try {
+      const result = await api.updatePortfolio(editingPortfolioId, { title });
+      if (result?.error) {
+        toast.error(result.error);
+      } else if (result?.id === editingPortfolioId && typeof result.title === "string") {
+        setPortfolios((previous) => previous.map((portfolio) =>
+          portfolio.id === editingPortfolioId ? { ...portfolio, title: result.title } : portfolio
+        ));
+        setEditingPortfolioId(null);
+        setPortfolioTitleDraft("");
+        toast.success("Portfolio renamed");
+      } else {
+        toast.error("Failed to rename portfolio");
+      }
+    } catch {
+      toast.error("Failed to rename portfolio");
+    } finally {
+      setIsSavingTitle(false);
     }
   };
 
@@ -299,9 +329,64 @@ const Admin = () => {
                   </div>
                   
                   <CardHeader className="p-6">
-                    <CardTitle className="text-xl font-serif text-slate-800">
-                      {p.title}
-                    </CardTitle>
+                    {editingPortfolioId === p.id ? (
+                      <form onSubmit={handleRenamePortfolio} className="flex min-w-0 items-center gap-1">
+                        <Input
+                          aria-label="Portfolio name"
+                          value={portfolioTitleDraft}
+                          onChange={(event) => setPortfolioTitleDraft(event.target.value)}
+                          disabled={isSavingTitle}
+                          autoFocus
+                          className="h-8 min-w-0 text-sm"
+                        />
+                        <Button
+                          type="submit"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          aria-label="Save portfolio name"
+                          title="Save portfolio name"
+                          disabled={isSavingTitle || !portfolioTitleDraft.trim()}
+                        >
+                          {isSavingTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          aria-label="Cancel rename"
+                          title="Cancel rename"
+                          disabled={isSavingTitle}
+                          onClick={() => {
+                            setEditingPortfolioId(null);
+                            setPortfolioTitleDraft("");
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </form>
+                    ) : (
+                      <div className="flex min-w-0 items-center justify-between gap-2">
+                        <CardTitle className="min-w-0 break-words text-xl font-serif text-slate-800">
+                          {p.title}
+                        </CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          aria-label={`Rename ${p.title}`}
+                          title="Rename portfolio"
+                          disabled={useMock || isSavingTitle}
+                          onClick={() => {
+                            setEditingPortfolioId(p.id);
+                            setPortfolioTitleDraft(p.title);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                     <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-medium">Photography Collection</p>
                   </CardHeader>
                   

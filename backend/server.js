@@ -3247,16 +3247,20 @@ app.get('/public/assets', async (req, res) => {
     );
     const totalCount = parseInt(countResult.rows[0].count, 10) || 0;
 
+    const orderBy = req.query.selection === 'four-hour'
+      ? "md5(a.id::text || floor(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Africa/Nairobi')) / 14400)::text), a.id"
+      : 'a.created_at DESC';
     params.push(limitNum, offset);
     const assetsQuery = `
       SELECT a.id, a.url, a.folder_id, a.created_at
       FROM assets a
       ${whereClause}
-      ORDER BY a.created_at DESC
+      ORDER BY ${orderBy}
       LIMIT $${params.length - 1} OFFSET $${params.length}
     `;
     const assetsResult = await pool.query(assetsQuery, params);
 
+    if (req.query.selection === 'four-hour') res.set('Cache-Control', 'no-store');
     res.json({
       assets: assetsResult.rows,
       totalCount,

@@ -21,6 +21,7 @@ import MasonryImage from "@/components/site/MasonryImage";
 import InstagramFeed from "@/components/site/InstagramFeed";
 import { Mail, MapPin, Clock, Phone, Instagram, Facebook } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useRotatingMasterpieces } from "@/hooks/use-rotating-masterpieces";
 
 import gownImg from "@/assets/gowns.jpg";
 import FloatingScrollToTop from "@/components/FloatingScrollToTop";
@@ -77,7 +78,7 @@ const getPortfolioCoverImage = (portfolio: Portfolio): string | null => {
 const Index = () => {
   const isMobile = useIsMobile();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const { assets, loading: masterpiecesLoading } = useRotatingMasterpieces();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
   const [heroImages, setHeroImages] = useState<string[]>(FALLBACK_HERO_IMAGES);
@@ -86,16 +87,14 @@ const Index = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [portfoliosData, assetsData, foldersData, postsData, heroAssetsData] = await Promise.all([
+        const [portfoliosData, foldersData, postsData, heroAssetsData] = await Promise.all([
           fetchPortfolios(),
-          fetchPublicAssets(undefined, 1, 12),
           fetchPublicFolders(),
           fetchRecentBlogPosts(),
           fetchPublicAssets(HOME_CAROUSEL_FOLDER_ID, 1, MAX_HERO_SLIDES)
         ]);
 
         if (portfoliosData) setPortfolios(portfoliosData);
-        if (assetsData && assetsData.assets) setAssets(assetsData.assets);
         if (foldersData) setFolders(foldersData);
         if (postsData) setRecentPosts(postsData.slice(0, 6));
         if (heroAssetsData?.assets?.length) {
@@ -756,7 +755,7 @@ const Index = () => {
             </div>
 
             <div className="masonry">
-              {loading ? (
+              {masterpiecesLoading ? (
                 Array(6).fill(0).map((_, i) => (
                   <Skeleton key={i} className="masonry-item w-full h-64 mb-8" />
                 ))

@@ -19,7 +19,6 @@ import * as api from "@/lib/api";
 import { toast } from "sonner";
 import { Image as ImageIcon, Trash2, Upload, Loader2, Search, CheckCircle2, Copy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import AdminPage from "@/components/admin/AdminPage";
-import AdminSection from "@/components/admin/AdminSection";
 import SEO from "@/components/site/SEO";
 
 const AdminAssets = () => {
@@ -40,11 +39,11 @@ const AdminAssets = () => {
   const [pageInput, setPageInput] = useState("1");
   const [searchQuery, setSearchQuery] = useState("");
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  const [targetMoveFolderId, setTargetMoveFolderId] = useState("");
+  const [targetCopyFolderId, setTargetCopyFolderId] = useState("");
   const [targetPortfolioId, setTargetPortfolioId] = useState("");
-  const [movingSelected, setMovingSelected] = useState(false);
+  const [copyingSelected, setCopyingSelected] = useState(false);
   const [addingToPortfolio, setAddingToPortfolio] = useState(false);
-  const itemsPerPage = 60;
+  const itemsPerPage = 100;
 
   const currentFolder = currentFolderId ? folders.find((f) => f.id === currentFolderId) ?? null : null;
   const previewAssetIndex = previewAssetId ? assets.findIndex((asset) => asset.id === previewAssetId) : -1;
@@ -77,6 +76,7 @@ const AdminAssets = () => {
 
   useEffect(() => {
     setPageInput(String(currentPage));
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [currentPage]);
 
   const loadData = async () => {
@@ -176,36 +176,45 @@ const AdminAssets = () => {
     }
   };
 
-  const handleMoveSelectedAssets = async () => {
+  const handleCopySelectedAssets = async () => {
     if (selectedAssetIds.length === 0) return;
-    if (!targetMoveFolderId) {
+    if (!targetCopyFolderId) {
       toast.error("Choose a destination folder");
       return;
     }
 
-    const destinationFolderId = targetMoveFolderId === "__none__" ? null : targetMoveFolderId;
-    if (destinationFolderId === (currentFolderId || null)) {
+    const destinationFolderId = targetCopyFolderId === "__none__" ? undefined : targetCopyFolderId;
+    if (currentFolderId && destinationFolderId === currentFolderId) {
       toast.error("Selected images are already in that location");
       return;
     }
 
-    setMovingSelected(true);
+    const selectedUrls = assets
+      .filter((asset) => selectedAssetIds.includes(asset.id))
+      .map((asset) => asset.url);
+
+    if (selectedUrls.length === 0) {
+      toast.error("Selected images are not available on this page");
+      return;
+    }
+
+    setCopyingSelected(true);
     try {
-      const result = await api.moveAssetsToFolder(selectedAssetIds, destinationFolderId);
+      const result = await api.addAssetsBulk(selectedUrls, destinationFolderId);
       if (result.error) {
         toast.error(result.error);
-      } else if (!result.updated) {
-        toast.error("No images were moved. Refresh and try again.");
+      } else if (!Array.isArray(result) || result.length === 0) {
+        toast.error("No images were copied. Refresh and try again.");
       } else {
-        toast.success(`Moved ${result.updated} image${result.updated === 1 ? "" : "s"}`);
+        toast.success(`Copied ${result.length} image${result.length === 1 ? "" : "s"} to folder`);
         setSelectedAssetIds([]);
-        setTargetMoveFolderId("");
+        setTargetCopyFolderId("");
         await loadData();
       }
     } catch {
-      toast.error("Failed to move selected images");
+      toast.error("Failed to copy selected images");
     } finally {
-      setMovingSelected(false);
+      setCopyingSelected(false);
     }
   };
 
@@ -287,11 +296,13 @@ const AdminAssets = () => {
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success(`Added ${selectedUrls.length} image${selectedUrls.length === 1 ? "" : "s"} to portfolio`);
+        toast.success(result.length > 0
+          ? `Copied ${result.length} image${result.length === 1 ? "" : "s"} to portfolio`
+          : "Selected images are already in this portfolio");
         setTargetPortfolioId("");
       }
     } catch {
-      toast.error("Failed to add selected images to portfolio");
+      toast.error("Failed to copy selected images to portfolio");
     } finally {
       setAddingToPortfolio(false);
     }
@@ -310,13 +321,13 @@ const AdminAssets = () => {
       <AdminPage
         title="Media Library"
         description="Bulk upload and organize your photography assets"
-        maxWidthClassName="max-w-6xl"
+        maxWidthClassName="max-w-none !space-y-3 !py-4 [&>header]:gap-2 [&>header_h1]:text-xl [&>header_p]:text-xs [&_button]:h-8 [&_button]:px-2 [&_button]:text-xs"
         actions={
-          <div className="relative w-full md:w-96">
+          <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search images by URL..."
-              className="pl-10 bg-white"
+              className="h-8 pl-10 bg-white text-xs"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -332,17 +343,20 @@ const AdminAssets = () => {
           onChange={handleFileUpload}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="space-y-3">
           {/* Sidebar: Upload Tools */}
-          <div className="lg:col-span-1 space-y-8">
-            <AdminSection title="Asset Tools" description="Upload files or add image links in the selected folder." contentClassName="space-y-4">
-              <Tabs defaultValue="upload" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+          <details className="group border-b border-slate-200 pb-2">
+            <summary className="flex w-fit cursor-pointer list-none items-center gap-1 text-xs font-medium text-slate-600 [&::-webkit-details-marker]:hidden">
+              <ChevronRight className="h-3 w-3 group-open:rotate-90" />
+              Upload options
+            </summary>
+              <Tabs defaultValue="upload" className="mt-2 w-full max-w-md">
+                <TabsList className="grid h-8 w-full grid-cols-2">
                   <TabsTrigger value="upload" className="text-xs">Upload</TabsTrigger>
                   <TabsTrigger value="links" className="text-xs">Links</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="upload" className="space-y-4">
+                <TabsContent value="upload" className="space-y-2">
                   <p className="text-xs text-muted-foreground">Select one or more images to upload to this folder.</p>
                   <Button
                     className="w-full"
@@ -355,10 +369,10 @@ const AdminAssets = () => {
                   </Button>
                 </TabsContent>
 
-                <TabsContent value="links" className="space-y-4">
+                <TabsContent value="links" className="space-y-2">
                   <p className="text-xs text-muted-foreground">Paste one image link per line (advanced).</p>
                   <Textarea
-                    className="min-h-[150px] text-xs font-mono"
+                    className="min-h-[90px] text-xs font-mono"
                     placeholder="https://example.com/image1.jpg\nhttps://example.com/image2.jpg"
                     value={bulkUrls}
                     onChange={(e) => setBulkUrls(e.target.value)}
@@ -368,17 +382,16 @@ const AdminAssets = () => {
                   </Button>
                 </TabsContent>
               </Tabs>
-            </AdminSection>
-          </div>
+          </details>
 
           {/* Main Content: Media Library */}
-          <div className="lg:col-span-3 space-y-8">
-             <div className="overflow-hidden rounded-xl border bg-white">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-slate-50/70 px-4 py-3">
-                  <div className="flex min-w-0 items-center gap-2 text-sm">
+           <div className="min-w-0 space-y-3">
+             <div className="overflow-hidden rounded-md border bg-white">
+               <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50/70 px-2 py-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs">
                     <span className="font-medium text-slate-600">Folder</span>
                     <select
-                      className="h-8 min-w-[220px] rounded-md border border-slate-300 bg-white px-2 text-sm"
+                      className="h-8 w-48 max-w-full rounded-md border border-slate-300 bg-white px-2 text-xs"
                       value={currentFolderId ?? ""}
                       onChange={(e) => {
                         const nextFolderId = e.target.value || null;
@@ -406,10 +419,10 @@ const AdminAssets = () => {
                     </Link>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-slate-200/70 px-2 py-1 text-xs text-slate-700">
+                    <span className="rounded bg-slate-200/70 px-2 py-0.5 text-xs text-slate-700">
                       {assets.length} image{assets.length === 1 ? "" : "s"}
                     </span>
-                    <span className="rounded-full bg-slate-200/70 px-2 py-1 text-xs text-slate-700">
+                    <span className="rounded bg-slate-200/70 px-2 py-0.5 text-xs text-slate-700">
                       {selectedAssetIds.length} selected
                     </span>
                   </div>
@@ -442,13 +455,13 @@ const AdminAssets = () => {
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-white p-2">
+              <div className="flex flex-wrap items-center gap-2 border-y border-slate-200 py-2">
                 <select
-                  className="h-8 min-w-[220px] rounded-md border border-slate-300 bg-white px-2 text-sm"
-                  value={targetMoveFolderId}
-                  onChange={(e) => setTargetMoveFolderId(e.target.value)}
+                  className="h-8 w-48 max-w-full rounded-md border border-slate-300 bg-white px-2 text-xs"
+                  value={targetCopyFolderId}
+                  onChange={(e) => setTargetCopyFolderId(e.target.value)}
                 >
-                  <option value="">Move selected to folder...</option>
+                  <option value="">Copy selected to folder...</option>
                   <option value="__none__">No folder (root)</option>
                   {folders.map((folder) => (
                     <option key={folder.id} value={folder.id}>
@@ -459,18 +472,19 @@ const AdminAssets = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleMoveSelectedAssets}
-                  disabled={selectedAssetIds.length === 0 || !targetMoveFolderId || movingSelected}
+                  onClick={handleCopySelectedAssets}
+                  disabled={selectedAssetIds.length === 0 || !targetCopyFolderId || copyingSelected}
                 >
-                  {movingSelected ? "Moving..." : "Move Selected"}
+                  {copyingSelected ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
+                  {copyingSelected ? "Copying..." : "Copy To Folder"}
                 </Button>
 
                 <select
-                  className="h-8 min-w-[220px] rounded-md border border-slate-300 bg-white px-2 text-sm"
+                  className="h-8 w-48 max-w-full rounded-md border border-slate-300 bg-white px-2 text-xs"
                   value={targetPortfolioId}
                   onChange={(e) => setTargetPortfolioId(e.target.value)}
                 >
-                  <option value="">Add selected to portfolio...</option>
+                  <option value="">Copy selected to portfolio...</option>
                   {portfolios.map((portfolio) => (
                     <option key={portfolio.id} value={portfolio.id}>
                       {portfolio.title}
@@ -483,16 +497,17 @@ const AdminAssets = () => {
                   onClick={handleAddSelectedToPortfolio}
                   disabled={selectedAssetIds.length === 0 || !targetPortfolioId || addingToPortfolio}
                 >
-                  {addingToPortfolio ? "Adding..." : "Add To Portfolio"}
+                  {addingToPortfolio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
+                  {addingToPortfolio ? "Copying..." : "Copy To Portfolio"}
                 </Button>
               </div>
 
               {/* Assets Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
                  {assets.map((asset) => (
                          <div
                            key={asset.id}
-                           className={`group relative aspect-square bg-slate-200 rounded-lg overflow-hidden border-2 cursor-pointer ${
+                           className={`group relative aspect-[3/4] bg-slate-200 rounded-md overflow-hidden border-2 cursor-pointer ${
                              selectedAssetIds.includes(asset.id) ? "border-sky-500" : "border-transparent"
                            }`}
                            onClick={() => toggleAssetSelection(asset.id)}
@@ -502,7 +517,7 @@ const AdminAssets = () => {
                               {selectedAssetIds.includes(asset.id) ? "Selected" : "Select"}
                             </div>
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
-                         <div className="flex gap-2">
+                         <div className="flex gap-1">
                            <Button 
                              variant="secondary" 
                              size="icon"
@@ -510,7 +525,7 @@ const AdminAssets = () => {
                                      e.stopPropagation();
                                      handleCopyUrl(asset.url);
                                    }}
-                             className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
+                             className="h-8 w-8 bg-white text-slate-700 hover:bg-slate-100 border-none"
                              title="Copy URL"
                            >
                              <Copy className="h-4 w-4" />
@@ -522,7 +537,7 @@ const AdminAssets = () => {
                                e.stopPropagation();
                                setPreviewAssetId(asset.id);
                              }}
-                             className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
+                             className="h-8 w-8 bg-white text-slate-700 hover:bg-slate-100 border-none"
                              title="View full image"
                            >
                              <Eye className="h-4 w-4" />
@@ -535,7 +550,7 @@ const AdminAssets = () => {
                                        e.stopPropagation();
                                        handleSetFolderCover(asset.url);
                                      }}
-                               className="h-9 w-9 bg-white text-slate-700 hover:bg-slate-100 border-none"
+                               className="h-8 w-8 bg-white text-slate-700 hover:bg-slate-100 border-none"
                                title="Use as folder thumbnail"
                              >
                                <CheckCircle2 className="h-4 w-4" />
@@ -566,7 +581,7 @@ const AdminAssets = () => {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-4 py-8">
+                <div className="flex flex-wrap items-center justify-center gap-2 py-3">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -575,7 +590,7 @@ const AdminAssets = () => {
                   >
                     Previous
                   </Button>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Page {currentPage} of {totalPages}
                   </span>
                   <Button 
@@ -598,7 +613,7 @@ const AdminAssets = () => {
                           handleGoToPage();
                         }
                       }}
-                      className="h-8 w-20"
+                      className="h-8 w-16 text-xs"
                     />
                     <Button variant="outline" size="sm" onClick={handleGoToPage}>
                       Go
