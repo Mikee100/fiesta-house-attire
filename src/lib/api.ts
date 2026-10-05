@@ -242,6 +242,13 @@ export const fetchPublicAssets = async (folderId?: string, page: number = 1, lim
   return await readJsonOrNull<PaginatedAssets>(res) || { assets: [], totalPages: 1 };
 };
 
+export const fetchRotatingMasterpieces = async (): Promise<AssetRecord[]> => {
+  const res = await fetch(`${API_URL}/public/assets?page=1&limit=15&selection=four-hour&folder_id=fd954f21-3e3d-4b78-88ce-1e75fd5ef6df`, { cache: 'no-store' });
+  const data = await readJsonOrNull<PaginatedAssets>(res);
+  if (!data || !Array.isArray(data.assets)) throw new Error('Failed to fetch rotating masterpieces');
+  return data.assets;
+};
+
 export const fetchPublicGalleryAssetsBySlug = async (gallerySlug: string, page: number = 1, limit: number = 100): Promise<PublicGalleryAssetsResponse> => {
   const normalizedSlug = normalizeGallerySlug(gallerySlug);
   const safeSlug = encodeURIComponent(normalizedSlug);
