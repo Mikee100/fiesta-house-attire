@@ -301,10 +301,14 @@ const AdminAnalytics = () => {
       const s = (r.source || "").toLowerCase();
       const m = (r.medium || "").toLowerCase();
 
-      let label = "Direct";
-      if (s === "google" || m === "organic") label = "Google Search";
+      let label = "Other / Unclassified";
+      if (s === "direct" && (!m || m === "none")) label = "Direct / Unattributed";
+      else if (s === "google" || m === "organic") label = "Google Search";
+      else if (s === "tiktok" || s.includes("tiktok")) label = "TikTok";
       else if (["instagram", "facebook", "tiktok", "whatsapp"].includes(s) || m === "social") label = "Instagram & Social";
       else if (m === "referral") label = "Referrals";
+      else if (s === "internal" || m === "internal") label = "Internal";
+      else if (s === "rss" || m === "rss") label = "RSS";
 
       const existing = grouped.get(label) || { label, visitors: 0, whatsapp: 0 };
       existing.visitors += safeNumber(r.visitors);
