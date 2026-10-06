@@ -17,11 +17,13 @@ import {
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
 import BeforeAfterSlider from "@/components/site/BeforeAfterSlider";
+import StudioSetGallery from "@/components/site/StudioSetGallery";
 import MasonryImage from "@/components/site/MasonryImage";
 import InstagramFeed from "@/components/site/InstagramFeed";
 import { Mail, MapPin, Clock, Phone, Instagram, Facebook } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useRotatingMasterpieces } from "@/hooks/use-rotating-masterpieces";
+import { splitHomeGallery } from "@/lib/home-gallery";
 
 import gownImg from "@/assets/gowns.jpg";
 import FloatingScrollToTop from "@/components/FloatingScrollToTop";
@@ -79,6 +81,7 @@ const Index = () => {
   const isMobile = useIsMobile();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const { assets, loading: masterpiecesLoading } = useRotatingMasterpieces();
+  const { studioImages, recentAssets } = splitHomeGallery(assets);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
   const [heroImages, setHeroImages] = useState<string[]>(FALLBACK_HERO_IMAGES);
@@ -554,37 +557,7 @@ const Index = () => {
         </section>
 
         {/* Iconic Sets Section - Gallery Layout */}
-        <section className="section-padding" style={{ backgroundColor: "white" }}>
-          <div className="container">
-            <div className="mobile-center" style={{ marginBottom: "3.5rem" }}>
-              <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600" }}>The Environments</span>
-              <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.8rem)", marginTop: "0.6rem" }}>Curated Studio Masterpieces</h2>
-            </div>
-
-            <div className="grid grid-3" style={{ gap: "3.5rem 2.5rem" }}>
-              {[
-                { name: "The Master Staircase", detail: "Regal architecture for sweeping silhouettes.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1785868048311_IMG_5587-scaled.jpg" },
-                { name: "Flower Gardens", detail: "Immersive floral arrangements in full bloom.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778154974695_IMG_4156-683x1024.jpg" },
-                { name: "The Minimalist Loft", detail: "Shadow and light editorial storytelling.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg" },
-                { name: "Elegant Swings", detail: "Capture the lightness of being.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778154967097_34%20-%20Copy.jpg" },
-                { name: "Cinematic Boat", detail: "Serene aquatic poetic reflection.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887595087_IMGL5485-scaled.jpg" },
-                { name: "The Grand Chandelier", detail: "High-glamour lighting and reflections.", img: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1778151876880_IMG_6287-scaled.jpg" }
-              ].map((set, i) => (
-                <div key={i} className="group cursor-default">
-                  <div className="overflow-hidden aspect-[4/5] mb-8 relative rounded-[2px] shadow-sm">
-                    <img src={set.img} alt={set.name} width={1200} height={1500} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-700" />
-                    <div className="absolute bottom-6 left-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform translate-y-4 group-hover:translate-y-0">
-                      <span className="text-[10px] uppercase tracking-widest font-bold">SET {i + 1}</span>
-                    </div>
-                  </div>
-                  <h3 className="display" style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>{set.name}</h3>
-                  <p style={{ fontSize: "0.95rem", opacity: 0.6, lineHeight: "1.6" }}>{set.detail}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <StudioSetGallery images={studioImages} />
 
 
         {/* Interactive Transformation - Before & After */}
@@ -760,7 +733,7 @@ const Index = () => {
                   <Skeleton key={i} className="masonry-item w-full h-64 mb-8" />
                 ))
               ) : (
-                assets.map((asset, i) => (
+                recentAssets.map((asset, i) => (
                   <div key={asset.id} className="masonry-item group relative overflow-hidden">
                     <MasonryImage
                       src={asset.url}

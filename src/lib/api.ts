@@ -1,5 +1,6 @@
 import { authenticatedFetch } from "@/lib/adminAuth";
 import { getTrackingContext } from "@/lib/tracking";
+import { RECENT_MASTERPIECES_COUNT, splitHomeGallery } from "@/lib/home-gallery";
 
 const isBrowser = typeof window !== 'undefined';
 const isLocalHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
@@ -243,10 +244,19 @@ export const fetchPublicAssets = async (folderId?: string, page: number = 1, lim
 };
 
 export const fetchRotatingMasterpieces = async (): Promise<AssetRecord[]> => {
-  const res = await fetch(`${API_URL}/public/assets?page=1&limit=15&selection=four-hour&folder_id=fd954f21-3e3d-4b78-88ce-1e75fd5ef6df`, { cache: 'no-store' });
-  const data = await readJsonOrNull<PaginatedAssets>(res);
-  if (!data || !Array.isArray(data.assets)) throw new Error('Failed to fetch rotating masterpieces');
-  return data.assets;
+  const assets: AssetRecord[] = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const res = await fetch(`${API_URL}/public/assets?page=${page}&limit=50&selection=four-hour&folder_id=fd954f21-3e3d-4b78-88ce-1e75fd5ef6df`, { cache: 'no-store' });
+    const data = await readJsonOrNull<PaginatedAssets>(res);
+    if (!data || !Array.isArray(data.assets)) throw new Error('Failed to fetch rotating masterpieces');
+    assets.push(...data.assets);
+    if (splitHomeGallery(assets).recentAssets.length === RECENT_MASTERPIECES_COUNT) return assets;
+    totalPages = data.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+  throw new Error('Not enough unique photos for 15 recent masterpieces');
 };
 
 export const fetchPublicGalleryAssetsBySlug = async (gallerySlug: string, page: number = 1, limit: number = 100): Promise<PublicGalleryAssetsResponse> => {
