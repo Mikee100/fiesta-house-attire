@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +85,17 @@ const AdminPortfolio = () => {
       ? (portfolios as PortfolioItem[]).find((p) => p.id === id)
       : undefined;
     if (found) {
-      setPortfolio(found);
+      const sortedImages = Array.isArray(found.images) ? [...found.images] : [];
+      sortedImages.sort((a, b) => {
+        const timeA = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+        const timeB = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+        if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+        const idA = Number((a as any).id);
+        const idB = Number((b as any).id);
+        if (!isNaN(idA) && !isNaN(idB) && idA !== idB) return idB - idA;
+        return 0;
+      });
+      setPortfolio({ ...found, images: sortedImages });
     } else {
       toast.error("Portfolio not found");
       navigate("/admin");

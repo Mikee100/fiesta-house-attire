@@ -35,10 +35,20 @@ const PortfolioCategory = () => {
       }
 
       if (found) {
-        // Handle images mapping if they are objects from backend
-        const images = Array.isArray(found.images) 
-          ? found.images.map((img) => typeof img === 'string' ? img : img.url)
-          : [];
+        // Handle images mapping ensuring images flow from latest added
+        const rawImages = Array.isArray(found.images) ? [...found.images] : [];
+        rawImages.sort((a, b) => {
+          if (typeof a === "object" && typeof b === "object" && a && b) {
+            const timeA = (a as api.PortfolioImage).created_at ? new Date((a as api.PortfolioImage).created_at!).getTime() : 0;
+            const timeB = (b as api.PortfolioImage).created_at ? new Date((b as api.PortfolioImage).created_at!).getTime() : 0;
+            if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+            const idA = Number((a as api.PortfolioImage).id);
+            const idB = Number((b as api.PortfolioImage).id);
+            if (!isNaN(idA) && !isNaN(idB) && idA !== idB) return idB - idA;
+          }
+          return 0;
+        });
+        const images = rawImages.map((img) => typeof img === 'string' ? img : img.url);
         setPortfolio({ ...found, images });
       }
       

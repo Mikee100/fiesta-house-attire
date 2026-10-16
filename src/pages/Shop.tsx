@@ -262,7 +262,7 @@ const Shop = () => {
                 Need a specific value or a combination of services? We can create a personalized voucher just for you.
               </p>
               <a 
-                href="https://wa.me/254720111928?text=Hi%20Fiesta%20House,%20I'd%20like%20to%20request%20a%20custom%20gift%20voucher." 
+                href="https://wa.me/254720111928?text=Hi%20Fiesta%20House%20Maternity,%20I'd%20like%20to%20request%20a%20custom%20gift%20voucher." 
                 data-track="whatsapp_click:shop_custom_voucher"
                 className="btn btn-outline" 
                 style={{ padding: "1rem 2.5rem", borderRadius: "100px", display: "inline-flex" }}

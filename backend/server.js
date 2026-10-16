@@ -169,7 +169,7 @@ const authRefreshLimiter = rateLimit({
 
 const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isProduction ? 40 : 120,
+  max: isProduction ? 1500 : 3000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many upload attempts. Please try again later.' }
@@ -2776,11 +2776,11 @@ app.get('/auth/me', requireAdminAuth, async (req, res) => {
   }
 });
 
-// Get all portfolios with their images
+// Get all portfolios with their images (images flow from latest added)
 app.get('/portfolios', async (req, res) => {
   try {
     const portfoliosResult = await pool.query('SELECT * FROM portfolios ORDER BY "order" ASC');
-    const imagesResult = await pool.query('SELECT * FROM portfolio_images ORDER BY "order" ASC');
+    const imagesResult = await pool.query('SELECT * FROM portfolio_images ORDER BY created_at DESC NULLS LAST, id DESC');
 
     const portfolios = portfoliosResult.rows.map(p => ({
       ...p,
@@ -2794,7 +2794,7 @@ app.get('/portfolios', async (req, res) => {
   }
 });
 
-// Get a single portfolio by id or slug with its images
+// Get a single portfolio by id or slug with its images (images flow from latest added)
 app.get('/portfolios/:idOrSlug', async (req, res) => {
   const { idOrSlug } = req.params;
 
@@ -2810,7 +2810,7 @@ app.get('/portfolios/:idOrSlug', async (req, res) => {
 
     const portfolio = portfolioResult.rows[0];
     const imagesResult = await pool.query(
-      'SELECT * FROM portfolio_images WHERE portfolio_id = $1 ORDER BY "order" ASC',
+      'SELECT * FROM portfolio_images WHERE portfolio_id = $1 ORDER BY created_at DESC NULLS LAST, id DESC',
       [portfolio.id]
     );
 
@@ -2846,7 +2846,7 @@ app.post('/portfolios', requireAdminAuth, async (req, res) => {
   }
 });
 
-// Add image to portfolio
+// Add image to portfolio (latest added image will flow to top)
 app.post('/portfolios/:id/images', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { url } = req.body;
@@ -2855,17 +2855,17 @@ app.post('/portfolios/:id/images', requireAdminAuth, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'INSERT INTO portfolio_images (portfolio_id, url) VALUES ($1, $2) ON CONFLICT (portfolio_id, url) DO NOTHING RETURNING *',
+      'INSERT INTO portfolio_images (portfolio_id, url) VALUES ($1, $2) ON CONFLICT (portfolio_id, url) DO UPDATE SET created_at = NOW() RETURNING *',
       [id, url]
     );
-    res.json(result.rows[0] || { message: 'Image already exists' });
+    res.json(result.rows[0] || { message: 'Image added' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to add image' });
   }
 });
 
-// Bulk add images to portfolio
+// Bulk add images to portfolio (latest added images will flow to top)
 app.post('/portfolios/:id/images/bulk', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   const { urls } = req.body;
@@ -2875,7 +2875,7 @@ app.post('/portfolios/:id/images/bulk', requireAdminAuth, async (req, res) => {
     const results = [];
     for (const url of urls) {
       const result = await pool.query(
-        'INSERT INTO portfolio_images (portfolio_id, url) VALUES ($1, $2) ON CONFLICT (portfolio_id, url) DO NOTHING RETURNING *',
+        'INSERT INTO portfolio_images (portfolio_id, url) VALUES ($1, $2) ON CONFLICT (portfolio_id, url) DO UPDATE SET created_at = NOW() RETURNING *',
         [id, url]
       );
       if (result.rows[0]) {
@@ -4583,7 +4583,7 @@ async function sendOrderEmails(order, items) {
         <div style="margin-top: 40px; text-align: center; border-top: 1px solid #eee; padding-top: 30px;">
           <p style="font-size: 13px; color: #999; margin-bottom: 5px;">Need help? Contact us via WhatsApp or Email</p>
           <p style="font-size: 14px; font-weight: bold;">
-            <a href="https://wa.me/254720111928" style="color: ${brandColors.skyBlue}; text-decoration: none;">WhatsApp</a> | 
+            <a href="https://wa.me/254720111928?text=Hello%20Fiesta%20House%20Maternity,%20I'd%20like%20to%20enquire%20about%20my%20order." style="color: ${brandColors.skyBlue}; text-decoration: none;">WhatsApp</a> | 
             <a href="mailto:info@fiestahousematernity.com" style="color: ${brandColors.magenta}; text-decoration: none;">info@fiestahousematernity.com</a>
           </p>
         </div>
@@ -4730,7 +4730,7 @@ app.get('/image-sitemap.xml', async (req, res) => {
         `SELECT p.slug, pi.url
          FROM portfolio_images pi
          JOIN portfolios p ON p.id = pi.portfolio_id
-         ORDER BY p."order" ASC, pi."order" ASC`
+         ORDER BY p."order" ASC, pi.created_at DESC NULLS LAST, pi.id DESC`
       ),
       pool.query(
         `SELECT slug, cover_image_url AS url

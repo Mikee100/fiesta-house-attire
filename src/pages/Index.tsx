@@ -97,7 +97,27 @@ const Index = () => {
           fetchPublicAssets(HOME_CAROUSEL_FOLDER_ID, 1, MAX_HERO_SLIDES)
         ]);
 
-        if (portfoliosData) setPortfolios(portfoliosData);
+        if (portfoliosData) {
+          const formatted = portfoliosData.map((p) => {
+            const rawImages = Array.isArray(p.images) ? [...p.images] : [];
+            rawImages.sort((a, b) => {
+              if (typeof a === "object" && typeof b === "object" && a && b) {
+                const timeA = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+                const timeB = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+                if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+                const idA = Number((a as any).id);
+                const idB = Number((b as any).id);
+                if (!isNaN(idA) && !isNaN(idB) && idA !== idB) return idB - idA;
+              }
+              return 0;
+            });
+            return {
+              ...p,
+              images: rawImages
+            };
+          });
+          setPortfolios(formatted);
+        }
         if (foldersData) setFolders(foldersData);
         if (postsData) setRecentPosts(postsData.slice(0, 6));
         if (heroAssetsData?.assets?.length) {
@@ -443,7 +463,7 @@ const Index = () => {
                   title: "Suspending Concept",
                   subtitle: "Cinematic Art",
                   desc: "Elevate your maternity story with Fiesta House's suspending concept-where gravity meets grace.",
-                  fallbackImg: "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886956026_IMGL29262-scaled.jpg",
+                  fallbackImg: "https://llyqnzwjcikwthxxszni.supabase.co/storage/v1/object/public/assets/1792157445655_IMGL5067-scaled.jpg",
                   link: "/gallery/suspending-concept"
                 }
               ].map((concept, i) => {
@@ -495,7 +515,7 @@ const Index = () => {
                 <Link to="/experience" data-track="experience_click:home_sanctuary_text" style={{ color: "var(--magenta)", borderBottom: "1px solid var(--magenta)", paddingBottom: "4px", fontSize: "1rem", fontWeight: "500" }}>Discover the Fiesta Way</Link>
               </div>
               <div style={{ position: "relative" }} className="mobile-center">
-                <img src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg" alt="Maternity Portrait" width={1200} height={1600} loading="lazy" decoding="async" style={{ width: "100%", height: "auto", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
+                <img src="https://llyqnzwjcikwthxxszni.supabase.co/storage/v1/object/public/assets/1792157432558_IMGL4318-scaled.jpg" alt="Maternity Portrait" width={1200} height={1600} loading="lazy" decoding="async" style={{ width: "100%", height: "auto", borderRadius: "2px", boxShadow: "clamp(10px, 4vw, 20px) clamp(10px, 4vw, 20px) 0 var(--sky-blue-tint)" }} />
               </div>
             </div>
           </div>
@@ -506,7 +526,7 @@ const Index = () => {
           style={{}}
         >
           <img
-            src="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886936832_IMG_4849-scaled.jpg"
+            src="https://llyqnzwjcikwthxxszni.supabase.co/storage/v1/object/public/assets/1792157446467_IMGL5083-scaled.jpg"
             alt=""
             aria-hidden="true"
             width={1920}
@@ -566,8 +586,8 @@ const Index = () => {
             <div className="grid grid-2" style={{ gap: "6rem", alignItems: "center" }}>
               <div style={{ order: 2 }}>
                 <BeforeAfterSlider
-                  beforeImage="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg"
-                  afterImage="https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg"
+                  beforeImage="https://llyqnzwjcikwthxxszni.supabase.co/storage/v1/object/public/assets/1792157461177_IMGL5847-scaled.jpg"
+                  afterImage="https://llyqnzwjcikwthxxszni.supabase.co/storage/v1/object/public/assets/1792157459755_IMGL5839-scaled.jpg"
                 />
               </div>
               <div style={{ order: 1 }} className="mobile-center">
@@ -1101,7 +1121,7 @@ const Index = () => {
               <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }} className="mobile-center justify-center home-final-cta-actions">
                 <Link to="/contact" className="btn btn-magenta home-final-cta-btn" data-track="booking_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>Book your session</Link>
                 <Link to="/session-packages" data-track="packages_click:home_final_packages" style={{ display: "inline-block", margin: "1rem", color: "var(--magenta)", fontWeight: 600 }}>Explore maternity session packages</Link>
-                <a href="https://wa.me/254720111928" className="btn btn-whatsapp home-final-cta-btn" data-track="whatsapp_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
+                <a href="https://wa.me/254720111928?text=Hello%20Fiesta%20House%20Maternity,%20I'd%20like%20to%20enquire%20about%20a%20maternity%20session." className="btn btn-whatsapp home-final-cta-btn" data-track="whatsapp_click:home_final_cta" style={{ padding: "1rem 2rem", fontSize: "0.85rem" }}>WhatsApp Us</a>
               </div>
             </div>
           </div>
