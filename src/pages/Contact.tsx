@@ -340,7 +340,7 @@ const Contact = () => {
                   }}
                 />
                 <a
-                  href="https://wa.me/254720111928"
+                  href="https://wa.me/254720111928?text=Hello%20Fiesta%20House%20Maternity,%20I'd%20like%20to%20enquire%20about%20a%20maternity%20session."
                   data-track="whatsapp_click:contact_page"
                   className="btn"
                   style={{

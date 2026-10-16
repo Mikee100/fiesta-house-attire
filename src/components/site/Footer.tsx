@@ -24,9 +24,9 @@ const Footer = () => {
   }, []);
 
   const miniGalleryImages = [
-    "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887598545_IMG_5166-scaled.jpg",
-    "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887597410_IMG_5033-scaled.jpg",
-    "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777887596251_IMG_0053-1365x2048.jpg",
+    "https://llyqnzwjcikwthxxszni.supabase.co/storage/v1/object/public/assets/1792157407025_IMGL2907-scaled.jpg",
+    "https://llyqnzwjcikwthxxszni.supabase.co/storage/v1/object/public/assets/1792157443706_IMGL4458-scaled.jpg",
+    "https://llyqnzwjcikwthxxszni.supabase.co/storage/v1/object/public/assets/1792157463090_IMGL5861-scaled.jpg",
   ];
 
   return (
@@ -79,7 +79,7 @@ const Footer = () => {
             </p>
             <div style={{ display: "flex", gap: "1.2rem", alignItems: "center" }}>
               <a
-                href="https://wa.me/254720111928"
+                href="https://wa.me/254720111928?text=Hello%20Fiesta%20House%20Maternity,%20I'd%20like%20to%20enquire%20about%20a%20maternity%20session."
                 target="_blank"
                 rel="noreferrer"
                 data-track="whatsapp_click:footer_link"

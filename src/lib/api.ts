@@ -48,6 +48,8 @@ const readJsonOrNull = async <T>(res: Response): Promise<T | null> => {
 export interface PortfolioImage {
   id: string;
   url: string;
+  created_at?: string;
+  order?: number;
 }
 
 export interface PortfolioRecord {

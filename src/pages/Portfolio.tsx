@@ -41,12 +41,26 @@ const Portfolio = () => {
         console.warn("Backend empty or unreachable, using mock data");
         setPortfolios(MOCK_PORTFOLIOS);
       } else {
-        // Map backend structure (images is an array of objects)
-        const formattedData = data.map((p) => ({
-          ...p,
-          images: p.images.map((img) => (typeof img === "string" ? img : img.url)),
-          cover_image_url: p.cover_image_url || null
-        }));
+        // Map backend structure (images is an array of objects) ensuring images flow from latest added
+        const formattedData = data.map((p) => {
+          const rawImages = Array.isArray(p.images) ? [...p.images] : [];
+          rawImages.sort((a, b) => {
+            if (typeof a === "object" && typeof b === "object" && a && b) {
+              const timeA = (a as api.PortfolioImage).created_at ? new Date((a as api.PortfolioImage).created_at!).getTime() : 0;
+              const timeB = (b as api.PortfolioImage).created_at ? new Date((b as api.PortfolioImage).created_at!).getTime() : 0;
+              if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+              const idA = Number((a as api.PortfolioImage).id);
+              const idB = Number((b as api.PortfolioImage).id);
+              if (!isNaN(idA) && !isNaN(idB) && idA !== idB) return idB - idA;
+            }
+            return 0;
+          });
+          return {
+            ...p,
+            images: rawImages.map((img) => (typeof img === "string" ? img : img.url)),
+            cover_image_url: p.cover_image_url || null
+          };
+        });
         setPortfolios(formattedData);
       }
       setLoading(false);

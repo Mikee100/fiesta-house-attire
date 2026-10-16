@@ -355,7 +355,7 @@ export default function FAQHub() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button asChild size="lg" className="bg-[#660032] hover:bg-[#80003f] text-white rounded-full px-8 py-6">
-              <a href="https://wa.me/254720111928" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/254720111928?text=Hello%20Fiesta%20House%20Maternity,%20I'd%20like%20to%20enquire%20about%20a%20maternity%20session." target="_blank" rel="noopener noreferrer">
                 Chat on WhatsApp (+254 720 111 928)
               </a>
             </Button>

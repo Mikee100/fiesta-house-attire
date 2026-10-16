@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ const AdminAssets = () => {
   const [bulkUrls, setBulkUrls] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [deletingPreview, setDeletingPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,25 +109,48 @@ const AdminAssets = () => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const total = files.length;
     setUploading(true);
+    setUploadProgress({ current: 0, total });
+
+    let successCount = 0;
+    const failedFiles: string[] = [];
+
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const uploadResult = await api.uploadFile(file);
-        
-        if (uploadResult.url) {
-          await api.createAsset(uploadResult.url, currentFolderId || undefined);
-        } else {
-          throw new Error(uploadResult.error || "Upload failed");
+        setUploadProgress({ current: i + 1, total });
+
+        try {
+          const uploadResult = await api.uploadFile(file);
+          if (uploadResult?.url) {
+            await api.createAsset(uploadResult.url, currentFolderId || undefined);
+            successCount++;
+          } else {
+            failedFiles.push(`${file.name}: ${uploadResult?.error || "Upload failed"}`);
+          }
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Upload failed";
+          failedFiles.push(`${file.name}: ${message}`);
         }
       }
-      toast.success("Upload complete");
-      loadData();
+
+      if (successCount === total) {
+        toast.success(`Successfully uploaded all ${successCount} images`);
+      } else if (successCount > 0) {
+        toast.warning(`Uploaded ${successCount} of ${total} images (${failedFiles.length} failed)`);
+        console.error("Failed uploads:", failedFiles);
+      } else {
+        toast.error(`Upload failed: ${failedFiles[0] || "Unknown error"}`);
+      }
+
+      await loadData();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to upload files";
       toast.error(message);
     } finally {
       setUploading(false);
+      setUploadProgress(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -365,7 +389,7 @@ const AdminAssets = () => {
                     style={{ backgroundColor: "#B09345" }}
                   >
                     {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                    {uploading ? "Uploading..." : "Select Files"}
+                    {uploading && uploadProgress ? `Uploading (${uploadProgress.current}/${uploadProgress.total})...` : uploading ? "Uploading..." : "Select Files"}
                   </Button>
                 </TabsContent>
 
@@ -433,7 +457,7 @@ const AdminAssets = () => {
               <div className="flex flex-wrap items-center gap-2">
                 <Button onClick={() => fileInputRef.current?.click()} disabled={uploading} size="sm">
                   {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                  Upload
+                  {uploading && uploadProgress ? `Uploading (${uploadProgress.current}/${uploadProgress.total})...` : "Upload"}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleSelectAllOnPage} disabled={assets.length === 0}>
                   Select Page
