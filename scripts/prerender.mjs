@@ -179,6 +179,7 @@ async function prerenderRoutes(allRoutes) {
 
   // Read the client HTML shell (produced by `vite build`)
   const indexHtml = await getClientHtmlShell();
+  await fs.writeFile(path.join(distDir, "spa.html"), indexHtml, "utf-8");
 
   console.log(`[prerender] rendering ${allRoutes.length} routes...`);
   let successCount = 0;
