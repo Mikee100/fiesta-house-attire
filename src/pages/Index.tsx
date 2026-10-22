@@ -1,4 +1,4 @@
-﻿import { cld } from "@/lib/cloudinary";
+import { cld } from "@/lib/cloudinary";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
@@ -371,10 +371,10 @@ const Index = () => {
               Where Every Mother Becomes Iconic
             </h2>
             <p style={{ fontSize: "1.05rem", color: "rgba(43, 35, 32, 0.8)", marginBottom: 16, textAlign: "center", lineHeight: "1.75" }}>
-              Fiesta House Maternity is Africa's reigning luxury maternity house, a private sanctuary in Parklands, Nairobi, built for pregnant women carrying something sacred and refusing to move through it unseen. Spanning over 3,000 square feet, our studio holds more than 20 sets, each one designed from the ground up with the pregnant body in mind â€” every step, every curve, every pose considered before you ever arrive. Step into our cinematic Boat Set. Ascend the Master Staircase. Disappear into the Flower Gardens, sway on the Celestial Swing, stand beneath chandeliers built for a coronation â€” because that is exactly what this is.
+              Fiesta House Maternity is Africa's reigning luxury maternity house, a private sanctuary in Parklands, Nairobi, built for pregnant women carrying something sacred and refusing to move through it unseen. Spanning over 3,000 square feet, our studio holds more than 20 sets, each one designed from the ground up with the pregnant body in mind — every step, every curve, every pose considered before you ever arrive. Step into our cinematic Boat Set. Ascend the Master Staircase. Disappear into the Flower Gardens, sway on the Celestial Swing, stand beneath chandeliers built for a coronation — because that is exactly what this is.
             </p>
             <p style={{ fontSize: "1.05rem", color: "rgba(43, 35, 32, 0.8)", marginBottom: 0, textAlign: "center", lineHeight: "1.75" }}>
-              You will not lift a finger. Choose from over 300 designer gowns and trailing silks in our couture atelier, fitted by our in-house wardrobe stylists. Our professional makeup artists and hair stylists prepare you for the frame, while our all-women team â€” gentle hands, practiced eyes â€” guides you through every pose, every breath, every gesture. This is not a photoshoot. It is the moment you are crowned.
+              You will not lift a finger. Choose from over 300 designer gowns and trailing silks in our couture atelier, fitted by our in-house wardrobe stylists. Our professional makeup artists and hair stylists prepare you for the frame, while our all-women team — gentle hands, practiced eyes — guides you through every pose, every breath, every gesture. This is not a photoshoot. It is the moment you are crowned.
             </p>
           </div>
         </section>
@@ -623,7 +623,7 @@ const Index = () => {
                 <span style={{ color: "var(--sky-blue)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "500" }}>Couture Atelier</span>
                 <h2 className="display h2-mobile" style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.8rem)", margin: "0.6rem 0 1rem" }}>Originality, Designed.</h2>
                 <p style={{ fontSize: "1.05rem", lineHeight: "1.7", opacity: 0.8, marginBottom: "1.5rem" }}>
-                  Every gown in our atelier is curated specifically for photography. Expectant mothers select the looks they want to be photographed in during their session. We do not sell retail fashionâ€”we provide an exclusive couture wardrobe that transforms your photoshoot into magazine art.
+                  Every gown in our atelier is curated specifically for photography. Expectant mothers select the looks they want to be photographed in during their session. We do not sell retail fashion—we provide an exclusive couture wardrobe that transforms your photoshoot into magazine art.
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "2.5rem" }}>
                   {["Flying Silk Trains", "Sculpting Bodycon Lace", "Ethereal Tulle Robes", "Included in Sessions"].map(tag => (
@@ -693,7 +693,7 @@ const Index = () => {
                 <p className="text-sm text-[#2B2320]/70 leading-relaxed mb-4">
                   Why weeks 28-34 are ideal, 7 vs 8 vs 9 months, and twin pregnancy timing.
                 </p>
-                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide â†’</span>
+                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide →</span>
               </Link>
 
               <Link
@@ -705,7 +705,7 @@ const Index = () => {
                 <p className="text-sm text-[#2B2320]/70 leading-relaxed mb-4">
                   What to pack in your studio bag, skin prep, hydration, and day-of roadmap.
                 </p>
-                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide â†’</span>
+                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide →</span>
               </Link>
 
               <Link
@@ -717,7 +717,7 @@ const Index = () => {
                 <p className="text-sm text-[#2B2320]/70 leading-relaxed mb-4">
                   Gown silhouettes, undergarments, studio backdrop pairings, and atelier looks.
                 </p>
-                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide â†’</span>
+                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide →</span>
               </Link>
 
               <Link
@@ -729,7 +729,7 @@ const Index = () => {
                 <p className="text-sm text-[#2B2320]/70 leading-relaxed mb-4">
                   Husband styling, toddler participation, and stress-free sequencing.
                 </p>
-                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide â†’</span>
+                <span className="text-xs font-bold text-[#660032] uppercase tracking-wider">Read Guide →</span>
               </Link>
             </div>
           </div>
@@ -801,7 +801,7 @@ const Index = () => {
             </Accordion>
             <div style={{ textAlign: "center", marginTop: "2rem" }}>
               <Link to="/faq" className="btn btn-outline" style={{ borderColor: "var(--magenta)", color: "var(--magenta)", fontWeight: 600, padding: "0.7rem 1.8rem", fontSize: "0.88rem" }}>
-                View All Frequently Asked Questions â†’
+                View All Frequently Asked Questions →
               </Link>
             </div>
           </div>
@@ -899,9 +899,9 @@ const Index = () => {
           <div className="container">
             <div className="text-center" style={{ maxWidth: "700px", margin: "0 auto 3rem" }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", color: "#F59E0B", marginBottom: "0.75rem", fontSize: "1.2rem" }}>
-                <span>â˜…</span><span>â˜…</span><span>â˜…</span><span>â˜…</span><span>â˜…</span>
+                <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
                 <span style={{ color: "var(--plum)", fontSize: "0.88rem", fontWeight: "700", letterSpacing: "0.03em", marginLeft: "0.3rem" }}>
-                  4.9 Rating â€¢ 1,169+ Google Reviews
+                  4.9 Rating • 1,169+ Google Reviews
                 </span>
               </div>
               <span style={{ color: "var(--magenta)", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.85rem", fontWeight: "600", display: "block", marginBottom: "0.5rem" }}>
@@ -917,17 +917,17 @@ const Index = () => {
                 {
                   text: "I received baby girl treatment, felt like I was outside Kenya for a minute, in those countries where Expectant mothers are valued and cherished. Staff are amazing, from Faith, to Indiana to Beverly to Amazing the talented photographer. I'm a happy Client!",
                   author: "Lydia Opiyo",
-                  tag: "Baby Girl Treatment â€¢ Google Review"
+                  tag: "Baby Girl Treatment • Google Review"
                 },
                 {
-                  text: "Very helpful staff. Indiana the make up artist was exceptional! Beverly my stylist was incredible! And words cannot describe Amazing the photographerâ€¦ she was just as her name describes. Am blessed!",
+                  text: "Very helpful staff. Indiana the make up artist was exceptional! Beverly my stylist was incredible! And words cannot describe Amazing the photographer… she was just as her name describes. Am blessed!",
                   author: "Hellen Okochil",
-                  tag: "MUA & Styling Team â€¢ Google Review"
+                  tag: "MUA & Styling Team • Google Review"
                 },
                 {
                   text: "It was a great experience having our maternity shoot done by Fiesta House Maternity. The team is well organized, from front office to makeup artists, stylists, photographer and team. A special pause and reflection moment before welcoming a newborn.",
                   author: "Alvin Gachie",
-                  tag: "Local Guide â€¢ Couple Session"
+                  tag: "Local Guide • Couple Session"
                 }
               ].map((t, i) => (
                 <div
@@ -945,7 +945,7 @@ const Index = () => {
                 >
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#F59E0B", fontSize: "0.95rem", marginBottom: "1rem" }}>
-                      <span>â˜…â˜…â˜…â˜…â˜…</span>
+                      <span>★★★★★</span>
                       <span style={{ fontSize: "0.72rem", color: "var(--plum)", fontWeight: "700", marginLeft: "0.3rem" }}>
                         Verified Google Review
                       </span>
@@ -977,7 +977,7 @@ const Index = () => {
                   borderRadius: "100px"
                 }}
               >
-                Read All 5-Star Reviews & Client Stories â†’
+                Read All 5-Star Reviews & Client Stories →
               </Link>
             </div>
           </div>

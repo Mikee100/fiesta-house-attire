@@ -417,7 +417,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* â”€â”€ VALUES â”€â”€ */}
+      {/* --- VALUES --- */}
       <section style={{ background: "#F5F0E8", padding: "8rem clamp(1.5rem, 5vw, 3rem)" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div
@@ -466,8 +466,8 @@ export default function About() {
         </div>
       </section>
 
-      {/* â”€â”€ EXPERIENCE â”€â”€ */}
-     {/* â”€â”€ EXPERIENCE â”€â”€ */}
+      {/* --- EXPERIENCE --- */}
+     {/* --- EXPERIENCE --- */}
 <section style={{ padding: "6rem clamp(1.5rem, 5vw, 3rem)", maxWidth: "1200px", margin: "0 auto" }}>
   <div style={{
     display: "flex", alignItems: "baseline", justifyContent: "space-between",
@@ -562,7 +562,7 @@ export default function About() {
   </div>
 </section>
 
-      {/* â”€â”€ CTA â”€â”€ */}
+      {/* --- CTA --- */}
       <section
         style={{
           background: "#2C2C2A",
