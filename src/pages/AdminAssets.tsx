@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { cld } from "@/lib/cloudinary";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,7 +45,7 @@ const AdminAssets = () => {
   const [targetPortfolioId, setTargetPortfolioId] = useState("");
   const [copyingSelected, setCopyingSelected] = useState(false);
   const [addingToPortfolio, setAddingToPortfolio] = useState(false);
-  const itemsPerPage = 100;
+  const itemsPerPage = 10;
 
   const currentFolder = currentFolderId ? folders.find((f) => f.id === currentFolderId) ?? null : null;
   const previewAssetIndex = previewAssetId ? assets.findIndex((asset) => asset.id === previewAssetId) : -1;
@@ -536,7 +537,7 @@ const AdminAssets = () => {
                            }`}
                            onClick={() => toggleAssetSelection(asset.id)}
                          >
-                      <img src={asset.url} alt="" className="object-cover w-full h-full" />
+                      <img src={cld(asset.url, 400)} alt="" loading="lazy" className="object-cover w-full h-full" />
                             <div className="absolute left-2 top-2 z-10 rounded bg-black/45 px-2 py-1 text-[10px] font-semibold text-white">
                               {selectedAssetIds.includes(asset.id) ? "Selected" : "Select"}
                             </div>
@@ -654,7 +655,7 @@ const AdminAssets = () => {
             {previewAsset && (
               <div className="relative">
                 <img
-                  src={previewAsset.url}
+                  src={cld(previewAsset.url, 1600)}
                   alt="Asset preview"
                   className="w-full max-h-[92vh] object-contain rounded"
                 />

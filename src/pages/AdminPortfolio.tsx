@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { cld } from "@/lib/cloudinary";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import * as api from "@/lib/api";
@@ -78,30 +79,55 @@ const AdminPortfolio = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const fetchPortfolioDetails = async () => {
-    setLoading(true);
-    const portfolios = await api.fetchPortfolios();
-    const found = Array.isArray(portfolios)
-      ? (portfolios as PortfolioItem[]).find((p) => p.id === id)
-      : undefined;
+
+const fetchPortfolioDetails = async () => {
+  if (!id) {
+    toast.error("Portfolio ID is missing");
+    navigate("/admin");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const found = await api.fetchPortfolio(id) as PortfolioItem | null;
+
     if (found) {
       const sortedImages = Array.isArray(found.images) ? [...found.images] : [];
+
       sortedImages.sort((a, b) => {
-        const timeA = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
-        const timeB = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+        const timeA = (a as any).created_at
+          ? new Date((a as any).created_at).getTime()
+          : 0;
+        const timeB = (b as any).created_at
+          ? new Date((b as any).created_at).getTime()
+          : 0;
+
         if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+
         const idA = Number((a as any).id);
         const idB = Number((b as any).id);
-        if (!isNaN(idA) && !isNaN(idB) && idA !== idB) return idB - idA;
+
+        if (!isNaN(idA) && !isNaN(idB) && idA !== idB) {
+          return idB - idA;
+        }
+
         return 0;
       });
+
       setPortfolio({ ...found, images: sortedImages });
     } else {
       toast.error("Portfolio not found");
       navigate("/admin");
     }
+  } catch (err) {
+    console.error("Failed to fetch portfolio details:", err);
+    toast.error("Failed to load portfolio");
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
 
   const loadFolders = async () => {
     if (!isLibraryOpen) return;
@@ -466,7 +492,7 @@ const AdminPortfolio = () => {
                             }`}
                             onClick={() => toggleAssetSelection(asset.url)}
                           >
-                            <img src={asset.url} alt="" className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
+                            <img src={cld(asset.url, 400)} alt="" loading="lazy" className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
 
                             <div
                               className={`absolute inset-0 flex flex-col items-center justify-center transition-all ${
@@ -632,7 +658,7 @@ const AdminPortfolio = () => {
                       }`}
                       onClick={() => togglePortfolioImageSelection(img.id)}
                     >
-                      <img src={img.url} alt="" className="object-cover w-full h-full" />
+                      <img src={cld(img.url, 500)} alt="" loading="lazy" className="object-cover w-full h-full" />
                       <div className="absolute left-2 top-2 z-10 rounded bg-black/45 px-2 py-1 text-[10px] font-semibold text-white">
                         {selectedPortfolioImageIds.includes(img.id) ? "Selected" : "Select"}
                       </div>
@@ -719,7 +745,7 @@ const AdminPortfolio = () => {
             <DialogTitle className="sr-only">Image preview</DialogTitle>
             {previewImageUrl && (
               <img
-                src={previewImageUrl}
+                src={cld(previewImageUrl, 1600)}
                 alt="Portfolio image preview"
                 className="w-full max-h-[82vh] object-contain rounded"
               />

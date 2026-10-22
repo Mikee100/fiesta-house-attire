@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/site/Layout";
 import * as api from "@/lib/api";
@@ -89,6 +89,8 @@ const GalleryPage = () => {
                       alt={`${folderName || "Fiesta House"} gallery photo ${i + 1} in Nairobi`} 
                       className="group-hover:scale-105"
                       priority={i < 3}
+                      width={600}
+                      height={800}
                     />
                   </div>
                 </div>
@@ -108,3 +110,4 @@ const GalleryPage = () => {
 };
 
 export default GalleryPage;
+

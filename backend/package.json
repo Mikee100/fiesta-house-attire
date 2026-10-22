@@ -18,6 +18,7 @@
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -34,9 +35,14 @@
   },
   "nodemonConfig": {
     "legacyWatch": true,
-    "watch": [".", ".env"],
+    "watch": [
+      ".",
+      ".env"
+    ],
     "ext": "js,cjs,mjs,json,env",
-    "ignore": ["node_modules/**"],
+    "ignore": [
+      "node_modules/**"
+    ],
     "delay": 300
   }
 }

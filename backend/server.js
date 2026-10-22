@@ -9,6 +9,10 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
+
+const cloudinary = require('cloudinary').v2;
+const { Readable } = require('stream');
+
 const rateLimit = require('express-rate-limit');
 const sanitizeHtmlModule = require('sanitize-html');
 
@@ -94,6 +98,12 @@ const hasSupabaseStorageConfig = Boolean(process.env.SUPABASE_URL && process.env
 const supabase = hasSupabaseStorageConfig
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
   : null;
+
+  // Cloudinary config (reads CLOUDINARY_URL automatically)
+const hasCloudinaryConfig = Boolean(process.env.CLOUDINARY_URL);
+if (hasCloudinaryConfig) {
+  cloudinary.config({ secure: true });
+}
 
 const MAX_UPLOAD_SIZE_BYTES = Number(process.env.MAX_UPLOAD_SIZE_BYTES || 10 * 1024 * 1024);
 const ALLOWED_UPLOAD_MIME_TYPES = new Set([
@@ -3373,29 +3383,31 @@ app.post('/upload', requireAdminAuth, uploadLimiter, (req, res, next) => {
   });
 }, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  if (!supabase) return res.status(500).json({ error: 'Supabase storage is not configured' });
+  if (!hasCloudinaryConfig) return res.status(500).json({ error: 'Cloudinary is not configured' });
 
   try {
-    const safeOriginalName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const fileName = `${Date.now()}_${safeOriginalName}`;
-    const { data, error } = await supabase.storage
-      .from('assets') // Bucket name must be 'assets'
-      .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: true
-      });
+    const baseName = req.file.originalname
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_');
 
-    if (error) throw error;
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'fiesta-house',
+          public_id: `${Date.now()}_${baseName}`,
+          resource_type: 'image',
+          overwrite: false
+        },
+        (error, uploaded) => (error ? reject(error) : resolve(uploaded))
+      );
+      Readable.from(req.file.buffer).pipe(stream);
+    });
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('assets')
-      .getPublicUrl(fileName);
-
-    res.json({ url: publicUrl });
+    // Same response shape as before, so the admin UI keeps working
+    res.json({ url: result.secure_url });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Upload to Supabase failed' });
+    console.error('Cloudinary upload failed', err);
+    res.status(500).json({ error: 'Upload to Cloudinary failed' });
   }
 });
 

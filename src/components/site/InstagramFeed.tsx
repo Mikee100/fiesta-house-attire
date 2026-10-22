@@ -1,5 +1,6 @@
-import React from "react";
+﻿import React from "react";
 import * as api from "@/lib/api";
+import { cld } from "@/lib/cloudinary";
 
 const FALLBACK_IG_TILES = [
   "https://silreoobmqwxbloiznyo.supabase.co/storage/v1/object/public/assets/1777886589981_IMGL4288.jpg",
@@ -100,7 +101,7 @@ const InstagramFeed = () => {
                 }}
               >
                 <img
-                  src={url}
+                  src={cld(url, 400)}
                   alt="Fiesta House Instagram preview"
                   loading="lazy"
                   decoding="async"
@@ -116,3 +117,4 @@ const InstagramFeed = () => {
 };
 
 export default InstagramFeed;
+

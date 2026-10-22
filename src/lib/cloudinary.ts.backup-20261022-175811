@@ -1,0 +1,50 @@
+﻿export const cld = (url: string | null | undefined, w = 600): string => {
+  if (!url) return "";
+
+  const uploadMarker = "/upload/";
+  const uploadIndex = url.indexOf(uploadMarker);
+
+  if (!url.includes("res.cloudinary.com") || uploadIndex === -1) {
+    return url;
+  }
+
+  const prefixEnd = uploadIndex + uploadMarker.length;
+  const remainder = url.slice(prefixEnd);
+  const slashIndex = remainder.indexOf("/");
+  const firstSegment =
+    slashIndex === -1 ? remainder : remainder.slice(0, slashIndex);
+
+  const hasExistingTransformations =
+    firstSegment.includes(",") ||
+    /^(f_|q_|w_|h_|c_|g_|ar_|dpr_|e_|r_|b_|bo_|fl_|t_)/.test(firstSegment);
+
+  const existing = hasExistingTransformations
+    ? firstSegment.split(",")
+    : [];
+
+  const additions: string[] = [];
+
+  if (!existing.some((part) => /^f_/.test(part))) {
+    additions.push("f_auto");
+  }
+
+  if (!existing.some((part) => /^q_/.test(part))) {
+    additions.push("q_auto");
+  }
+
+  if (!existing.some((part) => /^w_\d+$/.test(part))) {
+    additions.push(`w_${w}`);
+  }
+
+  const transformations = [...existing, ...additions].join(",");
+
+  if (hasExistingTransformations) {
+    return (
+      url.slice(0, prefixEnd) +
+      transformations +
+      url.slice(prefixEnd + firstSegment.length)
+    );
+  }
+
+  return url.slice(0, prefixEnd) + transformations + "/" + remainder;
+};
