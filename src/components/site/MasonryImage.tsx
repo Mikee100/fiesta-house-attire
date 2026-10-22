@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { cld } from "@/lib/cloudinary";
 
 interface MasonryImageProps {
   src: string;
   alt: string;
   className?: string;
-  defaultAspectRatio?: string; // e.g. "3/4" or "4/5" or "16/9"
-  priority?: boolean; // Set to true for above-the-fold images to preload
+  defaultAspectRatio?: string;
+  priority?: boolean;
   width?: number;
   height?: number;
   onMouseOver?: React.MouseEventHandler<HTMLImageElement>;
@@ -29,12 +30,15 @@ const MasonryImage: React.FC<MasonryImageProps> = ({
   const [loaded, setLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Check if image is already cached/loaded upon mount
+  const optimizedSrc = cld(src, width);
+
   useEffect(() => {
-    if (imgRef.current && imgRef.current.complete) {
+    setLoaded(false);
+
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) {
       setLoaded(true);
     }
-  }, [src]);
+  }, [optimizedSrc]);
 
   const handleLoad = () => {
     setLoaded(true);
@@ -54,15 +58,11 @@ const MasonryImage: React.FC<MasonryImageProps> = ({
         ...style,
       }}
     >
-      {/* Luxury Brand Gradient Pulse Skeleton Overlay */}
-      {!loaded && (
-          <div className="brand-skeleton-overlay" />
-      )}
+      {!loaded && <div className="brand-skeleton-overlay" />}
 
-      {/* The Image Element */}
       <img
         ref={imgRef}
-        src={src}
+        src={optimizedSrc}
         alt={alt}
         width={width}
         height={height}
@@ -76,8 +76,10 @@ const MasonryImage: React.FC<MasonryImageProps> = ({
           willChange: "opacity, transform",
         }}
         loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
         decoding="async"
         onLoad={handleLoad}
+        onError={() => setLoaded(true)}
         onMouseOver={onMouseOver}
         onMouseOut={onMouseOut}
       />
@@ -86,3 +88,4 @@ const MasonryImage: React.FC<MasonryImageProps> = ({
 };
 
 export default MasonryImage;
+
